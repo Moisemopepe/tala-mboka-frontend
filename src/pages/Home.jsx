@@ -32,6 +32,11 @@ export default function Home() {
       </select>
       <CategoryFilter value={category} onChange={setCategory} />
       <ReportMap reports={reports} height="calc(100vh - 220px)" />
+      {reports.length === 0 && (
+        <p className="rounded-2xl border border-slate-100 bg-white p-4 text-center text-sm font-bold text-slate-500 shadow-soft">
+          Aucune alerte disponible
+        </p>
+      )}
     </div>
   );
 }

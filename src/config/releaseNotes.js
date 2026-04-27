@@ -1,6 +1,51 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.1.5": {
+    adminNotes: `Version 0.1.5
+
+UX:
+- Ajout de la page Mes alertes.
+- Badges de statut plus clairs.
+- Empty states uniformes.
+
+Admin:
+- Tri par date.
+- Refresh automatique toutes les 30s.
+- Message clair si session expire.`,
+    userNotes: `Version 0.1.5
+
+Nouveautes:
+- Page Mes alertes.
+- Statuts plus lisibles.
+
+Amelioration:
+- Message clair apres envoi d'une alerte.`
+  },
+  "0.1.4": {
+    adminNotes: `Version 0.1.4
+
+UX:
+- Le contour bleu du logo n'apparait plus apres un clic souris.
+- Le focus reste disponible pour la navigation clavier.`,
+    userNotes: `Version 0.1.4
+
+Amelioration:
+- Le logo a un comportement visuel plus propre au clic.`
+  },
+  "0.1.3": {
+    adminNotes: `Version 0.1.3
+
+Admin:
+- Le logo du header redirige maintenant vers l'accueil.
+
+UX:
+- Navigation plus naturelle sur toutes les pages.`,
+    userNotes: `Version 0.1.3
+
+Amelioration:
+- Cliquer sur le logo ramene maintenant a l'accueil.`
+  },
   "0.1.2": {
     adminNotes: `Version 0.1.2
 

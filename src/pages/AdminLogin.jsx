@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client.js";
 import Button from "../components/Button.jsx";
@@ -10,6 +10,15 @@ export default function AdminLogin() {
   const [form, setForm] = useState({ phone: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [sessionMessage, setSessionMessage] = useState("");
+
+  useEffect(() => {
+    const storedMessage = localStorage.getItem("tala_session_message");
+    if (storedMessage) {
+      setSessionMessage(storedMessage);
+      localStorage.removeItem("tala_session_message");
+    }
+  }, []);
 
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -60,6 +69,7 @@ export default function AdminLogin() {
             placeholder="Mot de passe"
             className="form-field"
           />
+          {sessionMessage && <p className="rounded-xl bg-blue-50 p-3 text-sm font-bold text-primary">{sessionMessage}</p>}
           {error && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p>}
           <Button type="submit" variant="success" size="lg" className="w-full" disabled={loading}>
             {loading ? "Connexion..." : "Se connecter"}

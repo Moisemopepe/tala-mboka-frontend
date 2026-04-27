@@ -126,7 +126,7 @@ export default function Feed() {
         ))}
         {reports.length === 0 && (
           <p className="rounded-2xl border border-slate-100 bg-white p-6 text-center font-semibold text-slate-500 shadow-soft">
-            Aucun signalement.
+            Aucune alerte disponible
           </p>
         )}
       </div>

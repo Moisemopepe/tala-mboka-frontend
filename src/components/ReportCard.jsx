@@ -1,9 +1,10 @@
 import { Heart, MapPin, Share2 } from "lucide-react";
 import { api } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
-import { categories, statuses } from "../utils/categories.js";
+import { categories } from "../utils/categories.js";
 import Button from "./Button.jsx";
 import Card from "./Card.jsx";
+import StatusBadge from "./StatusBadge.jsx";
 
 export default function ReportCard({ report, onLiked }) {
   const { isAuthenticated } = useAuth();
@@ -28,9 +29,7 @@ export default function ReportCard({ report, onLiked }) {
             </p>
             <h2 className="font-heading text-lg font-black leading-snug text-text">{report.title}</h2>
           </div>
-          <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600">
-            {statuses[report.status] || report.status}
-          </span>
+          <StatusBadge status={report.status} />
         </div>
         <p className="text-sm leading-6 text-slate-600">{report.description}</p>
         <p className="flex items-center gap-1 text-xs text-slate-500">

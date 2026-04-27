@@ -1,5 +1,6 @@
 import { LogOut } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -9,6 +10,15 @@ export default function Profile() {
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState({ name: "", phone: "", password: "" });
   const [error, setError] = useState("");
+  const [sessionMessage, setSessionMessage] = useState("");
+
+  useEffect(() => {
+    const storedMessage = localStorage.getItem("tala_session_message");
+    if (storedMessage) {
+      setSessionMessage(storedMessage);
+      localStorage.removeItem("tala_session_message");
+    }
+  }, []);
 
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -36,6 +46,11 @@ export default function Profile() {
           <h1 className="font-heading text-2xl font-black text-text">{user?.name}</h1>
           <p className="font-semibold text-slate-600">{user?.phone}</p>
         </div>
+        <Link to="/my-reports">
+          <Button type="button" variant="success" className="w-full">
+            Mes alertes
+          </Button>
+        </Link>
         <Button
           type="button"
           onClick={logout}
@@ -100,6 +115,7 @@ export default function Profile() {
         placeholder="Mot de passe"
         className="form-field"
       />
+      {sessionMessage && <p className="rounded-xl bg-blue-50 p-3 text-sm font-bold text-primary">{sessionMessage}</p>}
       {error && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p>}
       <Button type="submit" variant="success" size="lg" className="w-full">
         Continuer

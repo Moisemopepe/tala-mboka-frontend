@@ -5,6 +5,7 @@ import Admin from "./pages/Admin.jsx";
 import AdminLogin from "./pages/AdminLogin.jsx";
 import Feed from "./pages/Feed.jsx";
 import Home from "./pages/Home.jsx";
+import MyReports from "./pages/MyReports.jsx";
 import Profile from "./pages/Profile.jsx";
 import Report from "./pages/Report.jsx";
 
@@ -19,6 +20,7 @@ export default function App() {
             element={<Report />}
           />
           <Route path="/feed" element={<Home />} />
+          <Route path="/my-reports" element={<MyReports />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route

@@ -23,6 +23,7 @@ export default function Report() {
   const [image, setImage] = useState(null);
   const [location, setLocation] = useState(null);
   const [message, setMessage] = useState("");
+  const [sent, setSent] = useState(false);
   const [locating, setLocating] = useState(false);
 
   function update(field, value) {
@@ -84,6 +85,7 @@ export default function Report() {
 
   async function submit(event) {
     event.preventDefault();
+    setSent(false);
     if (!location) {
       setMessage("Choisissez une position GPS ou sur la carte.");
       return;
@@ -101,16 +103,24 @@ export default function Report() {
     if (image) body.append("image", image);
 
     const endpoint = isAuthenticated ? "/reports" : "/reports/guest";
-    const data = await api(endpoint, { method: "POST", body });
-
-    if (!isAuthenticated) {
-      setMessage(data.message || "Votre alerte sera validée avant publication");
-      setForm((current) => ({ ...current, title: "", description: "" }));
-      setImage(null);
+    let data;
+    try {
+      data = await api(endpoint, { method: "POST", body });
+    } catch (err) {
+      setMessage(err.message || "Impossible d'envoyer l'alerte.");
       return;
     }
 
-    navigate("/");
+    setMessage(data.message || "Votre alerte a ete envoyee et sera validee");
+    setSent(true);
+    setForm((current) => ({ ...current, title: "", description: "" }));
+    setImage(null);
+
+    if (!isAuthenticated) {
+      return;
+    }
+
+    setTimeout(() => navigate("/my-reports"), 900);
   }
 
   return (
@@ -123,7 +133,11 @@ export default function Report() {
             : "Sans compte, votre alerte sera validée avant publication."}
         </p>
       </div>
-      {message && <p className="rounded-xl bg-amber-50 p-3 text-sm font-bold text-amber-800">{message}</p>}
+      {message && (
+        <p className={`rounded-xl p-3 text-sm font-bold ${sent ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`}>
+          {message}
+        </p>
+      )}
       <Card className="space-y-3 p-4">
         <input
           required

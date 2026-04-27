@@ -1,5 +1,6 @@
-import { Home, LayoutDashboard, List, PlusCircle, User } from "lucide-react";
-import { NavLink, Outlet } from "react-router-dom";
+import { FileText, Home, LayoutDashboard, List, PlusCircle, User } from "lucide-react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import Header from "./Header.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { VERSION } from "../config/version.js";
@@ -13,10 +14,24 @@ const items = [
 
 export default function Layout() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const storedUser = JSON.parse(localStorage.getItem("tala_user") || "null");
   const currentUser = user || storedUser;
   const canManage = ["admin", "moderator"].includes(currentUser?.role);
-  const navItems = canManage ? [...items, { to: "/admin", label: "Admin", icon: LayoutDashboard }] : items;
+  const userItems = currentUser ? [...items, { to: "/my-reports", label: "Alertes", icon: FileText }] : items;
+  const navItems = canManage ? [...userItems, { to: "/admin", label: "Admin", icon: LayoutDashboard }] : userItems;
+
+  useEffect(() => {
+    function handleSessionExpired() {
+      localStorage.setItem("tala_session_message", "Votre session a expire. Reconnectez-vous.");
+      const loginPath = location.pathname.startsWith("/admin") ? "/admin/login" : "/profile";
+      navigate(loginPath, { replace: true });
+    }
+
+    window.addEventListener("tala:session-expired", handleSessionExpired);
+    return () => window.removeEventListener("tala:session-expired", handleSessionExpired);
+  }, [location.pathname, navigate]);
 
   return (
     <div className="min-h-screen bg-background pb-24 text-slate-800">
@@ -30,7 +45,11 @@ export default function Layout() {
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200/80 bg-white/95 shadow-[0_-12px_30px_rgba(15,23,42,0.06)] backdrop-blur">
-        <div className={`mx-auto grid max-w-5xl px-2 py-2 ${navItems.length === 5 ? "grid-cols-5" : "grid-cols-4"}`}>
+        <div
+          className={`mx-auto grid max-w-5xl px-2 py-2 ${
+            navItems.length === 6 ? "grid-cols-6" : navItems.length === 5 ? "grid-cols-5" : "grid-cols-4"
+          }`}
+        >
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}

@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client.js";
 
 const AuthContext = createContext(null);
@@ -41,6 +41,16 @@ export function AuthProvider({ children }) {
     setToken(null);
     setUser(null);
   }
+
+  useEffect(() => {
+    function clearExpiredSession() {
+      setToken(null);
+      setUser(null);
+    }
+
+    window.addEventListener("tala:session-expired", clearExpiredSession);
+    return () => window.removeEventListener("tala:session-expired", clearExpiredSession);
+  }, []);
 
   const value = useMemo(
     () => ({ token, user, isAuthenticated: Boolean(token), login, register, logout }),

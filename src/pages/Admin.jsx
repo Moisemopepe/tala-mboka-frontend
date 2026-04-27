@@ -19,6 +19,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../api/client.js";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
+import StatusBadge from "../components/StatusBadge.jsx";
 import { currentReleaseNotes } from "../config/releaseNotes.js";
 import { VERSION } from "../config/version.js";
 import { categories, statuses } from "../utils/categories.js";
@@ -52,16 +53,23 @@ export default function Admin() {
   const [reportStatus, setReportStatus] = useState("");
   const [reportCategory, setReportCategory] = useState("");
   const [reportProvince, setReportProvince] = useState("");
+  const [reportDateSort, setReportDateSort] = useState("newest");
   const [userQuery, setUserQuery] = useState("");
   const [editingReport, setEditingReport] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState(null);
 
   useEffect(() => {
     refreshAdmin();
-  }, []);
+    const timer = window.setInterval(() => {
+      refreshAdmin({ silent: true });
+    }, 30000);
 
-  async function refreshAdmin() {
-    setLoading(true);
+    return () => window.clearInterval(timer);
+  }, [isAdmin]);
+
+  async function refreshAdmin(options = {}) {
+    if (!options.silent) setLoading(true);
     try {
       const [statsData, reportsData, usersData] = await Promise.all([
         api("/admin/stats"),
@@ -71,6 +79,7 @@ export default function Admin() {
       setStats(statsData);
       setReports(reportsData);
       setUsers(usersData);
+      setLastRefresh(new Date());
       setError("");
     } catch (err) {
       if (err.status === 401) {
@@ -81,7 +90,7 @@ export default function Admin() {
       }
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (!options.silent) setLoading(false);
     }
   }
 
@@ -154,8 +163,12 @@ export default function Admin() {
       const matchesCategory = !reportCategory || report.category === reportCategory;
       const matchesProvince = !reportProvince || report.province === reportProvince;
       return matchesQuery && matchesStatus && matchesCategory && matchesProvince;
+    }).sort((a, b) => {
+      const left = new Date(a.createdAt).getTime();
+      const right = new Date(b.createdAt).getTime();
+      return reportDateSort === "oldest" ? left - right : right - left;
     });
-  }, [reports, reportQuery, reportStatus, reportCategory, reportProvince]);
+  }, [reports, reportQuery, reportStatus, reportCategory, reportProvince, reportDateSort]);
 
   const filteredUsers = useMemo(() => {
     const query = userQuery.trim().toLowerCase();
@@ -203,6 +216,11 @@ export default function Admin() {
             <p className="text-sm font-medium text-slate-600">
               Modifier les alertes, gerer les users, suivre les stats et la carte.
             </p>
+            {lastRefresh && (
+              <p className="mt-1 text-xs font-bold text-slate-400">
+                Refresh auto toutes les 30s. Derniere mise a jour: {lastRefresh.toLocaleTimeString()}
+              </p>
+            )}
           </div>
           <Button type="button" variant="ghost" onClick={refreshAdmin}>
             <SlidersHorizontal size={18} />
@@ -232,6 +250,8 @@ export default function Admin() {
             onStatusFilter={setReportStatus}
             onCategoryFilter={setReportCategory}
             onProvinceFilter={setReportProvince}
+            dateSort={reportDateSort}
+            onDateSort={setReportDateSort}
             onStatus={updateStatus}
             onApprove={approveReport}
             onReject={rejectReport}
@@ -347,6 +367,8 @@ function ReportsPanel({
   onStatusFilter,
   onCategoryFilter,
   onProvinceFilter,
+  dateSort,
+  onDateSort,
   onStatus,
   onApprove,
   onReject,
@@ -359,14 +381,17 @@ function ReportsPanel({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-heading text-lg font-black text-text">Gestion des alertes</h2>
-            <p className="text-sm font-semibold text-slate-600">Modifier, filtrer, resoudre ou supprimer les signalements.</p>
+            <p className="text-sm font-semibold text-slate-600">
+              {reports.length} alerte{reports.length > 1 ? "s" : ""} affichee{reports.length > 1 ? "s" : ""}. Modifier,
+              filtrer, resoudre ou supprimer les signalements.
+            </p>
           </div>
           <Button type="button" variant="ghost" onClick={() => exportCsv("reports.csv", reports)}>
             <Download size={17} />
             Export CSV
           </Button>
         </div>
-        <div className="grid gap-2 md:grid-cols-[1fr_170px_170px_170px]">
+        <div className="grid gap-2 md:grid-cols-[1fr_150px_150px_150px_150px]">
           <label className="relative">
             <Search className="absolute left-3 top-3 text-slate-400" size={18} />
             <input
@@ -400,6 +425,10 @@ function ReportsPanel({
               </option>
             ))}
           </select>
+          <select value={dateSort} onChange={(event) => onDateSort(event.target.value)} className="form-field">
+            <option value="newest">Plus recentes</option>
+            <option value="oldest">Plus anciennes</option>
+          </select>
         </div>
       </div>
       <div className="overflow-x-auto">
@@ -426,9 +455,12 @@ function ReportsPanel({
                 <td className="px-4 py-3 font-semibold">{categories[report.category]?.label}</td>
                 <td className="px-4 py-3 text-slate-700">{report.userId?.name || "Unknown"}</td>
                 <td className="px-4 py-3">
-                  <p className="mb-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">
+                  <p className="mb-2 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">
                     {report.source || "user"}
                   </p>
+                  <div className="mb-2">
+                    <StatusBadge status={report.status} />
+                  </div>
                   <select
                     value={report.status}
                     onChange={(event) => onStatus(report._id, event.target.value)}
@@ -475,7 +507,7 @@ function ReportsPanel({
             {reports.length === 0 && (
               <tr>
                 <td className="px-4 py-8 text-center font-bold text-slate-500" colSpan={7}>
-                  Aucun resultat.
+                  Aucune alerte disponible
                 </td>
               </tr>
             )}

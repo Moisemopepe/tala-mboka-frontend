@@ -24,6 +24,12 @@ export async function api(path, options = {}) {
     const error = new Error(data.message || "Une erreur est survenue");
     error.status = response.status;
     error.data = data;
+    if (response.status === 401 && !endpoint.includes("/login")) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("tala_token");
+      localStorage.removeItem("tala_user");
+      window.dispatchEvent(new CustomEvent("tala:session-expired"));
+    }
     throw error;
   }
 
