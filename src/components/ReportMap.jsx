@@ -80,7 +80,17 @@ export default function ReportMap({ reports = [], height = "70vh", onPick, picke
         />
         {onPick && <ClickPicker onPick={onPick} />}
         {activeLocation && (
-          <Marker position={[activeLocation.lat, activeLocation.lng]} icon={markerIcon("water")}>
+          <Marker
+            position={[activeLocation.lat, activeLocation.lng]}
+            icon={markerIcon("water")}
+            draggable={Boolean(onPick)}
+            eventHandlers={{
+              dragend(event) {
+                const next = event.target.getLatLng();
+                onPick?.({ lat: next.lat, lng: next.lng });
+              }
+            }}
+          >
             <Popup>Position selectionnee</Popup>
           </Marker>
         )}

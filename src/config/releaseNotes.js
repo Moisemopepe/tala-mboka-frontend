@@ -1,6 +1,65 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.1.8": {
+    adminNotes: `Version 0.1.8
+
+Fil citoyen:
+- Cards plus professionnelles.
+- Temps relatif et distance ajoutees.
+- Placeholder image ajoute.
+- Voir plus pour descriptions longues.
+
+UX:
+- Actions partager et voir sur carte.
+- Hover et clic plus fluides.`,
+    userNotes: `Version 0.1.8
+
+Nouveautes:
+- Fil citoyen plus clair.
+- Distance, partage et bouton carte ajoutes.
+
+Amelioration:
+- Les alertes sont plus faciles a lire.`
+  },
+  "0.1.7": {
+    adminNotes: `Version 0.1.7
+
+Signalement:
+- Page de signalement reorganisee en blocs.
+- Validation front ajoutee.
+- Preview images jusqu'a 3 fichiers.
+- Marqueur carte deplacable.
+
+UX:
+- Loading anti double-submit.
+- Bloc succes avec actions rapides.`,
+    userNotes: `Version 0.1.7
+
+Nouveautes:
+- Formulaire de signalement plus clair.
+- Image preview et position plus facile a choisir.
+
+Amelioration:
+- Messages d'erreur et succes plus utiles.`
+  },
+  "0.1.6": {
+    adminNotes: `Version 0.1.6
+
+Profil:
+- Page profil plus dynamique.
+- Stats utilisateur ajoutees.
+- Dernieres alertes visibles.
+
+UX:
+- Avatar avec initiale.
+- Badge Utilisateur actif.`,
+    userNotes: `Version 0.1.6
+
+Nouveautes:
+- Profil plus complet.
+- Vos stats et dernieres alertes sont visibles.`
+  },
   "0.1.5": {
     adminNotes: `Version 0.1.5
 

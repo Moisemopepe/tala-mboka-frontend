@@ -1,4 +1,4 @@
-import { LocateFixed } from "lucide-react";
+import { LocateFixed, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
 import CategoryFilter from "../components/CategoryFilter.jsx";
@@ -14,6 +14,7 @@ export default function Feed() {
   const [commune, setCommune] = useState("");
   const [nearby, setNearby] = useState(null);
   const [notice, setNotice] = useState("");
+  const [locationError, setLocationError] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -50,9 +51,18 @@ export default function Feed() {
   }
 
   function useLocation() {
-    navigator.geolocation?.getCurrentPosition((position) => {
-      setNearby({ lat: position.coords.latitude, lng: position.coords.longitude });
-    });
+    if (!navigator.geolocation) {
+      setLocationError("Localisation indisponible sur cet appareil.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setNearby({ lat: position.coords.latitude, lng: position.coords.longitude });
+        setLocationError("");
+      },
+      () => setLocationError("Impossible de recuperer votre position.")
+    );
   }
 
   return (
@@ -81,14 +91,20 @@ export default function Feed() {
         </select>
         <Button
           type="button"
-          onClick={useLocation}
+          onClick={nearby ? () => setNearby(null) : useLocation}
           variant="ghost"
-          className="shrink-0"
+          className={`shrink-0 ${nearby ? "border-primary bg-blue-50 text-primary" : ""}`}
         >
-          <LocateFixed size={18} />
-          Proche
+          {nearby ? <X size={18} /> : <LocateFixed size={18} />}
+          {nearby ? "Reset" : "Proche"}
         </Button>
       </div>
+      {nearby && (
+        <p className="rounded-xl bg-blue-50 p-3 text-sm font-bold text-primary">
+          Filtre distance actif: alertes proches de vous en premier.
+        </p>
+      )}
+      {locationError && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{locationError}</p>}
       <div className="grid gap-2 sm:grid-cols-2">
         <select
           value={province}
