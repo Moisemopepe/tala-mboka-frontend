@@ -23,7 +23,7 @@ pkg.version = nextVersion;
 fs.writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
 
 writeEnvVersion(nextVersion);
-writeVersionConfig();
+writeVersionConfig(nextVersion);
 writeChangelog(nextVersion);
 
 console.log(`Version bumped to ${nextVersion}`);
@@ -53,8 +53,10 @@ function writeEnvVersion(version) {
   fs.writeFileSync(envPath, nextEnv.endsWith("\n") ? nextEnv : `${nextEnv}\n`);
 }
 
-function writeVersionConfig() {
-  const content = 'export const VERSION = import.meta.env.VITE_APP_VERSION || "0.0.1";\n';
+function writeVersionConfig(version) {
+  const content = `export const VERSION =
+  typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : import.meta.env.VITE_APP_VERSION || "${version}";
+`;
   fs.writeFileSync(versionConfigPath, content);
 }
 
