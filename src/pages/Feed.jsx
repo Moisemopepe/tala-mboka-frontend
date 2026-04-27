@@ -4,11 +4,14 @@ import { api } from "../api/client.js";
 import CategoryFilter from "../components/CategoryFilter.jsx";
 import Button from "../components/Button.jsx";
 import ReportCard from "../components/ReportCard.jsx";
+import { drcLocations, provinces } from "../utils/drcLocations.js";
 
 export default function Feed() {
   const [reports, setReports] = useState([]);
   const [sort, setSort] = useState("newest");
   const [category, setCategory] = useState("");
+  const [province, setProvince] = useState("");
+  const [commune, setCommune] = useState("");
   const [nearby, setNearby] = useState(null);
   const [notice, setNotice] = useState("");
 
@@ -16,6 +19,8 @@ export default function Feed() {
     const params = new URLSearchParams();
     params.set("sort", sort);
     if (category) params.set("category", category);
+    if (province) params.set("province", province);
+    if (commune) params.set("commune", commune);
     if (nearby) {
       params.set("nearLat", nearby.lat);
       params.set("nearLng", nearby.lng);
@@ -38,7 +43,7 @@ export default function Feed() {
         setReports(items);
       })
       .catch(console.error);
-  }, [sort, category, nearby]);
+  }, [sort, category, province, commune, nearby]);
 
   function updateLike(id, likesCount) {
     setReports((items) => items.map((item) => (item._id === id ? { ...item, likesCount } : item)));
@@ -83,6 +88,36 @@ export default function Feed() {
           <LocateFixed size={18} />
           Proche
         </Button>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <select
+          value={province}
+          onChange={(event) => {
+            setProvince(event.target.value);
+            setCommune("");
+          }}
+          className="form-field text-sm font-bold"
+        >
+          <option value="">Toutes les provinces</option>
+          {provinces.map((item) => (
+            <option value={item} key={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+        <select
+          value={commune}
+          onChange={(event) => setCommune(event.target.value)}
+          disabled={!province}
+          className="form-field text-sm font-bold disabled:bg-slate-100 disabled:text-slate-400"
+        >
+          <option value="">Toutes les communes</option>
+          {(drcLocations[province] || []).map((item) => (
+            <option value={item} key={item}>
+              {item}
+            </option>
+          ))}
+        </select>
       </div>
       <CategoryFilter value={category} onChange={setCategory} />
       <div className="space-y-4">

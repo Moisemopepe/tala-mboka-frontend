@@ -13,7 +13,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Feed />} />
           <Route
             path="/report"
             element={
@@ -22,7 +22,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/feed" element={<Feed />} />
+          <Route path="/feed" element={<Home />} />
           <Route path="/profile" element={<Profile />} />
           <Route
             path="/admin"

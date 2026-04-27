@@ -18,6 +18,7 @@ import { api } from "../api/client.js";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
 import { categories, statuses } from "../utils/categories.js";
+import { drcLocations, provinces } from "../utils/drcLocations.js";
 
 const tabs = [
   { key: "dashboard", label: "Dashboard", icon: BarChart3 },
@@ -39,6 +40,7 @@ export default function Admin() {
   const [reportQuery, setReportQuery] = useState("");
   const [reportStatus, setReportStatus] = useState("");
   const [reportCategory, setReportCategory] = useState("");
+  const [reportProvince, setReportProvince] = useState("");
   const [userQuery, setUserQuery] = useState("");
   const [editingReport, setEditingReport] = useState(null);
 
@@ -113,9 +115,10 @@ export default function Admin() {
         report.userId?.name?.toLowerCase().includes(query);
       const matchesStatus = !reportStatus || report.status === reportStatus;
       const matchesCategory = !reportCategory || report.category === reportCategory;
-      return matchesQuery && matchesStatus && matchesCategory;
+      const matchesProvince = !reportProvince || report.province === reportProvince;
+      return matchesQuery && matchesStatus && matchesCategory && matchesProvince;
     });
-  }, [reports, reportQuery, reportStatus, reportCategory]);
+  }, [reports, reportQuery, reportStatus, reportCategory, reportProvince]);
 
   const filteredUsers = useMemo(() => {
     const query = userQuery.trim().toLowerCase();
@@ -181,9 +184,11 @@ export default function Admin() {
             query={reportQuery}
             status={reportStatus}
             category={reportCategory}
+            province={reportProvince}
             onQuery={setReportQuery}
             onStatusFilter={setReportStatus}
             onCategoryFilter={setReportCategory}
+            onProvinceFilter={setReportProvince}
             onStatus={updateStatus}
             onEdit={setEditingReport}
             onDelete={deleteReport}
@@ -287,9 +292,11 @@ function ReportsPanel({
   query,
   status,
   category,
+  province,
   onQuery,
   onStatusFilter,
   onCategoryFilter,
+  onProvinceFilter,
   onStatus,
   onEdit,
   onDelete
@@ -307,7 +314,7 @@ function ReportsPanel({
             Export CSV
           </Button>
         </div>
-        <div className="grid gap-2 md:grid-cols-[1fr_180px_180px]">
+        <div className="grid gap-2 md:grid-cols-[1fr_170px_170px_170px]">
           <label className="relative">
             <Search className="absolute left-3 top-3 text-slate-400" size={18} />
             <input
@@ -333,6 +340,14 @@ function ReportsPanel({
               </option>
             ))}
           </select>
+          <select value={province} onChange={(event) => onProvinceFilter(event.target.value)} className="form-field">
+            <option value="">Toutes provinces</option>
+            {provinces.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
       <div className="overflow-x-auto">
@@ -343,7 +358,8 @@ function ReportsPanel({
               <th className="px-4 py-3">Category</th>
               <th className="px-4 py-3">User</th>
               <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Location</th>
+              <th className="px-4 py-3">Province / Commune</th>
+              <th className="px-4 py-3">GPS</th>
               <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
@@ -370,6 +386,9 @@ function ReportsPanel({
                     ))}
                   </select>
                 </td>
+                <td className="px-4 py-3 font-bold text-slate-700">
+                  {report.province || "-"} / {report.commune || "-"}
+                </td>
                 <td className="px-4 py-3 text-xs font-bold text-slate-600">
                   {report.location.lat.toFixed(4)}, {report.location.lng.toFixed(4)}
                 </td>
@@ -389,7 +408,7 @@ function ReportsPanel({
             ))}
             {reports.length === 0 && (
               <tr>
-                <td className="px-4 py-8 text-center font-bold text-slate-500" colSpan={6}>
+                <td className="px-4 py-8 text-center font-bold text-slate-500" colSpan={7}>
                   Aucun resultat.
                 </td>
               </tr>
@@ -493,6 +512,7 @@ function AdminMap({ reports, heatPoints }) {
               <Popup>
                 <p className="font-bold">{report.title}</p>
                 <p>{categories[report.category]?.label}</p>
+                <p>{report.province} / {report.commune}</p>
                 <p>{statuses[report.status]}</p>
               </Popup>
             </Marker>
@@ -551,6 +571,8 @@ function EditReportModal({ report, onClose, onSave }) {
     description: report.description || "",
     category: report.category || "road",
     status: report.status || "pending",
+    province: report.province || "Kinshasa",
+    commune: report.commune || "Gombe",
     lat: report.location?.lat || "",
     lng: report.location?.lng || ""
   });
@@ -602,6 +624,33 @@ function EditReportModal({ report, onClose, onSave }) {
             </select>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
+            <select
+              value={form.province}
+              onChange={(event) => {
+                const nextProvince = event.target.value;
+                setForm((current) => ({
+                  ...current,
+                  province: nextProvince,
+                  commune: drcLocations[nextProvince]?.[0] || ""
+                }));
+              }}
+              className="form-field"
+            >
+              {provinces.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+            <select value={form.commune} onChange={(event) => update("commune", event.target.value)} className="form-field">
+              {(drcLocations[form.province] || []).map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
             <input type="number" step="any" value={form.lat} onChange={(event) => update("lat", event.target.value)} className="form-field" placeholder="Latitude" />
             <input type="number" step="any" value={form.lng} onChange={(event) => update("lng", event.target.value)} className="form-field" placeholder="Longitude" />
           </div>
@@ -628,6 +677,8 @@ function exportCsv(filename, rows) {
     name: row.name || row.userId?.name,
     phone: row.phone || row.userId?.phone,
     category: row.category,
+    province: row.province,
+    commune: row.commune,
     status: row.status,
     reportCount: row.reportCount,
     likesCount: row.likesCount,

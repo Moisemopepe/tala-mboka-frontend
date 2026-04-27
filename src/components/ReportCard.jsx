@@ -35,6 +35,7 @@ export default function ReportCard({ report, onLiked }) {
         <p className="text-sm leading-6 text-slate-600">{report.description}</p>
         <p className="flex items-center gap-1 text-xs text-slate-500">
           <MapPin size={14} />
+          {report.province || "Province non renseignee"} / {report.commune || "Commune non renseignee"} ·{" "}
           {report.location.lat.toFixed(4)}, {report.location.lng.toFixed(4)}
         </p>
         <div className="flex gap-2">

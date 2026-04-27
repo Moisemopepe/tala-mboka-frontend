@@ -6,22 +6,77 @@ import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
 import ReportMap from "../components/ReportMap.jsx";
 import { categories } from "../utils/categories.js";
+import { drcLocations, provinces } from "../utils/drcLocations.js";
+import { resolveDrcLocation } from "../utils/geoLocation.js";
 
 export default function Report() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ title: "", description: "", category: "road" });
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    category: "road",
+    province: "Kinshasa",
+    commune: "Gombe"
+  });
   const [image, setImage] = useState(null);
   const [location, setLocation] = useState(null);
   const [message, setMessage] = useState("");
+  const [locating, setLocating] = useState(false);
 
   function update(field, value) {
-    setForm((current) => ({ ...current, [field]: value }));
+    setForm((current) => {
+      if (field === "province") {
+        return { ...current, province: value, commune: drcLocations[value]?.[0] || "" };
+      }
+      return { ...current, [field]: value };
+    });
+  }
+
+  async function applyLocation(nextLocation, source = "map") {
+    setLocation(nextLocation);
+    setMessage(source === "gps" ? "Localisation en cours..." : "Recherche province et commune...");
+
+    const resolved = await resolveDrcLocation(nextLocation.lat, nextLocation.lng);
+
+    if (resolved.province && resolved.commune) {
+      setForm((current) => ({
+        ...current,
+        province: resolved.province,
+        commune: resolved.commune
+      }));
+      setMessage(`Position detectee: ${resolved.province} / ${resolved.commune}`);
+      return;
+    }
+
+    if (resolved.province) {
+      setForm((current) => ({
+        ...current,
+        province: resolved.province,
+        commune: drcLocations[resolved.province]?.[0] || current.commune
+      }));
+      setMessage(`Province detectee: ${resolved.province}. Choisissez la commune si besoin.`);
+      return;
+    }
+
+    setMessage("Position GPS trouvee. Choisissez la province et la commune si elles ne sont pas correctes.");
   }
 
   function useGps() {
+    if (!navigator.geolocation) {
+      setMessage("GPS indisponible. Touchez la carte pour choisir le lieu.");
+      return;
+    }
+
+    setLocating(true);
     navigator.geolocation?.getCurrentPosition(
-      (position) => setLocation({ lat: position.coords.latitude, lng: position.coords.longitude }),
-      () => setMessage("GPS indisponible. Touchez la carte pour choisir le lieu.")
+      async (position) => {
+        await applyLocation({ lat: position.coords.latitude, lng: position.coords.longitude }, "gps");
+        setLocating(false);
+      },
+      () => {
+        setLocating(false);
+        setMessage("GPS indisponible. Touchez la carte pour choisir le lieu.");
+      }
     );
   }
 
@@ -36,12 +91,14 @@ export default function Report() {
     body.append("title", form.title);
     body.append("description", form.description);
     body.append("category", form.category);
+    body.append("province", form.province);
+    body.append("commune", form.commune);
     body.append("lat", location.lat);
     body.append("lng", location.lng);
     if (image) body.append("image", image);
 
     await api("/reports", { method: "POST", body });
-    navigate("/feed");
+    navigate("/");
   }
 
   return (
@@ -74,6 +131,22 @@ export default function Report() {
             </option>
           ))}
         </select>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <select value={form.province} onChange={(event) => update("province", event.target.value)} className="form-field">
+            {provinces.map((province) => (
+              <option value={province} key={province}>
+                {province}
+              </option>
+            ))}
+          </select>
+          <select value={form.commune} onChange={(event) => update("commune", event.target.value)} className="form-field">
+            {(drcLocations[form.province] || []).map((commune) => (
+              <option value={commune} key={commune}>
+                {commune}
+              </option>
+            ))}
+          </select>
+        </div>
         <input
           type="file"
           accept="image/*"
@@ -81,11 +154,11 @@ export default function Report() {
           className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-primary/10 file:px-3 file:py-2 file:font-bold file:text-primary"
         />
       </Card>
-      <Button type="button" onClick={useGps} variant="ghost" className="w-full">
+      <Button type="button" onClick={useGps} variant="ghost" className="w-full" disabled={locating}>
         <LocateFixed size={18} />
-        Utiliser ma position
+        {locating ? "Localisation..." : "Utiliser ma position"}
       </Button>
-      <ReportMap height="320px" onPick={setLocation} pickedLocation={location} />
+      <ReportMap height="320px" onPick={(nextLocation) => applyLocation(nextLocation, "map")} pickedLocation={location} />
       <Button type="submit" variant="success" size="lg" className="w-full">
         <Send size={18} />
         Envoyer le signalement

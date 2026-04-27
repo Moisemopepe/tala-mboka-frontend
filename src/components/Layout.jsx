@@ -5,9 +5,9 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { VERSION } from "../config/version.js";
 
 const items = [
-  { to: "/", label: "Carte", icon: Home },
+  { to: "/", label: "Fil", icon: List },
   { to: "/report", label: "Signaler", icon: PlusCircle },
-  { to: "/feed", label: "Fil", icon: List },
+  { to: "/feed", label: "Carte", icon: Home },
   { to: "/profile", label: "Profil", icon: User }
 ];
 
@@ -32,6 +32,7 @@ export default function Layout() {
             <NavLink
               key={to}
               to={to}
+              end={to === "/"}
               className={({ isActive }) =>
                 `flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl border text-[11px] font-black transition ${
                   isActive
