@@ -1,0 +1,53 @@
+import { createContext, useContext, useMemo, useState } from "react";
+import { api } from "../api/client.js";
+
+const AuthContext = createContext(null);
+
+export function AuthProvider({ children }) {
+  const [token, setToken] = useState(() => localStorage.getItem("tala_token"));
+  const [user, setUser] = useState(() => {
+    const stored = localStorage.getItem("tala_user");
+    return stored ? JSON.parse(stored) : null;
+  });
+
+  async function login(phone, password) {
+    const data = await api("/login", {
+      method: "POST",
+      body: JSON.stringify({ phone, password })
+    });
+    saveSession(data);
+  }
+
+  async function register(name, phone, password) {
+    const data = await api("/register", {
+      method: "POST",
+      body: JSON.stringify({ name, phone, password })
+    });
+    saveSession(data);
+  }
+
+  function saveSession(data) {
+    localStorage.setItem("tala_token", data.token);
+    localStorage.setItem("tala_user", JSON.stringify(data.user));
+    setToken(data.token);
+    setUser(data.user);
+  }
+
+  function logout() {
+    localStorage.removeItem("tala_token");
+    localStorage.removeItem("tala_user");
+    setToken(null);
+    setUser(null);
+  }
+
+  const value = useMemo(
+    () => ({ token, user, isAuthenticated: Boolean(token), login, register, logout }),
+    [token, user]
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  return useContext(AuthContext);
+}

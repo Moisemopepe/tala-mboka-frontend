@@ -1,0 +1,47 @@
+import { Home, LayoutDashboard, List, PlusCircle, User } from "lucide-react";
+import { NavLink, Outlet } from "react-router-dom";
+import Header from "./Header.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
+
+const items = [
+  { to: "/", label: "Carte", icon: Home },
+  { to: "/report", label: "Signaler", icon: PlusCircle },
+  { to: "/feed", label: "Fil", icon: List },
+  { to: "/profile", label: "Profil", icon: User }
+];
+
+export default function Layout() {
+  const { user } = useAuth();
+  const navItems = user?.role === "admin" ? [...items, { to: "/admin", label: "Admin", icon: LayoutDashboard }] : items;
+
+  return (
+    <div className="min-h-screen bg-background pb-24 text-slate-800">
+      <Header />
+
+      <main className="mx-auto max-w-5xl px-4 py-4 sm:py-6">
+        <Outlet />
+      </main>
+
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200/80 bg-white/95 shadow-[0_-12px_30px_rgba(15,23,42,0.06)] backdrop-blur">
+        <div className={`mx-auto grid max-w-5xl px-2 py-2 ${navItems.length === 5 ? "grid-cols-5" : "grid-cols-4"}`}>
+          {navItems.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                `flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl border text-[11px] font-black transition ${
+                  isActive
+                    ? "border-blue-100 bg-blue-50 text-primary"
+                    : "border-transparent text-slate-700 hover:bg-slate-50 hover:text-primary"
+                }`
+              }
+            >
+              <Icon size={21} strokeWidth={2.4} />
+              {label}
+            </NavLink>
+          ))}
+        </div>
+      </nav>
+    </div>
+  );
+}
