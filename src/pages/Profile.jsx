@@ -1,15 +1,15 @@
-import { Bell, CalendarDays, Eye, EyeOff, FileText, HeartHandshake, Info, LogOut, MapPinned, PlusCircle, ShieldCheck, Zap } from "lucide-react";
+import { Bell, CalendarDays, Eye, EyeOff, FileText, HeartHandshake, LogOut, MapPinned, PlusCircle, ShieldCheck, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api/client.js";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
-import { VERSION } from "../config/version.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { categories } from "../utils/categories.js";
 
 export default function Profile() {
+  const navigate = useNavigate();
   const { user, isAuthenticated, login, logout, register } = useAuth();
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState({ name: "", phone: "", password: "", confirmPassword: "" });
@@ -20,7 +20,6 @@ export default function Profile() {
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportsError, setReportsError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showAbout, setShowAbout] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -103,19 +102,17 @@ export default function Profile() {
       if (mode === "login") {
         await login(form.phone, form.password);
         setSuccessMessage("Connexion reussie.");
+        navigate("/", { replace: true });
       } else {
         await register(form.name, form.phone, form.password);
-        setSuccessMessage("Compte cree avec succes. Redirection vers votre profil...");
+        setSuccessMessage("Compte cree avec succes.");
+        navigate("/", { replace: true });
       }
     } catch (err) {
       setError(err.message);
     } finally {
       setAuthLoading(false);
     }
-  }
-
-  function openAboutModal() {
-    setShowAbout(true);
   }
 
   if (isAuthenticated) {
@@ -200,7 +197,7 @@ export default function Profile() {
           </div>
         </Card>
 
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           <Link to="/report">
             <Button type="button" variant="success" className="w-full">
               <PlusCircle size={18} />
@@ -213,12 +210,6 @@ export default function Profile() {
               Mes alertes
             </Button>
           </Link>
-          <Link to="/about">
-            <Button type="button" variant="ghost" className="w-full">
-              <Info size={18} />
-              A propos
-            </Button>
-          </Link>
           <Button type="button" onClick={logout} variant="ghost" className="w-full">
             <LogOut size={18} />
             Deconnexion
@@ -229,7 +220,6 @@ export default function Profile() {
   }
 
   return (
-    <div className="space-y-4">
     <form onSubmit={submit} className="space-y-4">
       <Card className="overflow-hidden">
         <div className="bg-gradient-to-br from-blue-50 via-white to-emerald-50 px-5 py-4">
@@ -377,33 +367,5 @@ export default function Profile() {
         </Button>
       </Card>
     </form>
-
-      <div className="flex flex-wrap items-center justify-center gap-2 text-center text-sm font-semibold text-slate-500">
-        <button type="button" onClick={openAboutModal} className="hover:text-primary hover:underline">
-          A propos
-        </button>
-        <span>•</span>
-        <a href="mailto:contact@talamboka.app" className="hover:text-primary hover:underline">
-          Contact
-        </a>
-        <span>•</span>
-        <span>Version {VERSION}</span>
-      </div>
-
-      {showAbout && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-soft">
-            <h2 className="font-heading text-lg font-black text-text">A propos</h2>
-            <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-              Tala Mboka permet aux citoyens de signaler, localiser et suivre les problemes de leur quartier afin
-              d'ameliorer leur environnement.
-            </p>
-            <Button type="button" onClick={() => setShowAbout(false)} className="mt-4 w-full">
-              Fermer
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
   );
 }

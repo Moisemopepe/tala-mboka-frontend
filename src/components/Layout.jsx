@@ -1,4 +1,4 @@
-import { FileText, Home, LayoutDashboard, List, PlusCircle, User } from "lucide-react";
+import { FileText, Home, Info, LayoutDashboard, List, PlusCircle, User } from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import Header from "./Header.jsx";
@@ -18,7 +18,9 @@ export default function Layout() {
   const storedUser = JSON.parse(localStorage.getItem("tala_user") || "null");
   const currentUser = user || storedUser;
   const canManage = ["admin", "moderator"].includes(currentUser?.role);
-  const userItems = currentUser ? [...items, { to: "/my-reports", label: "Alertes", icon: FileText }] : items;
+  const userItems = currentUser
+    ? [...items, { to: "/my-reports", label: "Alertes", icon: FileText }]
+    : [...items, { to: "/about", label: "A propos", icon: Info }];
   const navItems = canManage ? [...userItems, { to: "/admin", label: "Admin", icon: LayoutDashboard }] : userItems;
 
   useEffect(() => {
