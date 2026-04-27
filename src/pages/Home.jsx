@@ -77,10 +77,10 @@ export default function Home() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="font-heading text-2xl font-black text-text">Carte des alertes</h1>
-          <p className="text-sm font-medium text-slate-500">Comprendre les zones a risque et l'impact citoyen.</p>
+          <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">Carte des alertes</h1>
+          <p className="text-sm font-medium text-slate-500 md:text-base">Comprendre les zones a risque et l'impact citoyen.</p>
         </div>
         <div className="grid grid-cols-2 rounded-2xl bg-slate-100 p-1">
           <button
@@ -116,7 +116,7 @@ export default function Home() {
           ))}
         </select>
         <CategoryFilter value={category} onChange={setCategory} />
-        <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-[1fr_1fr_auto]">
           <select value={risk} onChange={(event) => setRisk(event.target.value)} className="form-field text-sm font-bold">
             <option value="">Tous les risques</option>
             {Object.entries(riskLevels).map(([key, item]) => (
@@ -157,13 +157,13 @@ export default function Home() {
       )}
 
       {loading && (
-        <div className="h-[calc(100vh-260px)] min-h-[420px] animate-pulse rounded-2xl bg-slate-100" />
+        <div className="h-[300px] animate-pulse rounded-2xl bg-slate-100 md:h-[400px] lg:h-[500px]" />
       )}
 
       {!loading && mode === "map" && (
         <ReportMap
           reports={enrichedReports}
-          height="calc(100vh - 280px)"
+          height="min(640px, calc(100vh - 280px))"
           pickedLocation={selectedLocation}
           analytics
           userLocation={userLocation}
@@ -176,7 +176,7 @@ export default function Home() {
       )}
 
       {!loading && mode === "list" && (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {enrichedReports.map((report) => (
             <ReportCard key={report._id} report={report} />
           ))}
@@ -189,7 +189,7 @@ export default function Home() {
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-2 text-xs font-black text-slate-600 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-2 text-xs font-black text-slate-600 sm:grid-cols-2 lg:grid-cols-4">
         {Object.entries(riskLevels).map(([key, item]) => (
           <div key={key} className="flex items-center gap-2 rounded-xl bg-white p-3 shadow-soft">
             <span className="h-3 w-3 rounded-full" style={{ background: item.color }} />

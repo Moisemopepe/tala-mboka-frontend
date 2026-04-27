@@ -68,8 +68,8 @@ export default function Feed() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="font-heading text-2xl font-black text-text">Fil citoyen</h1>
-        <p className="text-sm font-medium text-slate-500">Les problemes recents autour de vous</p>
+        <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">Fil citoyen</h1>
+        <p className="text-sm font-medium text-slate-500 md:text-base">Les problemes recents autour de vous</p>
       </div>
       {notice && (
         <button
@@ -80,11 +80,11 @@ export default function Feed() {
           {notice}
         </button>
       )}
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2 md:flex-row">
         <select
           value={sort}
           onChange={(event) => setSort(event.target.value)}
-          className="form-field flex-1 text-sm font-bold"
+          className="form-field w-full flex-1 text-sm font-bold"
         >
           <option value="newest">Plus recents</option>
           <option value="liked">Plus soutenus</option>
@@ -93,7 +93,7 @@ export default function Feed() {
           type="button"
           onClick={nearby ? () => setNearby(null) : useLocation}
           variant="ghost"
-          className={`shrink-0 ${nearby ? "border-primary bg-blue-50 text-primary" : ""}`}
+          className={`w-full md:w-auto md:shrink-0 ${nearby ? "border-primary bg-blue-50 text-primary" : ""}`}
         >
           {nearby ? <X size={18} /> : <LocateFixed size={18} />}
           {nearby ? "Reset" : "Proche"}
@@ -105,7 +105,7 @@ export default function Feed() {
         </p>
       )}
       {locationError && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{locationError}</p>}
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <select
           value={province}
           onChange={(event) => {
@@ -136,7 +136,7 @@ export default function Feed() {
         </select>
       </div>
       <CategoryFilter value={category} onChange={setCategory} />
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {reports.map((report) => (
           <ReportCard key={report._id} report={report} onLiked={updateLike} />
         ))}

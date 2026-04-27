@@ -131,14 +131,14 @@ export default function Profile() {
                   <ShieldCheck size={14} />
                   Utilisateur actif
                 </div>
-                <h1 className="truncate font-heading text-2xl font-black text-text">{user?.name}</h1>
-                <p className="font-semibold text-slate-600">{user?.phone}</p>
+                <h1 className="truncate font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">{user?.name}</h1>
+                <p className="text-sm font-semibold text-slate-600 md:text-base">{user?.phone}</p>
               </div>
             </div>
           </div>
         </Card>
 
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           <Card className="p-3 text-center">
             <p className="text-xs font-black uppercase text-slate-500">Total</p>
             <p className="font-heading text-2xl font-black text-text">{reports.length}</p>
@@ -173,7 +173,7 @@ export default function Profile() {
             </div>
           )}
 
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
             {latestReports.map((report) => (
               <div key={report._id} className="rounded-2xl border border-slate-100 bg-white p-3">
                 <div className="flex items-start justify-between gap-3">
@@ -194,26 +194,26 @@ export default function Profile() {
           </div>
         </Card>
 
-        <div className="grid gap-2 sm:grid-cols-4">
-          <Link to="/report" className="sm:col-span-1">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
+          <Link to="/report">
             <Button type="button" variant="success" className="w-full">
               <PlusCircle size={18} />
               Signaler
             </Button>
           </Link>
-          <Link to="/my-reports" className="sm:col-span-1">
+          <Link to="/my-reports">
             <Button type="button" variant="ghost" className="w-full">
               <FileText size={18} />
               Mes alertes
             </Button>
           </Link>
-          <Link to="/about" className="sm:col-span-1">
+          <Link to="/about">
             <Button type="button" variant="ghost" className="w-full">
               <Info size={18} />
               A propos
             </Button>
           </Link>
-          <Button type="button" onClick={logout} variant="ghost" className="w-full sm:col-span-1">
+          <Button type="button" onClick={logout} variant="ghost" className="w-full">
             <LogOut size={18} />
             Deconnexion
           </Button>
@@ -226,15 +226,15 @@ export default function Profile() {
     <form onSubmit={submit} className="space-y-4">
       <Card className="overflow-hidden">
         <div className="bg-gradient-to-br from-blue-50 via-white to-emerald-50 px-5 py-4">
-          <h1 className="font-heading text-3xl font-black leading-tight text-text">Rejoignez Tala Mboka</h1>
-          <p className="mt-1 text-sm font-bold text-slate-600">Signalez et améliorez votre quartier</p>
+          <h1 className="font-heading text-xl font-black leading-tight text-text md:text-2xl lg:text-3xl">Rejoignez Tala Mboka</h1>
+          <p className="mt-1 text-sm font-bold text-slate-600 md:text-base">Signalez et améliorez votre quartier</p>
           <p className="mt-3 rounded-2xl bg-white/80 p-3 text-sm font-bold leading-6 text-slate-700 shadow-sm">
             Chaque alerte aide votre quartier a etre vu, compris et mieux pris en charge.
           </p>
         </div>
       </Card>
 
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
         {[
           { icon: Zap, text: "Publier des alertes rapidement" },
           { icon: MapPinned, text: "Suivre les problemes proches" },

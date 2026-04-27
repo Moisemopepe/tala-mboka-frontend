@@ -33,16 +33,16 @@ export default function Layout() {
   }, [location.pathname, navigate]);
 
   return (
-    <div className="min-h-screen bg-background pb-24 text-slate-800">
+    <div className="min-h-screen w-full bg-background pb-24 text-slate-800">
       <Header />
 
-      <main className="mx-auto max-w-5xl px-4 py-4 sm:py-6">
+      <main className="mx-auto w-full max-w-[1400px] px-4 py-4 sm:px-6 sm:py-6 md:px-8 lg:px-10">
         <Outlet />
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200/80 bg-white/95 shadow-[0_-12px_30px_rgba(15,23,42,0.06)] backdrop-blur">
         <div
-          className={`mx-auto grid max-w-5xl px-2 py-2 ${
+          className={`mx-auto grid w-full max-w-[1400px] px-2 py-2 sm:px-4 md:px-6 ${
             navItems.length === 6 ? "grid-cols-6" : navItems.length === 5 ? "grid-cols-5" : "grid-cols-4"
           }`}
         >

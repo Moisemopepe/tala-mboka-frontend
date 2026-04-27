@@ -5,8 +5,8 @@ import NotificationBell from "./NotificationBell.jsx";
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+    <header className="sticky top-0 z-40 w-full border-b border-slate-200/70 bg-white/95 backdrop-blur">
+      <div className="flex w-full items-center justify-between gap-3 px-4 py-3 sm:px-6 md:px-8 lg:px-12">
         <Link
           to="/"
           className="min-w-0 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"

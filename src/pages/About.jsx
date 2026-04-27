@@ -24,18 +24,18 @@ export default function About() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="w-full">
       <Card className="w-full overflow-hidden">
         <div className="bg-white p-5 sm:p-7">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <Logo />
-              <h1 className="mt-5 font-heading text-3xl font-black leading-tight text-text">A propos</h1>
-              <p className="mt-2 max-w-xl text-base font-bold leading-7 text-slate-700">
+              <h1 className="mt-5 font-heading text-xl font-black leading-tight text-text md:text-2xl lg:text-3xl">A propos</h1>
+              <p className="mt-2 text-sm font-bold leading-7 text-slate-700 md:text-base">
                 Tala Mboka est une plateforme citoyenne qui permet a chacun de signaler facilement les problemes de son
                 quartier : routes degradees, coupures d'electricite, insecurite, insalubrite, et bien plus.
               </p>
-              <p className="mt-3 max-w-xl text-sm font-semibold leading-6 text-slate-600">
+              <p className="mt-3 text-sm font-semibold leading-6 text-slate-600 md:text-base">
                 Grace a Tala Mboka, chaque signalement devient visible, localise et suivi. Les citoyens peuvent ainsi
                 alerter, informer et contribuer a ameliorer leur environnement au quotidien.
               </p>
@@ -72,7 +72,7 @@ export default function About() {
               <Target className="text-primary" size={20} />
               <h2 className="font-heading text-lg font-black text-text">Pourquoi utiliser Tala Mboka ?</h2>
             </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
               {features.map((feature) => (
                 <div key={feature} className="flex items-start gap-2 rounded-2xl bg-slate-50 p-3 text-sm font-bold text-slate-700">
                   <CheckCircle2 className="mt-0.5 shrink-0 text-success" size={17} />
@@ -103,7 +103,7 @@ export default function About() {
             </p>
           </section>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <section className="rounded-2xl border border-slate-100 p-4">
               <div className="flex items-center gap-2">
                 <Mail className="text-primary" size={20} />

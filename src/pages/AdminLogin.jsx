@@ -46,12 +46,12 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-md items-center">
-      <Card className="w-full space-y-5 p-5">
+    <div className="flex min-h-[70vh] w-full items-center justify-center">
+      <Card className="w-full space-y-5 p-5 md:max-w-lg">
         <Logo />
         <div>
-          <h1 className="font-heading text-2xl font-black text-text">Connexion admin</h1>
-          <p className="text-sm font-semibold text-slate-600">Accedez au dashboard admin ou moderateur.</p>
+          <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">Connexion admin</h1>
+          <p className="text-sm font-semibold text-slate-600 md:text-base">Accedez au dashboard admin ou moderateur.</p>
         </div>
         <form onSubmit={submit} className="space-y-3">
           <input

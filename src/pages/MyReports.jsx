@@ -40,13 +40,13 @@ export default function MyReports() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <h1 className="font-heading text-2xl font-black text-text">Mes alertes</h1>
-          <p className="text-sm font-medium text-slate-500">Suivez le statut de vos signalements.</p>
+          <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">Mes alertes</h1>
+          <p className="text-sm font-medium text-slate-500 md:text-base">Suivez le statut de vos signalements.</p>
         </div>
         <Link to="/report">
-          <Button type="button" variant="success">
+          <Button type="button" variant="success" className="w-full md:w-auto">
             <PlusCircle size={18} />
             Signaler
           </Button>
@@ -69,7 +69,7 @@ export default function MyReports() {
         </Card>
       )}
 
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         {reports.map((report) => (
           <Card key={report._id} className="p-4">
             <div className="flex items-start justify-between gap-3">

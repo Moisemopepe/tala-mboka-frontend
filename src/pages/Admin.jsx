@@ -184,7 +184,7 @@ export default function Admin() {
   }, [reports]);
 
   return (
-    <div className="space-y-4 lg:grid lg:grid-cols-[220px_1fr] lg:gap-5 lg:space-y-0">
+    <div className="space-y-4 lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-5 lg:space-y-0">
       <aside className="rounded-2xl border border-slate-100 bg-white p-3 shadow-soft lg:sticky lg:top-24 lg:h-fit">
         <div className="mb-3 hidden items-center gap-2 px-2 py-1 lg:flex">
           <ShieldCheck className="text-primary" size={20} />
@@ -210,10 +210,10 @@ export default function Admin() {
       </aside>
 
       <section className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-          <h1 className="font-heading text-2xl font-black text-text">{isAdmin ? "Admin Dashboard" : "Moderateur Dashboard"}</h1>
-            <p className="text-sm font-medium text-slate-600">
+          <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">{isAdmin ? "Admin Dashboard" : "Moderateur Dashboard"}</h1>
+            <p className="text-sm font-medium text-slate-600 md:text-base">
               Modifier les alertes, gerer les users, suivre les stats et la carte.
             </p>
             {lastRefresh && (
@@ -378,7 +378,7 @@ function ReportsPanel({
   return (
     <Card className="overflow-hidden">
       <div className="space-y-3 border-b border-slate-100 p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="font-heading text-lg font-black text-text">Gestion des alertes</h2>
             <p className="text-sm font-semibold text-slate-600">
@@ -391,7 +391,7 @@ function ReportsPanel({
             Export CSV
           </Button>
         </div>
-        <div className="grid gap-2 md:grid-cols-[1fr_150px_150px_150px_150px]">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_repeat(4,minmax(150px,180px))]">
           <label className="relative">
             <Search className="absolute left-3 top-3 text-slate-400" size={18} />
             <input
@@ -432,7 +432,7 @@ function ReportsPanel({
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[860px] text-left text-sm">
+        <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-600">
             <tr>
               <th className="px-4 py-3">Report</th>
@@ -449,7 +449,7 @@ function ReportsPanel({
               <tr key={report._id} className="align-top">
                 <td className="px-4 py-3">
                   <p className="font-bold text-text">{report.title}</p>
-                  <p className="max-w-sm truncate text-slate-600">{report.description}</p>
+                  <p className="truncate text-slate-600">{report.description}</p>
                   <p className="mt-1 text-xs font-bold text-slate-500">{report.likesCount || 0} soutiens</p>
                 </td>
                 <td className="px-4 py-3 font-semibold">{categories[report.category]?.label}</td>
@@ -532,13 +532,13 @@ function UsersPanel({ users, query, onQuery, onToggleBan, onRole }) {
             Export CSV
           </Button>
         </div>
-        <label className="relative block max-w-xl">
+        <label className="relative block w-full">
           <Search className="absolute left-3 top-3 text-slate-400" size={18} />
           <input value={query} onChange={(event) => onQuery(event.target.value)} placeholder="Chercher nom ou telephone..." className="form-field pl-10" />
         </label>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-left text-sm">
+        <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-600">
             <tr>
               <th className="px-4 py-3">Name</th>
@@ -592,7 +592,7 @@ function AdminMap({ reports, heatPoints }) {
         <h2 className="font-heading text-lg font-black text-text">Map analytics</h2>
         <p className="text-sm font-semibold text-slate-600">Tous les signalements + heatmap par zone.</p>
       </div>
-      <div className="h-[520px]">
+      <div className="h-[300px] md:h-[400px] lg:h-[500px]">
         <MapContainer center={[-4.325, 15.3222]} zoom={12} scrollWheelZoom>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -637,11 +637,11 @@ function AdminTools({ reports, users, onOpenTab, isAdmin }) {
   );
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
       <div className="space-y-4">
         <Card className="p-4">
           <h2 className="font-heading text-xl font-black text-text">Ce que tu peux faire comme admin</h2>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
             {tools.map((tool) => (
               <div key={tool} className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm font-bold text-text">
                 {tool}

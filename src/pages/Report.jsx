@@ -250,8 +250,8 @@ export default function Report() {
   return (
     <form onSubmit={submit} className="animate-[fadeIn_0.2s_ease-out] space-y-4">
       <div>
-        <h1 className="font-heading text-2xl font-black text-text">Nouveau signalement</h1>
-        <p className="text-sm font-medium text-slate-500">
+        <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">Nouveau signalement</h1>
+        <p className="text-sm font-medium text-slate-500 md:text-base">
           {isAuthenticated ? "Votre alerte sera publiée immédiatement" : "Votre alerte sera vérifiée avant publication"}
         </p>
       </div>
@@ -263,7 +263,7 @@ export default function Report() {
             <div className="min-w-0 flex-1">
               <h2 className="font-heading text-lg font-black text-success">{success.title}</h2>
               <p className="text-sm font-bold text-emerald-800">{success.subtitle}</p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
                 <Button as={Link} to="/" type="button" variant="success">
                   Voir les alertes
                 </Button>
@@ -336,7 +336,7 @@ export default function Report() {
         </label>
         {errors.images && <p className="text-xs font-bold text-red-600">{errors.images}</p>}
         {previews.length > 0 && (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
             {previews.map((preview, index) => (
               <div key={`${preview.file.name}-${index}`} className="relative overflow-hidden rounded-xl border border-slate-100">
                 <img src={preview.url} alt="" className="h-24 w-full object-cover" />
@@ -357,7 +357,7 @@ export default function Report() {
       <div ref={fieldRefs.location}>
       <Card className="space-y-3 p-4">
         <h2 className="font-heading text-lg font-black text-text">Localisation</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <select value={form.province} onChange={(event) => update("province", event.target.value)} className="form-field">
             {provinces.map((province) => (
               <option value={province} key={province}>
@@ -373,7 +373,7 @@ export default function Report() {
             ))}
           </select>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Button type="button" onClick={() => useGps({ revealMapOnSuccess: false })} variant="ghost" className="w-full" disabled={locating}>
             <LocateFixed size={18} />
             {locating ? "Localisation..." : "Utiliser ma position"}
@@ -411,7 +411,7 @@ export default function Report() {
         {mapVisible && (
           <>
             <p className="text-sm font-bold text-slate-600">Cliquez sur la carte pour choisir l'emplacement. Vous pouvez deplacer le marqueur.</p>
-            <ReportMap height="320px" onPick={(nextLocation) => applyLocation(nextLocation, "map")} pickedLocation={location} />
+            <ReportMap height="min(500px, 55vh)" onPick={(nextLocation) => applyLocation(nextLocation, "map")} pickedLocation={location} />
           </>
         )}
         {location && (
