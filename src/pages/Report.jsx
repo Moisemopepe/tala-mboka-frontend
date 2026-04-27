@@ -1,4 +1,4 @@
-import { CheckCircle2, ImagePlus, Loader2, LocateFixed, MapPin, PlusCircle, Send, Trash2 } from "lucide-react";
+import { CheckCircle2, ImagePlus, Loader2, LocateFixed, MapPin, Pencil, PlusCircle, Send, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
@@ -8,7 +8,7 @@ import ReportMap from "../components/ReportMap.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { categories } from "../utils/categories.js";
 import { drcLocations, provinces } from "../utils/drcLocations.js";
-import { resolveDrcLocation } from "../utils/geoLocation.js";
+import { resolveDrcCoordinates, resolveDrcLocation } from "../utils/geoLocation.js";
 
 const initialForm = {
   title: "",
@@ -28,9 +28,14 @@ export default function Report() {
   const [location, setLocation] = useState(null);
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");
+  const [locationStatus, setLocationStatus] = useState("");
+  const [locationStatusType, setLocationStatusType] = useState("idle");
+  const [mapVisible, setMapVisible] = useState(false);
+  const [manualSyncing, setManualSyncing] = useState(false);
   const [success, setSuccess] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [locating, setLocating] = useState(false);
+  const autoLocateStarted = useRef(false);
   const fieldRefs = {
     title: useRef(null),
     description: useRef(null),
@@ -47,15 +52,49 @@ export default function Report() {
     return () => previews.forEach((preview) => URL.revokeObjectURL(preview.url));
   }, [previews]);
 
+  useEffect(() => {
+    if (autoLocateStarted.current) return;
+    autoLocateStarted.current = true;
+    useGps({ revealMapOnSuccess: false });
+  }, []);
+
+  async function syncManualLocation(province, commune) {
+    if (!province || !commune) return;
+
+    setManualSyncing(true);
+    const nextLocation = await resolveDrcCoordinates(province, commune);
+    setManualSyncing(false);
+
+    if (!nextLocation) return;
+
+    setSuccess(null);
+    setLocation(nextLocation);
+    setErrors((current) => ({ ...current, location: "" }));
+    setLocationStatus(`Position détectée: ${province} + ${commune}`);
+    setLocationStatusType("success");
+  }
+
   function update(field, value) {
     setSuccess(null);
     setErrors((current) => ({ ...current, [field]: "" }));
+    let nextProvince = form.province;
+    let nextCommune = form.commune;
+
     setForm((current) => {
       if (field === "province") {
-        return { ...current, province: value, commune: drcLocations[value]?.[0] || "" };
+        nextProvince = value;
+        nextCommune = drcLocations[value]?.[0] || "";
+        return { ...current, province: nextProvince, commune: nextCommune };
+      }
+      if (field === "commune") {
+        nextCommune = value;
       }
       return { ...current, [field]: value };
     });
+
+    if (field === "province" || field === "commune") {
+      syncManualLocation(nextProvince, nextCommune);
+    }
   }
 
   function validate() {
@@ -80,13 +119,15 @@ export default function Report() {
     setSuccess(null);
     setLocation(nextLocation);
     setErrors((current) => ({ ...current, location: "" }));
-    setMessage(source === "gps" ? "Localisation en cours..." : "Recherche province et commune...");
+    setLocationStatus(source === "gps" ? "Localisation en cours..." : "Recherche province et commune...");
+    setLocationStatusType("loading");
 
     const resolved = await resolveDrcLocation(nextLocation.lat, nextLocation.lng);
 
     if (resolved.province && resolved.commune) {
       setForm((current) => ({ ...current, province: resolved.province, commune: resolved.commune }));
-      setMessage(`Position selectionnee: ${resolved.province}, ${resolved.commune}`);
+      setLocationStatus(`Position détectée: ${resolved.province} + ${resolved.commune}`);
+      setLocationStatusType("success");
       return;
     }
 
@@ -96,28 +137,38 @@ export default function Report() {
         province: resolved.province,
         commune: drcLocations[resolved.province]?.[0] || current.commune
       }));
-      setMessage(`Province detectee: ${resolved.province}. Verifiez la commune.`);
+      setLocationStatus(`Position détectée: ${resolved.province}. Vérifiez la commune.`);
+      setLocationStatusType("success");
       return;
     }
 
-    setMessage("Position selectionnee. Verifiez la province et la commune.");
+    setLocationStatus("Position sélectionnée. Vérifiez la province et la commune.");
+    setLocationStatusType("success");
   }
 
-  function useGps() {
+  function useGps(options = {}) {
+    const { revealMapOnSuccess = true } = options;
     if (!navigator.geolocation) {
-      setErrors((current) => ({ ...current, location: "GPS indisponible. Cliquez sur la carte." }));
+      setMapVisible(true);
+      setLocationStatus("Impossible de détecter votre position");
+      setLocationStatusType("error");
       return;
     }
 
     setLocating(true);
+    setLocationStatus("Localisation en cours...");
+    setLocationStatusType("loading");
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         await applyLocation({ lat: position.coords.latitude, lng: position.coords.longitude }, "gps");
+        setMapVisible(revealMapOnSuccess);
         setLocating(false);
       },
       () => {
         setLocating(false);
-        setErrors((current) => ({ ...current, location: "GPS indisponible. Cliquez sur la carte." }));
+        setMapVisible(true);
+        setLocationStatus("Impossible de détecter votre position");
+        setLocationStatusType("error");
       }
     );
   }
@@ -184,6 +235,10 @@ export default function Report() {
       setForm(initialForm);
       setImages([]);
       setLocation(null);
+      setLocationStatus("");
+      setLocationStatusType("idle");
+      setMapVisible(false);
+      autoLocateStarted.current = false;
       setErrors({});
     } catch (err) {
       setMessage(err.message || "Impossible d'envoyer l'alerte.");
@@ -318,23 +373,47 @@ export default function Report() {
             ))}
           </select>
         </div>
-        <Button type="button" onClick={useGps} variant="ghost" className="w-full" disabled={locating}>
-          <LocateFixed size={18} />
-          {locating ? "Localisation..." : "Utiliser ma position"}
-        </Button>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Button type="button" onClick={() => useGps({ revealMapOnSuccess: false })} variant="ghost" className="w-full" disabled={locating}>
+            <LocateFixed size={18} />
+            {locating ? "Localisation..." : "Utiliser ma position"}
+          </Button>
+          <Button type="button" onClick={() => setMapVisible(true)} variant="ghost" className="w-full">
+            <Pencil size={18} />
+            Modifier l'emplacement
+          </Button>
+        </div>
         <div className="rounded-2xl bg-slate-50 p-3 text-sm font-bold text-slate-600">
           {location ? (
             <span className="flex items-center gap-2 text-text">
               <MapPin size={17} className="text-primary" />
-              Position selectionnee: {form.province}, {form.commune}
+              Position détectée: {form.province} + {form.commune}
             </span>
           ) : (
-            "Aucune position selectionnee"
+            locationStatus || "Aucune position sélectionnée"
           )}
         </div>
+        {locationStatus && location && (
+          <p
+            className={`rounded-xl p-3 text-xs font-bold ${
+              locationStatusType === "error"
+                ? "bg-red-50 text-red-700"
+                : locationStatusType === "loading"
+                  ? "bg-blue-50 text-primary"
+                  : "bg-emerald-50 text-emerald-700"
+            }`}
+          >
+            {locationStatus}
+          </p>
+        )}
+        {manualSyncing && <p className="text-xs font-bold text-slate-500">Synchronisation avec la carte...</p>}
         {errors.location && <p className="text-xs font-bold text-red-600">{errors.location}</p>}
-        <p className="text-sm font-bold text-slate-600">Cliquez sur la carte pour choisir l'emplacement. Vous pouvez deplacer le marqueur.</p>
-        <ReportMap height="320px" onPick={(nextLocation) => applyLocation(nextLocation, "map")} pickedLocation={location} />
+        {mapVisible && (
+          <>
+            <p className="text-sm font-bold text-slate-600">Cliquez sur la carte pour choisir l'emplacement. Vous pouvez deplacer le marqueur.</p>
+            <ReportMap height="320px" onPick={(nextLocation) => applyLocation(nextLocation, "map")} pickedLocation={location} />
+          </>
+        )}
         {location && (
           <p className="text-xs font-bold text-slate-500">
             Coordonnees: {location.lat.toFixed(5)}, {location.lng.toFixed(5)}

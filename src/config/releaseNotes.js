@@ -1,6 +1,20 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.2.7": {
+    adminNotes: `Version 0.2.7
+
+Maintenance:
+- Verification globale du code.
+- Correction d'une logique de risque obsolete.
+
+Qualite:
+- Build frontend et syntaxe backend verifies.`,
+    userNotes: `Version 0.2.7
+
+Amelioration:
+- Stabilite generale de l'application amelioree.`
+  },
   "0.2.6": {
     adminNotes: `Version 0.2.6
 

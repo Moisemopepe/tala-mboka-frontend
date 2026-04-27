@@ -6,7 +6,7 @@ export const riskLevels = {
 };
 
 export function getRiskLevel(report) {
-  if (["resolved", "rejected"].includes(report.status)) return "resolved";
+  if (report.status === "rejected") return "resolved";
   if (["security", "kidnapping"].includes(report.category)) return "urgent";
   if ((report.likesCount || report.likes?.length || 0) >= 10) return "urgent";
   if (["water", "electricity", "fraud"].includes(report.category)) return "important";

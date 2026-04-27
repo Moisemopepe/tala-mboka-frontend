@@ -1,6 +1,7 @@
 import { drcLocations, provinces } from "./drcLocations.js";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse";
+const NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search";
 
 export async function resolveDrcLocation(lat, lng) {
   const fallback = resolveKinshasaFallback(lat, lng);
@@ -37,6 +38,33 @@ export async function resolveDrcLocation(lat, lng) {
     };
   } catch (_error) {
     return fallback;
+  }
+}
+
+export async function resolveDrcCoordinates(province, commune) {
+  if (!province || !commune) return null;
+
+  try {
+    const params = new URLSearchParams({
+      format: "jsonv2",
+      q: `${commune}, ${province}, Republique democratique du Congo`,
+      limit: "1",
+      "accept-language": "fr"
+    });
+    const response = await fetch(`${NOMINATIM_SEARCH_URL}?${params.toString()}`);
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const firstResult = data[0];
+    if (!firstResult?.lat || !firstResult?.lon) return null;
+
+    return {
+      lat: Number(firstResult.lat),
+      lng: Number(firstResult.lon)
+    };
+  } catch (_error) {
+    return null;
   }
 }
 
