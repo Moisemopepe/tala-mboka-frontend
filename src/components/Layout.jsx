@@ -2,6 +2,7 @@ import { Home, LayoutDashboard, List, PlusCircle, User } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import Header from "./Header.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { VERSION } from "../config/version.js";
 
 const items = [
   { to: "/", label: "Carte", icon: Home },
@@ -20,6 +21,9 @@ export default function Layout() {
 
       <main className="mx-auto max-w-5xl px-4 py-4 sm:py-6">
         <Outlet />
+        <footer className="pb-4 pt-8 text-center">
+          <p style={{ opacity: 0.6, fontSize: "12px" }}>Version {VERSION}</p>
+        </footer>
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200/80 bg-white/95 shadow-[0_-12px_30px_rgba(15,23,42,0.06)] backdrop-blur">
