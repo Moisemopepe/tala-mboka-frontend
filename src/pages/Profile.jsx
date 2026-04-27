@@ -1,4 +1,4 @@
-import { Bell, CalendarDays, Eye, EyeOff, FileText, HeartHandshake, LogOut, MapPinned, PlusCircle, ShieldCheck, Zap } from "lucide-react";
+import { Bell, CalendarDays, Eye, EyeOff, FileText, HeartHandshake, Info, LogOut, MapPinned, PlusCircle, ShieldCheck, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api/client.js";
@@ -141,7 +141,7 @@ export default function Profile() {
           </div>
         </Card>
 
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
           <Card className="p-3 text-center">
             <p className="text-xs font-black uppercase text-slate-500">Total</p>
             <p className="font-heading text-2xl font-black text-text">{reports.length}</p>
@@ -208,6 +208,12 @@ export default function Profile() {
             <Button type="button" variant="ghost" className="w-full">
               <FileText size={18} />
               Mes alertes
+            </Button>
+          </Link>
+          <Link to="/about">
+            <Button type="button" variant="ghost" className="w-full">
+              <Info size={18} />
+              A propos
             </Button>
           </Link>
           <Button type="button" onClick={logout} variant="ghost" className="w-full">
