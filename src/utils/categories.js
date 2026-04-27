@@ -10,6 +10,6 @@ export const categories = {
 
 export const statuses = {
   pending: "En attente",
-  in_progress: "En traitement",
-  resolved: "Resolue"
+  approved: "Approuvee",
+  rejected: "Rejetee"
 };

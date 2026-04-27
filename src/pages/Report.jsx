@@ -5,12 +5,14 @@ import { api } from "../api/client.js";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
 import ReportMap from "../components/ReportMap.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import { categories } from "../utils/categories.js";
 import { drcLocations, provinces } from "../utils/drcLocations.js";
 import { resolveDrcLocation } from "../utils/geoLocation.js";
 
 export default function Report() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -93,11 +95,21 @@ export default function Report() {
     body.append("category", form.category);
     body.append("province", form.province);
     body.append("commune", form.commune);
+    body.append("address", `${form.commune}, ${form.province}`);
     body.append("lat", location.lat);
     body.append("lng", location.lng);
     if (image) body.append("image", image);
 
-    await api("/reports", { method: "POST", body });
+    const endpoint = isAuthenticated ? "/reports" : "/reports/guest";
+    const data = await api(endpoint, { method: "POST", body });
+
+    if (!isAuthenticated) {
+      setMessage(data.message || "Votre alerte sera validée avant publication");
+      setForm((current) => ({ ...current, title: "", description: "" }));
+      setImage(null);
+      return;
+    }
+
     navigate("/");
   }
 
@@ -105,7 +117,11 @@ export default function Report() {
     <form onSubmit={submit} className="space-y-4">
       <div>
         <h1 className="font-heading text-2xl font-black text-text">Nouveau signalement</h1>
-        <p className="text-sm font-medium text-slate-500">Ajoutez une description courte et le lieu exact.</p>
+        <p className="text-sm font-medium text-slate-500">
+          {isAuthenticated
+            ? "Votre alerte sera publiee directement."
+            : "Sans compte, votre alerte sera validée avant publication."}
+        </p>
       </div>
       {message && <p className="rounded-xl bg-amber-50 p-3 text-sm font-bold text-amber-800">{message}</p>}
       <Card className="space-y-3 p-4">

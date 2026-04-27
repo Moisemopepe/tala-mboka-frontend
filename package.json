@@ -1,6 +1,6 @@
 {
   "name": "tala-mboka-frontend",
-  "version": "0.0.4",
+  "version": "0.1.2",
   "type": "module",
   "private": true,
   "scripts": {

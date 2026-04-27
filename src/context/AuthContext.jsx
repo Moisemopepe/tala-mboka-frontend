@@ -4,7 +4,7 @@ import { api } from "../api/client.js";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem("tala_token"));
+  const [token, setToken] = useState(() => localStorage.getItem("token") || localStorage.getItem("tala_token"));
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem("tala_user");
     return stored ? JSON.parse(stored) : null;
@@ -27,6 +27,7 @@ export function AuthProvider({ children }) {
   }
 
   function saveSession(data) {
+    localStorage.setItem("token", data.token);
     localStorage.setItem("tala_token", data.token);
     localStorage.setItem("tala_user", JSON.stringify(data.user));
     setToken(data.token);
@@ -34,6 +35,7 @@ export function AuthProvider({ children }) {
   }
 
   function logout() {
+    localStorage.removeItem("token");
     localStorage.removeItem("tala_token");
     localStorage.removeItem("tala_user");
     setToken(null);

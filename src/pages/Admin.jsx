@@ -13,25 +13,36 @@ import {
   X
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Circle, MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../api/client.js";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
+import { currentReleaseNotes } from "../config/releaseNotes.js";
+import { VERSION } from "../config/version.js";
 import { categories, statuses } from "../utils/categories.js";
 import { drcLocations, provinces } from "../utils/drcLocations.js";
 
 const tabs = [
   { key: "dashboard", label: "Dashboard", icon: BarChart3 },
   { key: "reports", label: "Reports", icon: FileText },
-  { key: "users", label: "Users", icon: Users },
+  { key: "users", label: "Users", icon: Users, adminOnly: true },
   { key: "map", label: "Map", icon: MapPinned },
   { key: "tools", label: "Outils", icon: Wrench }
 ];
 
-const statusOptions = ["pending", "in_progress", "resolved"];
+const statusOptions = ["pending", "approved", "rejected"];
 const categoryOptions = Object.keys(categories);
+const versionNotesMaxLength = 2000;
 
 export default function Admin() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const storedUser = JSON.parse(localStorage.getItem("tala_user") || "null");
+  const currentUser = user || storedUser;
+  const isAdmin = currentUser?.role === "admin";
+  const visibleTabs = tabs.filter((tab) => !tab.adminOnly || isAdmin);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [stats, setStats] = useState(null);
   const [reports, setReports] = useState([]);
@@ -43,24 +54,34 @@ export default function Admin() {
   const [reportProvince, setReportProvince] = useState("");
   const [userQuery, setUserQuery] = useState("");
   const [editingReport, setEditingReport] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     refreshAdmin();
   }, []);
 
   async function refreshAdmin() {
+    setLoading(true);
     try {
       const [statsData, reportsData, usersData] = await Promise.all([
         api("/admin/stats"),
         api("/admin/reports"),
-        api("/admin/users")
+        isAdmin ? api("/admin/users") : Promise.resolve([])
       ]);
       setStats(statsData);
       setReports(reportsData);
       setUsers(usersData);
       setError("");
     } catch (err) {
+      if (err.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("tala_token");
+        navigate("/admin/login", { replace: true });
+        return;
+      }
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -70,6 +91,22 @@ export default function Admin() {
       body: JSON.stringify({ status })
     });
     setReports((items) => items.map((item) => (item._id === id ? { ...item, status: updated.status } : item)));
+    refreshAdmin();
+  }
+
+  async function approveReport(id) {
+    const updated = await api(`/admin/reports/${id}/approve`, { method: "PATCH" });
+    setReports((items) => items.map((item) => (item._id === id ? updated : item)));
+    refreshAdmin();
+  }
+
+  async function rejectReport(id) {
+    const reason = window.prompt("Raison du rejet (optionnel)") || "";
+    const updated = await api(`/admin/reports/${id}/reject`, {
+      method: "PATCH",
+      body: JSON.stringify({ reason })
+    });
+    setReports((items) => items.map((item) => (item._id === id ? updated : item)));
     refreshAdmin();
   }
 
@@ -141,7 +178,7 @@ export default function Admin() {
           <p className="font-heading font-black text-text">Admin</p>
         </div>
         <div className="flex gap-2 overflow-x-auto lg:block lg:space-y-2">
-          {tabs.map(({ key, label, icon: Icon }) => (
+          {visibleTabs.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               type="button"
@@ -162,7 +199,7 @@ export default function Admin() {
       <section className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="font-heading text-2xl font-black text-text">Admin Dashboard</h1>
+          <h1 className="font-heading text-2xl font-black text-text">{isAdmin ? "Admin Dashboard" : "Moderateur Dashboard"}</h1>
             <p className="text-sm font-medium text-slate-600">
               Modifier les alertes, gerer les users, suivre les stats et la carte.
             </p>
@@ -173,12 +210,18 @@ export default function Admin() {
           </Button>
         </div>
 
+        {loading && (
+          <Card className="p-5">
+            <p className="text-sm font-bold text-slate-600">Chargement des donnees admin...</p>
+          </Card>
+        )}
+
         {error && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p>}
 
-        {activeTab === "dashboard" && (
-          <Dashboard stats={stats} reports={reports} users={users} onOpenTab={setActiveTab} />
+        {!loading && activeTab === "dashboard" && (
+          <Dashboard stats={stats} reports={reports} users={users} onOpenTab={setActiveTab} isAdmin={isAdmin} />
         )}
-        {activeTab === "reports" && (
+        {!loading && activeTab === "reports" && (
           <ReportsPanel
             reports={filteredReports}
             query={reportQuery}
@@ -190,15 +233,19 @@ export default function Admin() {
             onCategoryFilter={setReportCategory}
             onProvinceFilter={setReportProvince}
             onStatus={updateStatus}
+            onApprove={approveReport}
+            onReject={rejectReport}
             onEdit={setEditingReport}
             onDelete={deleteReport}
           />
         )}
-        {activeTab === "users" && (
+        {!loading && isAdmin && activeTab === "users" && (
           <UsersPanel users={filteredUsers} query={userQuery} onQuery={setUserQuery} onToggleBan={toggleBan} onRole={updateRole} />
         )}
-        {activeTab === "map" && <AdminMap reports={reports} heatPoints={heatPoints} />}
-        {activeTab === "tools" && <AdminTools reports={reports} users={users} onOpenTab={setActiveTab} />}
+        {!loading && activeTab === "map" && <AdminMap reports={reports} heatPoints={heatPoints} />}
+        {!loading && activeTab === "tools" && (
+          <AdminTools reports={reports} users={users} onOpenTab={setActiveTab} isAdmin={isAdmin} />
+        )}
       </section>
 
       {editingReport && <EditReportModal report={editingReport} onClose={() => setEditingReport(null)} onSave={saveReport} />}
@@ -206,12 +253,13 @@ export default function Admin() {
   );
 }
 
-function Dashboard({ stats, reports, users, onOpenTab }) {
+function Dashboard({ stats, reports, users, onOpenTab, isAdmin }) {
   const cards = [
-    { label: "Total reports", value: stats?.totalReports ?? 0, color: "text-primary", tab: "reports" },
-    { label: "Pending", value: stats?.pendingReports ?? 0, color: "text-amber-600", tab: "reports" },
-    { label: "Resolved", value: stats?.resolvedReports ?? 0, color: "text-success", tab: "reports" },
-    { label: "Users", value: stats?.totalUsers ?? 0, color: "text-danger", tab: "users" }
+    { label: "Total reports", value: stats?.reports ?? stats?.totalReports ?? 0, color: "text-primary", tab: "reports" },
+    { label: "Pending", value: stats?.pending ?? stats?.pendingReports ?? 0, color: "text-amber-600", tab: "reports" },
+    { label: "Approved", value: stats?.approved ?? stats?.resolved ?? 0, color: "text-success", tab: "reports" },
+    { label: "Rejected", value: stats?.rejected ?? 0, color: "text-danger", tab: "reports" },
+    { label: "Users", value: stats?.users ?? stats?.totalUsers ?? 0, color: "text-danger", tab: "users", adminOnly: true }
   ];
   const bannedUsers = users.filter((user) => user.banned).length;
   const urgentReports = reports.filter((report) => report.status === "pending").slice(0, 4);
@@ -219,7 +267,7 @@ function Dashboard({ stats, reports, users, onOpenTab }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {cards.map((card) => (
+        {cards.filter((card) => !card.adminOnly || isAdmin).map((card) => (
           <button key={card.label} type="button" onClick={() => onOpenTab(card.tab)} className="text-left">
             <Card className="p-4 transition hover:border-blue-100 hover:bg-blue-50">
               <p className="text-xs font-black uppercase text-slate-600">{card.label}</p>
@@ -242,7 +290,7 @@ function Dashboard({ stats, reports, users, onOpenTab }) {
                 <div className="h-2 rounded-full bg-slate-100">
                   <div
                     className="h-2 rounded-full bg-primary"
-                    style={{ width: `${Math.min((item.count / Math.max(stats.totalReports, 1)) * 100, 100)}%` }}
+                    style={{ width: `${Math.min((item.count / Math.max(stats.reports ?? stats.totalReports, 1)) * 100, 100)}%` }}
                   />
                 </div>
               </div>
@@ -255,11 +303,13 @@ function Dashboard({ stats, reports, users, onOpenTab }) {
           <h2 className="font-heading text-lg font-black text-text">Actions rapides</h2>
           <div className="mt-4 space-y-2">
             <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("reports")}>
-              Modifier les alertes
+              Pending Reports
             </Button>
-            <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("users")}>
-              Gerer les utilisateurs
-            </Button>
+            {isAdmin && (
+              <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("users")}>
+                Gerer les utilisateurs
+              </Button>
+            )}
             <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("map")}>
               Voir la heatmap
             </Button>
@@ -271,7 +321,7 @@ function Dashboard({ stats, reports, users, onOpenTab }) {
       </div>
 
       <Card className="p-4">
-        <h2 className="font-heading text-lg font-black text-text">Alertes en attente</h2>
+        <h2 className="font-heading text-lg font-black text-text">Pending Reports</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           {urgentReports.map((report) => (
             <div key={report._id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
@@ -298,6 +348,8 @@ function ReportsPanel({
   onCategoryFilter,
   onProvinceFilter,
   onStatus,
+  onApprove,
+  onReject,
   onEdit,
   onDelete
 }) {
@@ -374,6 +426,9 @@ function ReportsPanel({
                 <td className="px-4 py-3 font-semibold">{categories[report.category]?.label}</td>
                 <td className="px-4 py-3 text-slate-700">{report.userId?.name || "Unknown"}</td>
                 <td className="px-4 py-3">
+                  <p className="mb-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">
+                    {report.source || "user"}
+                  </p>
                   <select
                     value={report.status}
                     onChange={(event) => onStatus(report._id, event.target.value)}
@@ -388,12 +443,23 @@ function ReportsPanel({
                 </td>
                 <td className="px-4 py-3 font-bold text-slate-700">
                   {report.province || "-"} / {report.commune || "-"}
+                  {report.location.address && <p className="text-xs font-semibold text-slate-500">{report.location.address}</p>}
                 </td>
                 <td className="px-4 py-3 text-xs font-bold text-slate-600">
                   {report.location.lat.toFixed(4)}, {report.location.lng.toFixed(4)}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
+                    {report.status === "pending" && (
+                      <>
+                        <Button type="button" variant="success" size="sm" onClick={() => onApprove(report._id)}>
+                          Approve
+                        </Button>
+                        <Button type="button" variant="danger" size="sm" onClick={() => onReject(report._id)}>
+                          Reject
+                        </Button>
+                      </>
+                    )}
                     <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(report)}>
                       <Edit3 size={16} />
                       Modifier
@@ -463,6 +529,7 @@ function UsersPanel({ users, query, onQuery, onToggleBan, onRole }) {
                     className="rounded-xl border border-slate-200 bg-white px-3 py-2 font-bold text-text"
                   >
                     <option value="user">user</option>
+                    <option value="moderator">moderator</option>
                     <option value="admin">admin</option>
                   </select>
                 </td>
@@ -523,45 +590,148 @@ function AdminMap({ reports, heatPoints }) {
   );
 }
 
-function AdminTools({ reports, users, onOpenTab }) {
+function AdminTools({ reports, users, onOpenTab, isAdmin }) {
   const tools = [
     "Modifier titre, description, categorie, statut et coordonnees des alertes",
-    "Marquer une alerte en attente, en traitement ou resolue",
+    "Approuver ou rejeter les alertes invitees",
     "Supprimer une alerte incorrecte ou abusive",
     "Chercher et filtrer les alertes par categorie, statut ou utilisateur",
-    "Bannir ou debannir un utilisateur",
-    "Promouvoir un utilisateur en admin ou le remettre en user",
     "Exporter les rapports et utilisateurs en CSV",
     "Visualiser toutes les alertes sur la carte analytics avec heatmap"
-  ];
+  ].concat(
+    isAdmin
+      ? ["Bannir ou debannir un utilisateur", "Promouvoir un utilisateur en moderateur ou admin"]
+      : ["Gerer les alertes sans modifier les roles utilisateurs"]
+  );
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-      <Card className="p-4">
-        <h2 className="font-heading text-xl font-black text-text">Ce que tu peux faire comme admin</h2>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {tools.map((tool) => (
-            <div key={tool} className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm font-bold text-text">
-              {tool}
-            </div>
-          ))}
-        </div>
-      </Card>
+      <div className="space-y-4">
+        <Card className="p-4">
+          <h2 className="font-heading text-xl font-black text-text">Ce que tu peux faire comme admin</h2>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {tools.map((tool) => (
+              <div key={tool} className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm font-bold text-text">
+                {tool}
+              </div>
+            ))}
+          </div>
+        </Card>
+        {isAdmin && <VersionNotificationForm />}
+      </div>
       <Card className="p-4">
         <h2 className="font-heading text-lg font-black text-text">Raccourcis</h2>
         <div className="mt-4 space-y-2">
           <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("reports")}>
             Reports: {reports.length}
           </Button>
-          <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("users")}>
-            Users: {users.length}
-          </Button>
+          {isAdmin && (
+            <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("users")}>
+              Users: {users.length}
+            </Button>
+          )}
           <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("map")}>
             Map analytics
           </Button>
         </div>
       </Card>
     </div>
+  );
+}
+
+function VersionNotificationForm() {
+  const defaultReleaseForm = {
+    version: VERSION,
+    adminNotes: currentReleaseNotes.adminNotes,
+    userNotes: currentReleaseNotes.userNotes
+  };
+  const [form, setForm] = useState({
+    ...defaultReleaseForm
+  });
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  function update(field, value) {
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  async function submit(event) {
+    event.preventDefault();
+    const adminNotesLength = form.adminNotes.trim().length;
+    const userNotesLength = form.userNotes.trim().length;
+
+    if (adminNotesLength > versionNotesMaxLength || userNotesLength > versionNotesMaxLength) {
+      setMessage(`Les notes ne peuvent pas depasser ${versionNotesMaxLength} caracteres.`);
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
+
+    try {
+      const data = await api("/admin/version-notifications", {
+        method: "POST",
+        body: JSON.stringify(form)
+      });
+      setMessage(data.message);
+      setForm({
+        version: VERSION,
+        adminNotes: "",
+        userNotes: ""
+      });
+    } catch (err) {
+      setMessage(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Card className="p-4">
+      <h2 className="font-heading text-lg font-black text-text">Notification de version</h2>
+      <p className="text-sm font-semibold text-slate-600">
+        Admin/moderateur recoit les notes completes. User recoit seulement les details utiles cote public.
+      </p>
+      <form onSubmit={submit} className="mt-4 space-y-3">
+        <input
+          value={form.version}
+          onChange={(event) => update("version", event.target.value)}
+          className="form-field"
+          placeholder="Version ex: 0.0.9"
+        />
+        <textarea
+          value={form.adminNotes}
+          onChange={(event) => update("adminNotes", event.target.value)}
+          className="form-field"
+          rows={3}
+          maxLength={versionNotesMaxLength}
+          placeholder="Notes admin: toutes les modifications techniques et moderation"
+        />
+        <p className="text-right text-xs font-bold text-slate-500">
+          {form.adminNotes.trim().length}/{versionNotesMaxLength} caracteres admin
+        </p>
+        <textarea
+          value={form.userNotes}
+          onChange={(event) => update("userNotes", event.target.value)}
+          className="form-field"
+          rows={3}
+          maxLength={versionNotesMaxLength}
+          placeholder="Notes user: changements visibles par les utilisateurs"
+        />
+        <p className="text-right text-xs font-bold text-slate-500">
+          {form.userNotes.trim().length}/{versionNotesMaxLength} caracteres user
+        </p>
+        {message && <p className="rounded-xl bg-blue-50 p-3 text-sm font-bold text-primary">{message}</p>}
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button type="submit" variant="success" disabled={loading}>
+            {loading ? "Envoi..." : "Notifier la version"}
+          </Button>
+          <Button type="button" variant="ghost" onClick={() => setForm(defaultReleaseForm)}>
+            Remettre les notes
+          </Button>
+        </div>
+      </form>
+    </Card>
   );
 }
 

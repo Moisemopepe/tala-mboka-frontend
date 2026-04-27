@@ -1,6 +1,7 @@
-import { Bell, UserCircle } from "lucide-react";
+import { UserCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import Logo from "./Logo.jsx";
+import NotificationBell from "./NotificationBell.jsx";
 
 export default function Header() {
   return (
@@ -10,14 +11,7 @@ export default function Header() {
           <Logo compact />
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-soft"
-            aria-label="Notifications"
-          >
-            <Bell size={19} />
-            <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full border-2 border-white bg-danger" />
-          </button>
+          <NotificationBell />
           <Link
             to="/profile"
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-soft"

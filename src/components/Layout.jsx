@@ -13,7 +13,10 @@ const items = [
 
 export default function Layout() {
   const { user } = useAuth();
-  const navItems = user?.role === "admin" ? [...items, { to: "/admin", label: "Admin", icon: LayoutDashboard }] : items;
+  const storedUser = JSON.parse(localStorage.getItem("tala_user") || "null");
+  const currentUser = user || storedUser;
+  const canManage = ["admin", "moderator"].includes(currentUser?.role);
+  const navItems = canManage ? [...items, { to: "/admin", label: "Admin", icon: LayoutDashboard }] : items;
 
   return (
     <div className="min-h-screen bg-background pb-24 text-slate-800">

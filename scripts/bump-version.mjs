@@ -34,7 +34,10 @@ function bump(version, bumpType) {
 
   if (bumpType === "major") return `${major + 1}.0.0`;
   if (bumpType === "minor") return `${major}.${minor + 1}.0`;
-  return `${major}.${minor}.${patch + 1}`;
+
+  const nextPatch = patch + 1;
+  if (nextPatch > 9) return `${major}.${minor + 1}.0`;
+  return `${major}.${minor}.${nextPatch}`;
 }
 
 function writeEnvVersion(version) {
