@@ -1,4 +1,4 @@
-import { Bell, CalendarDays, Eye, EyeOff, FileText, HeartHandshake, LogOut, MapPinned, PlusCircle, ShieldCheck, Zap } from "lucide-react";
+import { Bell, CalendarDays, Eye, EyeOff, FileText, HeartHandshake, Info, LogOut, MapPinned, PlusCircle, ShieldCheck, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
@@ -194,7 +194,7 @@ export default function Profile() {
           </div>
         </Card>
 
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-4">
           <Link to="/report" className="sm:col-span-1">
             <Button type="button" variant="success" className="w-full">
               <PlusCircle size={18} />
@@ -205,6 +205,12 @@ export default function Profile() {
             <Button type="button" variant="ghost" className="w-full">
               <FileText size={18} />
               Mes alertes
+            </Button>
+          </Link>
+          <Link to="/about" className="sm:col-span-1">
+            <Button type="button" variant="ghost" className="w-full">
+              <Info size={18} />
+              A propos
             </Button>
           </Link>
           <Button type="button" onClick={logout} variant="ghost" className="w-full sm:col-span-1">
@@ -243,6 +249,18 @@ export default function Profile() {
           </div>
         ))}
       </div>
+
+      <Link to="/about">
+        <Card className="p-4 transition hover:border-blue-100 hover:bg-blue-50">
+          <div className="flex items-center gap-3">
+            <Info className="text-primary" size={22} />
+            <div>
+              <p className="font-heading font-black text-text">A propos de Tala Mboka</p>
+              <p className="text-sm font-semibold text-slate-500">Version, contact et transparence.</p>
+            </div>
+          </div>
+        </Card>
+      </Link>
 
       <Card className="space-y-4 p-4">
         <div className="grid grid-cols-2 rounded-xl bg-slate-100 p-1">

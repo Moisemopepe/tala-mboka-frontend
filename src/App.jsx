@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout.jsx";
+import About from "./pages/About.jsx";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute.jsx";
 import Admin from "./pages/Admin.jsx";
 import AdminLogin from "./pages/AdminLogin.jsx";
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/feed" element={<Home />} />
           <Route path="/my-reports" element={<MyReports />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/about" element={<About />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route
             path="/admin"
