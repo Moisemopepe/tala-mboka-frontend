@@ -1,4 +1,4 @@
-import { CheckCircle2, Copy, ExternalLink, Mail, ShieldCheck, Sparkles, UserRound } from "lucide-react";
+import { CheckCircle2, Copy, ExternalLink, Mail, ShieldCheck, Target, UserRound } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Button from "../components/Button.jsx";
@@ -7,11 +7,11 @@ import Logo from "../components/Logo.jsx";
 import { VERSION } from "../config/version.js";
 
 const features = [
-  "Signalement rapide des problemes publics",
-  "Localisation GPS et choix manuel de la zone",
-  "Suivi des alertes et de leur statut",
-  "Carte interactive pour visualiser les zones concernees",
-  "Espace admin pour moderation et transparence"
+  "Signaler un probleme en quelques secondes",
+  "Voir les incidents autour de soi",
+  "Suivre l'evolution des situations signalees",
+  "Contribuer a rendre son quartier plus sur et plus propre",
+  "Donner de la visibilite aux problemes souvent ignores"
 ];
 
 export default function About() {
@@ -24,16 +24,20 @@ export default function About() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-3xl items-center">
+    <div className="mx-auto max-w-3xl">
       <Card className="w-full overflow-hidden">
-        <div className="bg-gradient-to-br from-blue-50 via-white to-emerald-50 p-5 sm:p-7">
+        <div className="bg-white p-5 sm:p-7">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <Logo />
               <h1 className="mt-5 font-heading text-3xl font-black leading-tight text-text">A propos</h1>
-              <p className="mt-2 max-w-xl text-sm font-bold leading-6 text-slate-600">
-                Tala Mboka aide les citoyens a signaler, localiser et suivre les problemes publics afin de rendre les
-                quartiers plus visibles, mieux compris et plus faciles a ameliorer.
+              <p className="mt-2 max-w-xl text-base font-bold leading-7 text-slate-700">
+                Tala Mboka est une plateforme citoyenne qui permet a chacun de signaler facilement les problemes de son
+                quartier : routes degradees, coupures d'electricite, insecurite, insalubrite, et bien plus.
+              </p>
+              <p className="mt-3 max-w-xl text-sm font-semibold leading-6 text-slate-600">
+                Grace a Tala Mboka, chaque signalement devient visible, localise et suivi. Les citoyens peuvent ainsi
+                alerter, informer et contribuer a ameliorer leur environnement au quotidien.
               </p>
             </div>
             <div className="rounded-2xl border border-white bg-white/85 p-3 shadow-sm">
@@ -65,8 +69,8 @@ export default function About() {
         <div className="space-y-5 p-5 sm:p-7">
           <section>
             <div className="flex items-center gap-2">
-              <Sparkles className="text-primary" size={20} />
-              <h2 className="font-heading text-lg font-black text-text">Fonctionnalites principales</h2>
+              <Target className="text-primary" size={20} />
+              <h2 className="font-heading text-lg font-black text-text">Pourquoi utiliser Tala Mboka ?</h2>
             </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {features.map((feature) => (
@@ -76,6 +80,27 @@ export default function About() {
                 </div>
               ))}
             </div>
+          </section>
+
+          <section className="rounded-2xl bg-emerald-50 p-4">
+            <div className="flex items-start gap-3">
+              <ShieldCheck className="mt-0.5 shrink-0 text-success" size={22} />
+              <div>
+                <h2 className="font-heading text-lg font-black text-emerald-950">Impact</h2>
+                <p className="mt-2 text-sm font-bold leading-6 text-emerald-900">
+                  Tala Mboka donne une voix aux citoyens. Chaque signalement aide a mieux comprendre les realites du
+                  terrain et a encourager des actions concretes pour ameliorer les conditions de vie.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-100 p-4">
+            <h2 className="font-heading text-lg font-black text-text">Vision</h2>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+              Notre ambition est de creer une communaute active ou chaque citoyen peut participer au changement de son
+              environnement, simplement avec son telephone.
+            </p>
           </section>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -98,19 +123,10 @@ export default function About() {
                 <h2 className="font-heading text-lg font-black text-text">Developpeur</h2>
               </div>
               <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-                Application developpee par Moise Mopepe pour soutenir la participation citoyenne locale.
+                Application developpee par Moise Mopepe pour encourager la participation citoyenne et moderniser le
+                suivi des problemes urbains.
               </p>
             </section>
-          </div>
-
-          <div className="rounded-2xl bg-emerald-50 p-4">
-            <div className="flex items-start gap-3">
-              <ShieldCheck className="mt-0.5 shrink-0 text-success" size={22} />
-              <p className="text-sm font-bold leading-6 text-emerald-900">
-                Tala Mboka privilegie la simplicite, la precision et la transparence pour donner plus de valeur aux
-                signalements citoyens.
-              </p>
-            </div>
           </div>
 
           <Button as={Link} to="/profile" type="button" variant="ghost" className="w-full sm:w-auto">
