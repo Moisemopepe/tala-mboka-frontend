@@ -1,54 +1,202 @@
-import { useEffect, useState } from "react";
+import { List, Map, RotateCcw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api/client.js";
 import CategoryFilter from "../components/CategoryFilter.jsx";
+import ReportCard from "../components/ReportCard.jsx";
 import ReportMap from "../components/ReportMap.jsx";
+import Button from "../components/Button.jsx";
+import { categories } from "../utils/categories.js";
 import { provinces } from "../utils/drcLocations.js";
+import { distanceKm, getRiskLevel, riskLevels } from "../utils/risk.js";
+
+const distanceOptions = [
+  { value: "", label: "Toutes distances" },
+  { value: "1", label: "Moins de 1 km" },
+  { value: "5", label: "Moins de 5 km" },
+  { value: "10", label: "Moins de 10 km" },
+  { value: "25", label: "Moins de 25 km" }
+];
 
 export default function Home() {
   const [searchParams] = useSearchParams();
   const [reports, setReports] = useState([]);
   const [category, setCategory] = useState("");
   const [province, setProvince] = useState("");
+  const [risk, setRisk] = useState("");
+  const [distance, setDistance] = useState("");
+  const [mode, setMode] = useState("map");
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationError, setLocationError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [debouncedFilters, setDebouncedFilters] = useState({ category: "", province: "" });
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (category) params.set("category", category);
-    if (province) params.set("province", province);
-    api(`/reports${params.toString() ? `?${params.toString()}` : ""}`).then(setReports).catch(console.error);
+    const timer = window.setTimeout(() => setDebouncedFilters({ category, province }), 250);
+    return () => window.clearTimeout(timer);
   }, [category, province]);
 
-  const selectedReport = reports.find((report) => report._id === searchParams.get("report"));
+  useEffect(() => {
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (debouncedFilters.category) params.set("category", debouncedFilters.category);
+    if (debouncedFilters.province) params.set("province", debouncedFilters.province);
+    api(`/reports${params.toString() ? `?${params.toString()}` : ""}`)
+      .then(setReports)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [debouncedFilters]);
+
+  const enrichedReports = useMemo(() => {
+    return reports
+      .map((report) => {
+        const reportLocation = { lat: report.location.lat, lng: report.location.lng };
+        const km = userLocation ? distanceKm(userLocation, reportLocation) : null;
+        return { ...report, risk: getRiskLevel(report), distanceKm: km };
+      })
+      .filter((report) => !risk || report.risk === risk)
+      .filter((report) => !distance || (typeof report.distanceKm === "number" && report.distanceKm <= Number(distance)))
+      .sort((a, b) => {
+        if (userLocation) return (a.distanceKm || 0) - (b.distanceKm || 0);
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      })
+      .slice(0, 500);
+  }, [reports, risk, distance, userLocation]);
+
+  const selectedReport = enrichedReports.find((report) => report._id === searchParams.get("report"));
   const selectedLocation = selectedReport
     ? { lat: selectedReport.location.lat, lng: selectedReport.location.lng }
-    : null;
+    : userLocation;
+
+  function resetFilters() {
+    setCategory("");
+    setProvince("");
+    setRisk("");
+    setDistance("");
+  }
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="font-heading text-2xl font-black text-text">Carte des alertes</h1>
-        <p className="text-sm font-medium text-slate-500">Signaler pour changer</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="font-heading text-2xl font-black text-text">Carte des alertes</h1>
+          <p className="text-sm font-medium text-slate-500">Comprendre les zones a risque et l'impact citoyen.</p>
+        </div>
+        <div className="grid grid-cols-2 rounded-2xl bg-slate-100 p-1">
+          <button
+            type="button"
+            onClick={() => setMode("map")}
+            className={`flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-black ${
+              mode === "map" ? "bg-white text-primary shadow-sm" : "text-slate-600"
+            }`}
+          >
+            <Map size={17} />
+            Carte
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("list")}
+            className={`flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-black ${
+              mode === "list" ? "bg-white text-primary shadow-sm" : "text-slate-600"
+            }`}
+          >
+            <List size={17} />
+            Liste
+          </button>
+        </div>
       </div>
-      <select value={province} onChange={(event) => setProvince(event.target.value)} className="form-field text-sm font-bold">
-        <option value="">Toutes les provinces</option>
-        {provinces.map((item) => (
-          <option value={item} key={item}>
-            {item}
-          </option>
-        ))}
-      </select>
-      <CategoryFilter value={category} onChange={setCategory} />
+
+      <div className="space-y-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-soft">
+        <select value={province} onChange={(event) => setProvince(event.target.value)} className="form-field text-sm font-bold">
+          <option value="">Toutes les provinces</option>
+          {provinces.map((item) => (
+            <option value={item} key={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+        <CategoryFilter value={category} onChange={setCategory} />
+        <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+          <select value={risk} onChange={(event) => setRisk(event.target.value)} className="form-field text-sm font-bold">
+            <option value="">Tous les risques</option>
+            {Object.entries(riskLevels).map(([key, item]) => (
+              <option value={key} key={key}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+          <select
+            value={distance}
+            onChange={(event) => setDistance(event.target.value)}
+            className="form-field text-sm font-bold"
+            disabled={!userLocation}
+          >
+            {distanceOptions.map((item) => (
+              <option value={item.value} key={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+          <Button type="button" variant="ghost" onClick={resetFilters}>
+            <RotateCcw size={17} />
+            Reset
+          </Button>
+        </div>
+        {!userLocation && distance && (
+          <p className="rounded-xl bg-amber-50 p-3 text-sm font-bold text-amber-800">
+            Localisez-vous d'abord pour filtrer par distance.
+          </p>
+        )}
+        {locationError && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{locationError}</p>}
+      </div>
+
       {selectedReport && (
         <p className="rounded-xl bg-blue-50 p-3 text-sm font-bold text-primary">
           Carte centree sur: {selectedReport.title}
         </p>
       )}
-      <ReportMap reports={reports} height="calc(100vh - 220px)" pickedLocation={selectedLocation} />
-      {reports.length === 0 && (
-        <p className="rounded-2xl border border-slate-100 bg-white p-4 text-center text-sm font-bold text-slate-500 shadow-soft">
-          Aucune alerte disponible
+
+      {loading && (
+        <div className="h-[calc(100vh-260px)] min-h-[420px] animate-pulse rounded-2xl bg-slate-100" />
+      )}
+
+      {!loading && mode === "map" && (
+        <ReportMap
+          reports={enrichedReports}
+          height="calc(100vh - 280px)"
+          pickedLocation={selectedLocation}
+          analytics
+          userLocation={userLocation}
+          onUserLocation={(location) => {
+            setUserLocation(location);
+            setLocationError("");
+          }}
+          onLocationError={setLocationError}
+        />
+      )}
+
+      {!loading && mode === "list" && (
+        <div className="space-y-4">
+          {enrichedReports.map((report) => (
+            <ReportCard key={report._id} report={report} />
+          ))}
+        </div>
+      )}
+
+      {!loading && enrichedReports.length === 0 && (
+        <p className="rounded-2xl border border-slate-100 bg-white p-6 text-center font-semibold text-slate-500 shadow-soft">
+          Aucune alerte dans cette zone
         </p>
       )}
+
+      <div className="grid grid-cols-2 gap-2 text-xs font-black text-slate-600 sm:grid-cols-4">
+        {Object.entries(riskLevels).map(([key, item]) => (
+          <div key={key} className="flex items-center gap-2 rounded-xl bg-white p-3 shadow-soft">
+            <span className="h-3 w-3 rounded-full" style={{ background: item.color }} />
+            {item.label}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

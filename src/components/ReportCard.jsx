@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { categories } from "../utils/categories.js";
+import { formatDistance } from "../utils/risk.js";
 import Button from "./Button.jsx";
 import Card from "./Card.jsx";
 import StatusBadge from "./StatusBadge.jsx";
@@ -19,13 +20,6 @@ function relativeTime(dateValue) {
   return `il y a ${days}j`;
 }
 
-function distanceLabel(distance) {
-  if (typeof distance !== "number") return "";
-  const km = distance * 111;
-  if (km < 1) return `${Math.round(km * 1000)} m`;
-  return `${km.toFixed(km < 10 ? 1 : 0)} km`;
-}
-
 export default function ReportCard({ report, onLiked }) {
   const { isAuthenticated } = useAuth();
   const [expanded, setExpanded] = useState(false);
@@ -34,7 +28,7 @@ export default function ReportCard({ report, onLiked }) {
   const shareText = encodeURIComponent(`${report.title} - ${report.description}`);
   const shareUrl = `https://wa.me/?text=${shareText}`;
   const likesCount = report.likesCount ?? report.likes?.length ?? 0;
-  const distance = distanceLabel(report.distance);
+  const distance = formatDistance(report.distanceKm);
 
   async function like() {
     if (!isAuthenticated) return;

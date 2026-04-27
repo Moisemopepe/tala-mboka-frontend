@@ -1,6 +1,140 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.2.6": {
+    adminNotes: `Version 0.2.6
+
+Auth:
+- Bloc securite retire de l'inscription.
+
+UX:
+- Formulaire plus simple et plus direct.`,
+    userNotes: `Version 0.2.6
+
+Amelioration:
+- Inscription plus legere et plus directe.`
+  },
+  "0.2.5": {
+    adminNotes: `Version 0.2.5
+
+Inscription:
+- Validation temps reel ajoutee.
+- Confirmation mot de passe ajoutee.
+- Erreurs affichees sous les champs.
+- Bouton bloque si formulaire invalide.
+
+UX:
+- Etats visuels vert/rouge.
+- Message donnees securisees ajoute.`,
+    userNotes: `Version 0.2.5
+
+Amelioration:
+- Inscription plus claire et securisante.
+- Confirmation mot de passe ajoutee.`
+  },
+  "0.2.4": {
+    adminNotes: `Version 0.2.4
+
+Auth:
+- Icônes internes des inputs retirees.
+- Lien mot de passe oublie masque en inscription.
+- Champ mot de passe garde seulement le bouton oeil.
+
+UX:
+- Formulaire plus propre et lisible.`,
+    userNotes: `Version 0.2.4
+
+Amelioration:
+- Formulaire connexion/inscription plus propre.
+- Mot de passe oublie affiche seulement en connexion.`
+  },
+  "0.2.3": {
+    adminNotes: `Version 0.2.3
+
+Auth:
+- Les icones des champs disparaissent pendant la saisie.
+- Le texte des inputs reste mieux aligne.
+
+UX:
+- Correction visuelle sur telephone et mot de passe.`,
+    userNotes: `Version 0.2.3
+
+Amelioration:
+- Les champs de connexion sont plus propres pendant la saisie.`
+  },
+  "0.2.2": {
+    adminNotes: `Version 0.2.2
+
+Auth:
+- Badge utilisateurs actifs retire.
+- Message OTP futur retire.
+- Espacement des icones input corrige.
+
+UX:
+- Champs telephone et mot de passe plus propres.`,
+    userNotes: `Version 0.2.2
+
+Amelioration:
+- Page connexion plus propre.
+- Champs mieux alignes.`
+  },
+  "0.2.1": {
+    adminNotes: `Version 0.2.1
+
+Auth:
+- Header plus compact.
+- Cards benefices animees.
+- Tabs login/register ameliorees.
+- Focus input vert ajoute.
+
+UX:
+- Messages confiance et OTP futur ajoutes.`,
+    userNotes: `Version 0.2.1
+
+Amelioration:
+- Page connexion plus fluide.
+- Messages plus rassurants.`
+  },
+  "0.2.0": {
+    adminNotes: `Version 0.2.0
+
+Auth:
+- Page login/register modernisee.
+- Benefices utilisateurs ajoutes.
+- Inputs avec icones.
+- Affichage mot de passe ajoute.
+
+UX:
+- Loading, succes et erreurs plus clairs.
+- Social proof ajoute.`,
+    userNotes: `Version 0.2.0
+
+Nouveautes:
+- Connexion et inscription plus simples.
+- Mot de passe affichable.
+
+Amelioration:
+- Page compte plus rassurante.`
+  },
+  "0.1.9": {
+    adminNotes: `Version 0.1.9
+
+Carte:
+- Clustering des alertes ajoute.
+- Heatmap risque ajoutee.
+- Popup riche avec risque et distance.
+- Mode Carte / Liste ajoute.
+
+UX:
+- Filtres risque, categorie et distance.
+- Localisation utilisateur sur la carte.`,
+    userNotes: `Version 0.1.9
+
+Nouveautes:
+- Carte plus intelligente.
+- Zones a risque visibles.
+- Alertes proches plus faciles a trouver.`
+  },
   "0.1.8": {
     adminNotes: `Version 0.1.8
 
