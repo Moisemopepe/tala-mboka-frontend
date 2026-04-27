@@ -175,7 +175,7 @@ export default function Home() {
         />
       )}
 
-      {!loading && mode === "list" && (
+      {!loading && mode === "list" && enrichedReports.length > 0 && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {enrichedReports.map((report) => (
             <ReportCard key={report._id} report={report} />
@@ -184,7 +184,7 @@ export default function Home() {
       )}
 
       {!loading && enrichedReports.length === 0 && (
-        <p className="rounded-2xl border border-slate-100 bg-white p-6 text-center font-semibold text-slate-500 shadow-soft">
+        <p className="w-full rounded-2xl border border-slate-100 bg-white p-8 text-center font-semibold text-slate-500 shadow-soft">
           Aucune alerte dans cette zone
         </p>
       )}
