@@ -5,6 +5,7 @@ import { api } from "../api/client.js";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
+import { VERSION } from "../config/version.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { categories } from "../utils/categories.js";
 
@@ -19,6 +20,7 @@ export default function Profile() {
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportsError, setReportsError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -110,6 +112,10 @@ export default function Profile() {
     } finally {
       setAuthLoading(false);
     }
+  }
+
+  function openAboutModal() {
+    setShowAbout(true);
   }
 
   if (isAuthenticated) {
@@ -223,6 +229,7 @@ export default function Profile() {
   }
 
   return (
+    <div className="space-y-4">
     <form onSubmit={submit} className="space-y-4">
       <Card className="overflow-hidden">
         <div className="bg-gradient-to-br from-blue-50 via-white to-emerald-50 px-5 py-4">
@@ -249,18 +256,6 @@ export default function Profile() {
           </div>
         ))}
       </div>
-
-      <Link to="/about">
-        <Card className="p-4 transition hover:border-blue-100 hover:bg-blue-50">
-          <div className="flex items-center gap-3">
-            <Info className="text-primary" size={22} />
-            <div>
-              <p className="font-heading font-black text-text">A propos de Tala Mboka</p>
-              <p className="text-sm font-semibold text-slate-500">Version, contact et transparence.</p>
-            </div>
-          </div>
-        </Card>
-      </Link>
 
       <Card className="space-y-4 p-4">
         <div className="grid grid-cols-2 rounded-xl bg-slate-100 p-1">
@@ -382,5 +377,33 @@ export default function Profile() {
         </Button>
       </Card>
     </form>
+
+      <div className="flex flex-wrap items-center justify-center gap-2 text-center text-sm font-semibold text-slate-500">
+        <button type="button" onClick={openAboutModal} className="hover:text-primary hover:underline">
+          A propos
+        </button>
+        <span>•</span>
+        <a href="mailto:contact@talamboka.app" className="hover:text-primary hover:underline">
+          Contact
+        </a>
+        <span>•</span>
+        <span>Version {VERSION}</span>
+      </div>
+
+      {showAbout && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-soft">
+            <h2 className="font-heading text-lg font-black text-text">A propos</h2>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+              Tala Mboka permet aux citoyens de signaler, localiser et suivre les problemes de leur quartier afin
+              d'ameliorer leur environnement.
+            </p>
+            <Button type="button" onClick={() => setShowAbout(false)} className="mt-4 w-full">
+              Fermer
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
