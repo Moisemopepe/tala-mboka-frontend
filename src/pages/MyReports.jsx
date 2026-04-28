@@ -7,6 +7,7 @@ import Card from "../components/Card.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { categories } from "../utils/categories.js";
+import { reporterRoleLabel } from "../utils/reporterRoles.js";
 
 export default function MyReports() {
   const navigate = useNavigate();
@@ -83,6 +84,7 @@ export default function MyReports() {
             </div>
             <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{report.description}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold text-slate-500">
+              <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">{reporterRoleLabel(report.reporterRole)}</span>
               <span>{report.province || "-"} / {report.commune || "-"}</span>
               <span className="inline-flex items-center gap-1">
                 <CalendarDays size={14} />

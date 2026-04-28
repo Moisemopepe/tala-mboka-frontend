@@ -26,6 +26,7 @@ import { currentReleaseNotes } from "../config/releaseNotes.js";
 import { VERSION } from "../config/version.js";
 import { categories, statuses } from "../utils/categories.js";
 import { drcLocations, provinces } from "../utils/drcLocations.js";
+import { reporterRoles, reporterRoleLabel } from "../utils/reporterRoles.js";
 
 const tabs = [
   { key: "dashboard", label: "Dashboard", icon: BarChart3 },
@@ -47,6 +48,7 @@ const moderationStyles = {
   rejected: "bg-red-50 text-red-700 ring-red-200"
 };
 const categoryOptions = Object.keys(categories);
+const reporterRoleOptions = Object.keys(reporterRoles);
 const versionNotesMaxLength = 2000;
 
 export default function Admin() {
@@ -480,7 +482,12 @@ function ReportsPanel({
                   <p className="mt-1 text-xs font-bold text-slate-500">{report.likesCount || 0} soutiens</p>
                 </td>
                 <td className="px-4 py-3 font-semibold">{categories[report.category]?.label}</td>
-                <td className="px-4 py-3 text-slate-700">{report.userId?.name || "Unknown"}</td>
+                <td className="px-4 py-3 text-slate-700">
+                  <p className="font-semibold">{report.userId?.name || (report.source === "guest" ? "Invité" : "Unknown")}</p>
+                  <p className="mt-1 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
+                    {reporterRoleLabel(report.reporterRole)}
+                  </p>
+                </td>
                 <td className="px-4 py-3">
                   <p className="mb-2 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">
                     {report.source || "user"}
@@ -818,6 +825,7 @@ function EditReportModal({ report, onClose, onSave }) {
     description: report.description || "",
     category: report.category || "road",
     status: ["danger", "critique"].includes(report.status) ? report.status : "",
+    reporterRole: report.reporterRole || "concerned",
     province: report.province || "Kinshasa",
     commune: report.commune || "Gombe",
     lat: report.location?.lat || "",
@@ -871,6 +879,13 @@ function EditReportModal({ report, onClose, onSave }) {
               ))}
             </select>
           </div>
+          <select value={form.reporterRole} onChange={(event) => update("reporterRole", event.target.value)} className="form-field">
+            {reporterRoleOptions.map((item) => (
+              <option key={item} value={item}>
+                {reporterRoles[item].label}
+              </option>
+            ))}
+          </select>
           <div className="grid gap-3 sm:grid-cols-2">
             <select
               value={form.province}
@@ -928,6 +943,7 @@ function exportCsv(filename, rows) {
     province: row.province,
     commune: row.commune,
     status: row.status,
+    reporterRole: row.reporterRole,
     reportCount: row.reportCount,
     likesCount: row.likesCount,
     lat: row.location?.lat,

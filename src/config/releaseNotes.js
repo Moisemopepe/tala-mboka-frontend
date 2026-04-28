@@ -1,6 +1,21 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.4.1": {
+    adminNotes: `Version 0.4.1
+
+Signalement:
+- Ajout du role du declarant: concerne, temoin ou anonyme.
+- Le role est transmis au backend et visible dans l'admin.
+
+UX:
+- Le formulaire donne plus de contexte sans ajouter d'ecran inutile.
+- Les cartes affichent mieux le contexte du signalement.`,
+    userNotes: `Version 0.4.1
+
+Nouveaute:
+- Vous pouvez maintenant indiquer si vous etes concerne, temoin ou anonyme lors d'un signalement.`
+  },
   "0.4.0": {
     adminNotes: `Version 0.4.0
 

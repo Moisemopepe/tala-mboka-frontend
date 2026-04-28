@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { api, assetUrl } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { categories } from "../utils/categories.js";
+import { reporterRoleLabel } from "../utils/reporterRoles.js";
 import { formatDistance, normalizeStatus } from "../utils/risk.js";
 import Button from "./Button.jsx";
 import Card from "./Card.jsx";
@@ -74,6 +75,9 @@ export default function ReportCard({ report, onLiked }) {
 
       <div className="space-y-3 p-4">
         <h2 className="font-heading text-[17px] font-semibold leading-snug text-text">{report.title}</h2>
+        <p className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+          Signalé comme {reporterRoleLabel(report.reporterRole).toLowerCase()}
+        </p>
 
         <div>
           <p className={`text-sm leading-6 text-slate-600 ${expanded ? "" : "line-clamp-2"}`}>{report.description}</p>

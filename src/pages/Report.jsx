@@ -9,11 +9,13 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { categories } from "../utils/categories.js";
 import { drcLocations, provinces } from "../utils/drcLocations.js";
 import { resolveDrcCoordinates, resolveDrcLocation } from "../utils/geoLocation.js";
+import { reporterRoles } from "../utils/reporterRoles.js";
 
 const initialForm = {
   title: "",
   description: "",
   category: "road",
+  reporterRole: "concerned",
   province: "Kinshasa",
   commune: "Gombe"
 };
@@ -232,6 +234,7 @@ export default function Report() {
     body.append("title", form.title.trim());
     body.append("description", form.description.trim());
     body.append("category", form.category);
+    body.append("reporterRole", form.reporterRole);
     body.append("province", form.province);
     body.append("commune", form.commune);
     body.append("address", `${form.commune}, ${form.province}`);
@@ -304,6 +307,33 @@ export default function Report() {
       </div>
 
       {message && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{message}</p>}
+
+      <Card className="space-y-3 p-4">
+        <div>
+          <h2 className="font-heading text-lg font-black text-text">Votre rôle</h2>
+          <p className="text-sm font-semibold text-slate-500">Aidez l'équipe à mieux comprendre le contexte.</p>
+        </div>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          {Object.entries(reporterRoles).map(([key, item]) => {
+            const selected = form.reporterRole === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => update("reporterRole", key)}
+                className={`rounded-xl border p-3 text-left transition active:scale-[0.98] ${
+                  selected
+                    ? "border-green-300 bg-green-50 text-primary shadow-sm"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-green-200 hover:bg-green-50"
+                }`}
+              >
+                <span className="block text-sm font-black">{item.label}</span>
+                <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">{item.description}</span>
+              </button>
+            );
+          })}
+        </div>
+      </Card>
 
       <Card className="space-y-3 p-4">
         <h2 className="font-heading text-lg font-black text-text">Formulaire</h2>
