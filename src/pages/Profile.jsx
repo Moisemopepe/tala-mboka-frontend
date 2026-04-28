@@ -77,12 +77,12 @@ export default function Profile() {
       Object.values(registerErrors).every((item) => !item));
 
   function fieldClass(field) {
-    if (mode !== "register") return "focus:border-success focus:shadow-[0_0_0_4px_rgba(25,135,84,0.12)]";
+    if (mode !== "register") return "focus:border-primary focus:shadow-[0_0_0_4px_rgba(22,163,74,0.12)]";
     const hasValue = Boolean(form[field]);
     const errorText = fieldErrors[field] || (hasValue ? registerErrors[field] : "");
-    if (errorText) return "border-red-300 focus:border-red-500 focus:shadow-[0_0_0_4px_rgba(220,53,69,0.12)]";
-    if (hasValue) return "border-success focus:border-success focus:shadow-[0_0_0_4px_rgba(25,135,84,0.12)]";
-    return "focus:border-success focus:shadow-[0_0_0_4px_rgba(25,135,84,0.12)]";
+    if (errorText) return "border-red-300 focus:border-red-500 focus:shadow-[0_0_0_4px_rgba(239,68,68,0.12)]";
+    if (hasValue) return "border-primary focus:border-primary focus:shadow-[0_0_0_4px_rgba(22,163,74,0.12)]";
+    return "focus:border-primary focus:shadow-[0_0_0_4px_rgba(22,163,74,0.12)]";
   }
 
   async function submit(event) {
@@ -124,13 +124,13 @@ export default function Profile() {
     return (
       <div className="space-y-4">
         <Card className="overflow-hidden">
-          <div className="bg-gradient-to-br from-blue-50 via-white to-emerald-50 p-5">
+          <div className="bg-gradient-to-br from-green-50 via-white to-emerald-50 p-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary font-heading text-2xl font-black text-white shadow-soft">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-primary font-heading text-2xl font-semibold text-white shadow-sm">
                 {initial}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-black text-success ring-1 ring-emerald-100">
+                <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-primary ring-1 ring-green-100">
                   <ShieldCheck size={14} />
                   Utilisateur actif
                 </div>
@@ -227,8 +227,8 @@ export default function Profile() {
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <Card className="overflow-hidden">
-        <div className="bg-gradient-to-br from-blue-50 via-white to-emerald-50 px-5 py-4">
+        <Card className="overflow-hidden">
+        <div className="bg-gradient-to-br from-green-50 via-white to-emerald-50 px-5 py-4">
           <h1 className="font-heading text-xl font-black leading-tight text-text md:text-2xl lg:text-3xl">Rejoignez Tala Mboka</h1>
           <p className="mt-1 text-sm font-bold text-slate-600 md:text-base">Signalez et améliorez votre quartier</p>
           <p className="mt-3 rounded-2xl bg-white/80 p-3 text-sm font-bold leading-6 text-slate-700 shadow-sm">
@@ -245,7 +245,7 @@ export default function Profile() {
         ].map(({ icon: Icon, text }) => (
           <div
             key={text}
-            className="rounded-2xl border border-slate-100 bg-white p-3 shadow-soft transition duration-200 hover:-translate-y-0.5 hover:border-blue-100 hover:bg-blue-50 hover:shadow-[0_16px_32px_rgba(15,23,42,0.08)]"
+            className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-green-200 hover:bg-green-50 hover:shadow-[0_16px_32px_rgba(15,23,42,0.08)]"
           >
             <Icon className="text-primary" size={20} />
             <p className="mt-2 text-sm font-black text-text">{text}</p>
@@ -285,6 +285,7 @@ export default function Profile() {
 
         {mode === "register" && (
           <label className="block">
+            <span className="mb-1 block text-sm font-semibold text-slate-700">Nom complet</span>
             <input
               required
               value={form.name}
@@ -298,6 +299,7 @@ export default function Profile() {
           </label>
         )}
         <label className="block">
+          <span className="mb-1 block text-sm font-semibold text-slate-700">Telephone</span>
           <input
             required
             value={form.phone}
@@ -310,6 +312,7 @@ export default function Profile() {
           )}
         </label>
         <label className="relative block">
+          <span className="mb-1 block text-sm font-semibold text-slate-700">Mot de passe</span>
           <input
             required
             type={showPassword ? "text" : "password"}
@@ -321,7 +324,7 @@ export default function Profile() {
           <button
             type="button"
             onClick={() => setShowPassword((value) => !value)}
-            className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-primary"
+            className="absolute bottom-1 right-2 flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-primary"
             aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -332,6 +335,7 @@ export default function Profile() {
         </label>
         {mode === "register" && (
           <label className="block">
+            <span className="mb-1 block text-sm font-semibold text-slate-700">Confirmation</span>
             <input
               required
               type={showPassword ? "text" : "password"}
@@ -353,8 +357,8 @@ export default function Profile() {
             Mot de passe oublié
           </button>
         )}
-        {sessionMessage && <p className="rounded-xl bg-blue-50 p-3 text-sm font-bold text-primary">{sessionMessage}</p>}
-        {successMessage && <p className="rounded-xl bg-emerald-50 p-3 text-sm font-bold text-success">{successMessage}</p>}
+        {sessionMessage && <p className="rounded-xl bg-green-50 p-3 text-sm font-bold text-primary">{sessionMessage}</p>}
+        {successMessage && <p className="rounded-xl bg-emerald-50 p-3 text-sm font-bold text-primary">{successMessage}</p>}
         {error && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p>}
         <Button
           type="submit"

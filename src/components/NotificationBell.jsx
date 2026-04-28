@@ -47,7 +47,7 @@ export default function NotificationBell() {
       <button
         type="button"
         onClick={toggleOpen}
-        className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-soft"
+        className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-green-200 hover:bg-green-50 hover:text-primary"
         aria-label="Notifications"
       >
         <Bell size={19} />
@@ -59,7 +59,7 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-12 z-50 w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-soft sm:w-96">
+        <div className="absolute right-0 top-12 z-50 w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg sm:w-96">
           <div className="border-b border-slate-100 p-3">
             <p className="font-heading text-sm font-black text-text">Notifications</p>
             <p className="text-xs font-semibold text-slate-500">
@@ -74,7 +74,7 @@ export default function NotificationBell() {
               <p className="p-4 text-sm font-semibold text-slate-500">Aucune notification.</p>
             )}
             {items.map((item) => (
-              <article key={item._id} className={`border-b border-slate-100 p-3 ${item.read ? "bg-white" : "bg-blue-50"}`}>
+              <article key={item._id} className={`border-b border-slate-100 p-3 ${item.read ? "bg-white" : "bg-green-50"}`}>
                 <p className="text-sm font-black text-text">{item.title}</p>
                 <p className="mt-1 whitespace-pre-line text-xs font-semibold leading-5 text-slate-600">{item.message}</p>
                 <p className="mt-2 text-[11px] font-bold text-slate-400">{new Date(item.createdAt).toLocaleString()}</p>

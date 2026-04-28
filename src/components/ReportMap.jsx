@@ -22,7 +22,7 @@ function escapeHtml(value = "") {
 
 function markerIcon(reportOrCategory, options = {}) {
   const risk = typeof reportOrCategory === "object" ? getRiskLevel(reportOrCategory) : null;
-  const color = risk ? riskLevels[risk].color : categories[reportOrCategory]?.color || "#0B5ED7";
+  const color = risk ? riskLevels[risk].color : categories[reportOrCategory]?.color || "#16a34a";
   const size = options.large ? 30 : 24;
   return L.divIcon({
     className: "",
@@ -86,13 +86,13 @@ function ClusterLayer({ reports, userLocation }) {
       marker.bindPopup(
         `<article class="map-popup-card">
           <div class="map-popup-top">
-            <span style="color:${category?.color || "#0B5ED7"}">${escapeHtml(category?.label || report.category)}</span>
+            <span style="color:${category?.color || "#16a34a"}">${escapeHtml(category?.label || report.category)}</span>
             <strong style="background:${riskMeta.color}">${escapeHtml(riskMeta.label)}</strong>
           </div>
           <h3>${escapeHtml(report.title)}</h3>
           <p>${escapeHtml(report.description || "").slice(0, 120)}</p>
-          <div class="map-popup-location">📍 ${escapeHtml(report.province || "-")} / ${escapeHtml(report.commune || "-")}</div>
-          ${distance ? `<div class="map-popup-distance">📍 a ${distance} de vous</div>` : ""}
+          <div class="map-popup-location">Position: ${escapeHtml(report.province || "-")} / ${escapeHtml(report.commune || "-")}</div>
+          ${distance ? `<div class="map-popup-distance">A ${distance} de vous</div>` : ""}
           <a href="/?report=${escapeHtml(report._id)}">Voir detail</a>
         </article>`,
         { maxWidth: 280, className: "modern-popup" }
@@ -121,10 +121,10 @@ function HeatLayer({ reports }) {
       blur: 24,
       maxZoom: 16,
       gradient: {
-        0.2: "#198754",
-        0.5: "#FFD60A",
-        0.75: "#F97316",
-        1: "#DC3545"
+        0.2: "#16a34a",
+        0.5: "#eab308",
+        0.75: "#f97316",
+        1: "#ef4444"
       }
     });
     map.addLayer(layer);
@@ -136,8 +136,8 @@ function HeatLayer({ reports }) {
 
 function RiskLegend() {
   return (
-    <div className="absolute bottom-4 right-4 z-[450] rounded-2xl bg-white/90 p-3 text-xs font-black text-slate-700 shadow-soft backdrop-blur">
-      {Object.entries(riskLevels).map(([key, item]) => (
+    <div className="absolute bottom-4 right-4 z-[450] rounded-xl bg-white/90 p-3 text-xs font-semibold text-slate-700 shadow-lg backdrop-blur">
+      {Object.entries(riskLevels).filter(([key]) => key !== "resolved").map(([key, item]) => (
         <p key={key} className="flex items-center gap-2 py-0.5">
           <span className="h-3 w-3 rounded-full" style={{ background: item.color }} />
           {item.label}
@@ -149,7 +149,7 @@ function RiskLegend() {
 
 export default function ReportMap({
   reports = [],
-  height = "70vh",
+  height = "min(500px, 62vh)",
   onPick,
   pickedLocation,
   analytics = false,
@@ -179,22 +179,22 @@ export default function ReportMap({
   }
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-soft" style={{ height }}>
+    <div className="relative h-[300px] w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:h-[400px] lg:h-[500px]" style={{ height }}>
       <div className="absolute left-3 right-3 top-3 z-[450] flex items-center justify-between gap-2">
-        <div className="rounded-xl bg-white/95 px-3 py-2 text-xs font-black text-text shadow-soft backdrop-blur">
+        <div className="rounded-lg bg-white/95 px-3 py-2 text-xs font-semibold text-text shadow-sm backdrop-blur">
           {visibleReports.length} alertes
         </div>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={useLocation}
-            className="flex min-h-10 items-center gap-2 rounded-xl bg-white px-3 text-sm font-black text-primary shadow-soft"
+            className="flex min-h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm font-semibold text-primary shadow-sm transition hover:bg-green-50"
           >
             <LocateFixed size={18} />
             {analytics ? "Me localiser" : ""}
           </button>
           {!onPick && (
-            <Button as={Link} to="/report" variant="success" size="sm" className="shadow-soft">
+            <Button as={Link} to="/report" variant="success" size="sm">
               <Plus size={17} />
               Signaler
             </Button>

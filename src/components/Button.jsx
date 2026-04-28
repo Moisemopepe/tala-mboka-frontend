@@ -1,9 +1,9 @@
 const variants = {
-  primary: "bg-primary text-white shadow-soft shadow-blue-900/10 hover:bg-blue-700",
-  success: "bg-success text-white shadow-soft shadow-emerald-900/10 hover:bg-emerald-700",
-  danger: "bg-danger text-white shadow-soft shadow-red-900/10 hover:bg-red-700",
-  secondary: "bg-secondary text-slate-950 shadow-soft shadow-yellow-900/10 hover:bg-yellow-300",
-  ghost: "border border-slate-200 bg-white text-slate-800 hover:border-primary/40 hover:bg-blue-50 hover:text-primary"
+  primary: "bg-primary text-white shadow-sm hover:bg-green-700",
+  success: "bg-primary text-white shadow-sm hover:bg-green-700",
+  danger: "bg-danger text-white shadow-sm hover:bg-red-600",
+  secondary: "bg-info text-slate-950 shadow-sm hover:bg-yellow-400",
+  ghost: "border border-slate-200 bg-white text-slate-800 shadow-sm hover:border-green-200 hover:bg-green-50 hover:text-primary"
 };
 
 const sizes = {
@@ -22,7 +22,7 @@ export default function Button({
 }) {
   return (
     <Component
-      className={`inline-flex items-center justify-center gap-2 rounded-xl font-bold transition active:scale-[0.99] disabled:pointer-events-none disabled:bg-slate-300 disabled:text-white ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition active:scale-95 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${sizes[size]} ${className}`}
       {...props}
     >
       {children}

@@ -3,26 +3,28 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: "#0B5ED7",
-        secondary: "#FFD60A",
-        success: "#198754",
-        danger: "#DC3545",
-        background: "#F8FAFC",
-        text: "#1E293B",
+        primary: "#16a34a",
+        secondary: "#eab308",
+        success: "#16a34a",
+        danger: "#ef4444",
+        warning: "#f97316",
+        info: "#eab308",
+        background: "#f9fafb",
+        text: "#111827",
         mboka: {
-          green: "#198754",
-          yellow: "#FFD60A",
-          red: "#DC3545",
-          blue: "#0B5ED7",
-          sky: "#0B5ED7"
+          green: "#16a34a",
+          yellow: "#eab308",
+          red: "#ef4444",
+          blue: "#2563eb",
+          sky: "#0ea5e9"
         }
       },
       boxShadow: {
-        soft: "0 12px 30px rgba(15, 23, 42, 0.08)"
+        soft: "0 10px 28px rgba(15, 23, 42, 0.07)"
       },
       fontFamily: {
-        heading: ["Poppins", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
-        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"]
+        heading: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        sans: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"]
       }
     }
   },

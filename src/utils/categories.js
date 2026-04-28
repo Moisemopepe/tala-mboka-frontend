@@ -1,9 +1,9 @@
 export const categories = {
-  road: { label: "Route", color: "#0B5ED7" },
+  road: { label: "Route", color: "#2563eb" },
   water: { label: "Eau", color: "#0EA5E9" },
-  electricity: { label: "Electricite", color: "#FFD60A" },
-  waste: { label: "Salubrite", color: "#198754" },
-  security: { label: "Insecurite", color: "#DC3545" },
+  electricity: { label: "Electricite", color: "#eab308" },
+  waste: { label: "Salubrite", color: "#16a34a" },
+  security: { label: "Insecurite", color: "#ef4444" },
   fraud: { label: "Escroquerie", color: "#9333EA" },
   kidnapping: { label: "Enlevement", color: "#BE123C" }
 };

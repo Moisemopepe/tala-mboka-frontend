@@ -40,12 +40,12 @@ export default function About() {
                 alerter, informer et contribuer a ameliorer leur environnement au quotidien.
               </p>
             </div>
-            <div className="rounded-2xl border border-white bg-white/85 p-3 shadow-sm">
+            <div className="rounded-xl border border-slate-200 bg-white/85 p-3 shadow-sm">
               <p className="text-xs font-black uppercase text-slate-500">Version</p>
               <div className="mt-2 flex items-center gap-2">
                 <Link
                   to="/about"
-                  className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-blue-50 px-3 text-sm font-black text-primary"
+                  className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-green-50 px-3 text-sm font-semibold text-primary"
                   title="Changelog a venir"
                 >
                   v{VERSION}
@@ -54,7 +54,7 @@ export default function About() {
                 <button
                   type="button"
                   onClick={copyVersion}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:border-primary/40 hover:bg-blue-50 hover:text-primary"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:border-green-200 hover:bg-green-50 hover:text-primary"
                   aria-label="Copier la version"
                   title="Copier la version"
                 >
@@ -74,7 +74,7 @@ export default function About() {
             </div>
             <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
               {features.map((feature) => (
-                <div key={feature} className="flex items-start gap-2 rounded-2xl bg-slate-50 p-3 text-sm font-bold text-slate-700">
+                <div key={feature} className="flex items-start gap-2 rounded-xl bg-slate-50 p-3 text-sm font-bold text-slate-700">
                   <CheckCircle2 className="mt-0.5 shrink-0 text-success" size={17} />
                   <span>{feature}</span>
                 </div>
@@ -82,7 +82,7 @@ export default function About() {
             </div>
           </section>
 
-          <section className="rounded-2xl bg-emerald-50 p-4">
+          <section className="rounded-xl bg-emerald-50 p-4">
             <div className="flex items-start gap-3">
               <ShieldCheck className="mt-0.5 shrink-0 text-success" size={22} />
               <div>
@@ -95,7 +95,7 @@ export default function About() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-100 p-4">
+          <section className="rounded-xl border border-slate-100 p-4">
             <h2 className="font-heading text-lg font-black text-text">Vision</h2>
             <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
               Notre ambition est de creer une communaute active ou chaque citoyen peut participer au changement de son
@@ -104,7 +104,7 @@ export default function About() {
           </section>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <section className="rounded-2xl border border-slate-100 p-4">
+            <section className="rounded-xl border border-slate-100 p-4">
               <div className="flex items-center gap-2">
                 <Mail className="text-primary" size={20} />
                 <h2 className="font-heading text-lg font-black text-text">Contact</h2>
@@ -117,7 +117,7 @@ export default function About() {
               </a>
             </section>
 
-            <section className="rounded-2xl border border-slate-100 p-4">
+            <section className="rounded-xl border border-slate-100 p-4">
               <div className="flex items-center gap-2">
                 <UserRound className="text-primary" size={20} />
                 <h2 className="font-heading text-lg font-black text-text">Developpeur</h2>

@@ -83,11 +83,11 @@ export default function Home() {
           <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">Carte des alertes</h1>
           <p className="text-sm font-medium text-slate-500 md:text-base">Comprendre les zones a risque et l'impact citoyen.</p>
         </div>
-        <div className="grid grid-cols-2 rounded-2xl bg-slate-100 p-1">
+        <div className="grid grid-cols-2 rounded-xl bg-slate-100 p-1">
           <button
             type="button"
             onClick={() => setMode("map")}
-            className={`flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-black ${
+            className={`flex min-h-10 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold ${
               mode === "map" ? "bg-white text-primary shadow-sm" : "text-slate-600"
             }`}
           >
@@ -97,7 +97,7 @@ export default function Home() {
           <button
             type="button"
             onClick={() => setMode("list")}
-            className={`flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-black ${
+            className={`flex min-h-10 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold ${
               mode === "list" ? "bg-white text-primary shadow-sm" : "text-slate-600"
             }`}
           >
@@ -107,7 +107,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="space-y-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-soft">
+      <div className="space-y-3 rounded-xl border border-slate-200/70 bg-white p-3 shadow-sm">
         <select value={province} onChange={(event) => setProvince(event.target.value)} className="form-field text-sm font-bold">
           <option value="">Toutes les provinces</option>
           {provinces.map((item) => (
@@ -154,13 +154,13 @@ export default function Home() {
       </div>
 
       {selectedReport && (
-        <p className="rounded-xl bg-blue-50 p-3 text-sm font-bold text-primary">
+        <p className="rounded-xl bg-green-50 p-3 text-sm font-bold text-primary">
           Carte centree sur: {selectedReport.title}
         </p>
       )}
 
       {loading && (
-        <div className="h-[300px] animate-pulse rounded-2xl bg-slate-100 md:h-[400px] lg:h-[500px]" />
+        <div className="h-[300px] animate-pulse rounded-xl bg-slate-100 md:h-[400px] lg:h-[500px]" />
       )}
 
       {!loading && mode === "map" && (
@@ -187,14 +187,14 @@ export default function Home() {
       )}
 
       {!loading && enrichedReports.length === 0 && (
-        <p className="w-full rounded-2xl border border-slate-100 bg-white p-8 text-center font-semibold text-slate-500 shadow-soft">
+        <p className="w-full rounded-xl border border-slate-200 bg-white p-8 text-center font-semibold text-slate-500 shadow-sm">
           Aucune alerte dans cette zone
         </p>
       )}
 
       <div className="grid grid-cols-1 gap-2 text-xs font-black text-slate-600 sm:grid-cols-2 lg:grid-cols-4">
         {Object.entries(riskLevels).filter(([key]) => key !== "resolved").map(([key, item]) => (
-          <div key={key} className="flex items-center gap-2 rounded-xl bg-white p-3 shadow-soft">
+          <div key={key} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
             <span className="h-3 w-3 rounded-full" style={{ background: item.color }} />
             {item.label}
           </div>

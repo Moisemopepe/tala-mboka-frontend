@@ -38,13 +38,13 @@ export default function Layout() {
     <div className="min-h-screen w-full bg-background pb-24 text-slate-800">
       <Header />
 
-      <main className="mx-auto w-full max-w-[1400px] px-4 py-4 sm:px-6 sm:py-6 md:px-8 lg:px-10">
+      <main className="w-full px-4 py-4 sm:px-6 sm:py-6 md:px-8 lg:px-10">
         <Outlet />
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200/80 bg-white/95 shadow-[0_-12px_30px_rgba(15,23,42,0.06)] backdrop-blur">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200/80 bg-white/95 shadow-[0_-10px_26px_rgba(15,23,42,0.06)] backdrop-blur">
         <div
-          className={`mx-auto grid w-full max-w-[1400px] px-2 py-2 sm:px-4 md:px-6 ${
+          className={`grid w-full px-2 py-2 sm:px-4 md:px-6 ${
             navItems.length === 6 ? "grid-cols-6" : navItems.length === 5 ? "grid-cols-5" : "grid-cols-4"
           }`}
         >
@@ -54,9 +54,9 @@ export default function Layout() {
               to={to}
               end={to === "/"}
               className={({ isActive }) =>
-                `flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl border text-[11px] font-black transition ${
+                `flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl border text-[11px] font-semibold transition ${
                   isActive
-                    ? "border-blue-100 bg-blue-50 text-primary"
+                    ? "border-green-200 bg-green-50 text-primary"
                     : "border-transparent text-slate-700 hover:bg-slate-50 hover:text-primary"
                 }`
               }

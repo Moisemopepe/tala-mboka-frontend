@@ -185,7 +185,7 @@ export default function Admin() {
 
   return (
     <div className="space-y-4 lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-5 lg:space-y-0">
-      <aside className="rounded-2xl border border-slate-100 bg-white p-3 shadow-soft lg:sticky lg:top-24 lg:h-fit">
+      <aside className="rounded-xl border border-slate-200/70 bg-white p-3 shadow-sm lg:sticky lg:top-24 lg:h-fit">
         <div className="mb-3 hidden items-center gap-2 px-2 py-1 lg:flex">
           <ShieldCheck className="text-primary" size={20} />
           <p className="font-heading font-black text-text">Admin</p>
@@ -196,10 +196,10 @@ export default function Admin() {
               key={key}
               type="button"
               onClick={() => setActiveTab(key)}
-              className={`flex min-h-12 shrink-0 items-center gap-3 rounded-xl border px-4 text-sm font-black transition lg:w-full ${
+              className={`flex min-h-12 shrink-0 items-center gap-3 rounded-lg border px-4 text-sm font-semibold transition lg:w-full ${
                 activeTab === key
-                  ? "border-primary bg-blue-50 text-primary shadow-sm"
-                  : "border-transparent bg-white text-[#1E293B] hover:border-blue-100 hover:bg-blue-50 hover:text-primary"
+                  ? "border-green-200 bg-green-50 text-primary shadow-sm"
+                  : "border-transparent bg-white text-[#1E293B] hover:border-green-200 hover:bg-green-50 hover:text-primary"
               }`}
             >
               <Icon size={19} strokeWidth={2.4} />
@@ -289,7 +289,7 @@ function Dashboard({ stats, reports, users, onOpenTab, isAdmin }) {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {cards.filter((card) => !card.adminOnly || isAdmin).map((card) => (
           <button key={card.label} type="button" onClick={() => onOpenTab(card.tab)} className="text-left">
-            <Card className="p-4 transition hover:border-blue-100 hover:bg-blue-50">
+            <Card className="p-4 transition hover:border-green-200 hover:bg-green-50">
               <p className="text-xs font-black uppercase text-slate-600">{card.label}</p>
               <p className={`mt-2 font-heading text-3xl font-black ${card.color}`}>{card.value}</p>
             </Card>
@@ -633,7 +633,7 @@ function AdminTools({ reports, users, onOpenTab, isAdmin }) {
           <h2 className="font-heading text-xl font-black text-text">Ce que tu peux faire comme admin</h2>
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
             {tools.map((tool) => (
-              <div key={tool} className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm font-bold text-text">
+              <div key={tool} className="rounded-lg border border-green-100 bg-green-50 p-3 text-sm font-bold text-text">
                 {tool}
               </div>
             ))}
@@ -743,7 +743,7 @@ function VersionNotificationForm() {
         <p className="text-right text-xs font-bold text-slate-500">
           {form.userNotes.trim().length}/{versionNotesMaxLength} caracteres user
         </p>
-        {message && <p className="rounded-xl bg-blue-50 p-3 text-sm font-bold text-primary">{message}</p>}
+        {message && <p className="rounded-xl bg-green-50 p-3 text-sm font-bold text-primary">{message}</p>}
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button type="submit" variant="success" disabled={loading}>
             {loading ? "Envoi..." : "Notifier la version"}
@@ -785,7 +785,7 @@ function EditReportModal({ report, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end bg-slate-950/40 p-3 sm:items-center sm:justify-center">
-      <form onSubmit={submit} className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-4 shadow-soft">
+      <form onSubmit={submit} className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-4 shadow-lg">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <h2 className="font-heading text-xl font-black text-text">Modifier l'alerte</h2>

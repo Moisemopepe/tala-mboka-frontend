@@ -282,6 +282,7 @@ export default function Report() {
       <Card className="space-y-3 p-4">
         <h2 className="font-heading text-lg font-black text-text">Formulaire</h2>
         <div>
+          <label className="mb-1 block text-sm font-semibold text-slate-700">Titre</label>
           <input
             ref={fieldRefs.title}
             value={form.title}
@@ -292,6 +293,7 @@ export default function Report() {
           {errors.title && <p className="mt-1 text-xs font-bold text-red-600">{errors.title}</p>}
         </div>
         <div>
+          <label className="mb-1 block text-sm font-semibold text-slate-700">Description</label>
           <textarea
             ref={fieldRefs.description}
             value={form.description}
@@ -303,6 +305,7 @@ export default function Report() {
           {errors.description && <p className="mt-1 text-xs font-bold text-red-600">{errors.description}</p>}
         </div>
         <div>
+          <label className="mb-1 block text-sm font-semibold text-slate-700">Categorie</label>
           <select
             ref={fieldRefs.category}
             value={form.category}
@@ -327,7 +330,7 @@ export default function Report() {
             event.preventDefault();
             addImages(event.dataTransfer.files);
           }}
-          className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center transition hover:border-primary hover:bg-blue-50"
+          className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center transition hover:border-primary hover:bg-green-50"
         >
           <ImagePlus className="text-primary" size={28} />
           <span className="mt-2 text-sm font-black text-text">Ajouter jusqu'a 3 images</span>
@@ -358,6 +361,8 @@ export default function Report() {
       <Card className="space-y-3 p-4">
         <h2 className="font-heading text-lg font-black text-text">Localisation</h2>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <label className="block">
+          <span className="mb-1 block text-sm font-semibold text-slate-700">Province</span>
           <select value={form.province} onChange={(event) => update("province", event.target.value)} className="form-field">
             {provinces.map((province) => (
               <option value={province} key={province}>
@@ -365,6 +370,9 @@ export default function Report() {
               </option>
             ))}
           </select>
+          </label>
+          <label className="block">
+          <span className="mb-1 block text-sm font-semibold text-slate-700">Commune</span>
           <select value={form.commune} onChange={(event) => update("commune", event.target.value)} className="form-field">
             {(drcLocations[form.province] || []).map((commune) => (
               <option value={commune} key={commune}>
@@ -372,6 +380,7 @@ export default function Report() {
               </option>
             ))}
           </select>
+          </label>
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Button type="button" onClick={() => useGps({ revealMapOnSuccess: false })} variant="ghost" className="w-full" disabled={locating}>
@@ -383,7 +392,7 @@ export default function Report() {
             Modifier l'emplacement
           </Button>
         </div>
-        <div className="rounded-2xl bg-slate-50 p-3 text-sm font-bold text-slate-600">
+        <div className="rounded-xl bg-slate-50 p-3 text-sm font-bold text-slate-600">
           {location ? (
             <span className="flex items-center gap-2 text-text">
               <MapPin size={17} className="text-primary" />
@@ -399,7 +408,7 @@ export default function Report() {
               locationStatusType === "error"
                 ? "bg-red-50 text-red-700"
                 : locationStatusType === "loading"
-                  ? "bg-blue-50 text-primary"
+                  ? "bg-green-50 text-primary"
                   : "bg-emerald-50 text-emerald-700"
             }`}
           >

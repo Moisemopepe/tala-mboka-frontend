@@ -39,13 +39,13 @@ export default function ReportCard({ report, onLiked }) {
   return (
     <Card
       as="article"
-      className="group overflow-hidden transition duration-200 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-[0_18px_40px_rgba(15,23,42,0.10)]"
+      className="group overflow-hidden transition duration-200 hover:-translate-y-0.5 hover:border-green-200 hover:shadow-[0_18px_40px_rgba(15,23,42,0.10)]"
     >
       <div className="relative h-44 overflow-hidden bg-slate-100 sm:h-52">
         {image ? (
           <img src={image} alt="" className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]" loading="lazy" />
         ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-blue-50 text-slate-400">
+          <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-green-50 text-slate-400">
             <ImageIcon size={34} />
             <p className="mt-2 text-xs font-black uppercase">Aucune image</p>
           </div>
@@ -87,7 +87,7 @@ export default function ReportCard({ report, onLiked }) {
           </p>
         </div>
 
-        <div className="flex items-center justify-between rounded-xl bg-emerald-50 px-3 py-2 text-sm font-black text-success">
+        <div className="flex items-center justify-between rounded-lg bg-green-50 px-3 py-2 text-sm font-semibold text-primary">
           <span>{likesCount} personne{likesCount > 1 ? "s" : ""} concernee{likesCount > 1 ? "s" : ""}</span>
           {distance && <span>{distance}</span>}
         </div>
@@ -101,14 +101,14 @@ export default function ReportCard({ report, onLiked }) {
             href={shareUrl}
             target="_blank"
             rel="noreferrer"
-            className="flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-primary/40 hover:bg-blue-50 hover:text-primary active:scale-95"
+            className="flex min-h-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-green-200 hover:bg-green-50 hover:text-primary active:scale-95"
             aria-label="Partager sur WhatsApp"
           >
             <Share2 size={18} />
           </a>
           <Link
             to={`/feed?report=${report._id}`}
-            className="flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-primary/40 hover:bg-blue-50 hover:text-primary active:scale-95"
+            className="flex min-h-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-green-200 hover:bg-green-50 hover:text-primary active:scale-95"
             aria-label="Voir sur la carte"
           >
             <MapPinned size={18} />

@@ -97,14 +97,14 @@ export default function Feed() {
           type="button"
           onClick={nearby ? () => setNearby(null) : useLocation}
           variant="ghost"
-          className={`w-full md:w-auto md:shrink-0 ${nearby ? "border-primary bg-blue-50 text-primary" : ""}`}
+          className={`w-full md:w-auto md:shrink-0 ${nearby ? "border-green-200 bg-green-50 text-primary" : ""}`}
         >
           {nearby ? <X size={18} /> : <LocateFixed size={18} />}
           {nearby ? "Reset" : "Proche"}
         </Button>
       </div>
       {nearby && (
-        <p className="rounded-xl bg-blue-50 p-3 text-sm font-bold text-primary">
+        <p className="rounded-xl bg-green-50 p-3 text-sm font-bold text-primary">
           Filtre distance actif: alertes proches de vous en premier.
         </p>
       )}
@@ -157,7 +157,7 @@ export default function Feed() {
           ))}
         </div>
       ) : (
-        <div className="w-full rounded-2xl border border-slate-100 bg-white p-8 text-center font-semibold text-slate-500 shadow-soft">
+        <div className="w-full rounded-xl border border-slate-200 bg-white p-8 text-center font-semibold text-slate-500 shadow-sm">
           Aucune alerte disponible
         </div>
       )}
