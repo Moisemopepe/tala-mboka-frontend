@@ -18,8 +18,10 @@ export default function Feed() {
   const [nearby, setNearby] = useState(null);
   const [notice, setNotice] = useState("");
   const [locationError, setLocationError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     const params = new URLSearchParams();
     params.set("sort", sort);
     if (category) params.set("category", category);
@@ -47,7 +49,8 @@ export default function Feed() {
         localStorage.setItem("tala_report_statuses", JSON.stringify(current));
         setReports(items);
       })
-      .catch(console.error);
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, [sort, category, status, province, commune, nearby]);
 
   function updateLike(id, likesCount) {
@@ -70,10 +73,10 @@ export default function Feed() {
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">Fil citoyen</h1>
-        <p className="text-sm font-medium text-slate-500 md:text-base">Les problemes recents autour de vous</p>
+    <div className="mx-auto w-full max-w-[1200px] space-y-5 px-0 sm:px-2">
+      <div className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-sm">
+        <h1 className="font-heading text-xl font-semibold text-text md:text-2xl lg:text-3xl">Alertes autour de vous</h1>
+        <p className="mt-1 text-sm text-slate-500 md:text-base">Suivez les problemes signales en temps reel</p>
       </div>
       {notice && (
         <button
@@ -150,17 +153,35 @@ export default function Feed() {
             </option>
           ))}
       </select>
-      {reports.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      {loading && <SkeletonList />}
+
+      {!loading && reports.length > 0 ? (
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,340px),1fr))] gap-5">
           {reports.map((report) => (
             <ReportCard key={report._id} report={report} onLiked={updateLike} />
           ))}
         </div>
       ) : (
-        <div className="w-full rounded-xl border border-slate-200 bg-white p-8 text-center font-semibold text-slate-500 shadow-sm">
-          Aucune alerte disponible
+        !loading && (
+        <div className="w-full rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <p className="text-lg font-semibold text-text">Aucune alerte pour le moment</p>
+          <p className="mt-2 text-sm text-slate-500">Soyez le premier a signaler.</p>
         </div>
+        )
       )}
+    </div>
+  );
+}
+
+function SkeletonList() {
+  return (
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,340px),1fr))] gap-5">
+      {[1, 2, 3, 4].map((item) => (
+        <div
+          key={item}
+          className="h-[320px] animate-pulse rounded-xl border border-slate-200 bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 shadow-sm"
+        />
+      ))}
     </div>
   );
 }
