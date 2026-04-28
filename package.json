@@ -12,6 +12,7 @@
     "version:major": "node scripts/bump-version.mjs major"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "leaflet": "^1.9.4",
