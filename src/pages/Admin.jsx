@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  CheckCircle2,
   Download,
   Edit3,
   FileText,
@@ -10,7 +11,8 @@ import {
   Trash2,
   Users,
   Wrench,
-  X
+  X,
+  XCircle
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -34,6 +36,16 @@ const tabs = [
 ];
 
 const statusOptions = ["danger", "critique", "suivi"];
+const moderationOptions = {
+  pending: "En attente",
+  approved: "Publie",
+  rejected: "Rejete"
+};
+const moderationStyles = {
+  pending: "bg-yellow-50 text-yellow-700 ring-yellow-200",
+  approved: "bg-green-50 text-green-700 ring-green-200",
+  rejected: "bg-red-50 text-red-700 ring-red-200"
+};
 const categoryOptions = Object.keys(categories);
 const versionNotesMaxLength = 2000;
 
@@ -51,6 +63,7 @@ export default function Admin() {
   const [error, setError] = useState("");
   const [reportQuery, setReportQuery] = useState("");
   const [reportStatus, setReportStatus] = useState("");
+  const [reportModeration, setReportModeration] = useState("");
   const [reportCategory, setReportCategory] = useState("");
   const [reportProvince, setReportProvince] = useState("");
   const [reportDateSort, setReportDateSort] = useState("newest");
@@ -160,15 +173,17 @@ export default function Admin() {
         report.description?.toLowerCase().includes(query) ||
         report.userId?.name?.toLowerCase().includes(query);
       const matchesStatus = !reportStatus || report.status === reportStatus;
+      const currentModeration = report.moderationStatus || "approved";
+      const matchesModeration = !reportModeration || currentModeration === reportModeration;
       const matchesCategory = !reportCategory || report.category === reportCategory;
       const matchesProvince = !reportProvince || report.province === reportProvince;
-      return matchesQuery && matchesStatus && matchesCategory && matchesProvince;
+      return matchesQuery && matchesStatus && matchesModeration && matchesCategory && matchesProvince;
     }).sort((a, b) => {
       const left = new Date(a.createdAt).getTime();
       const right = new Date(b.createdAt).getTime();
       return reportDateSort === "oldest" ? left - right : right - left;
     });
-  }, [reports, reportQuery, reportStatus, reportCategory, reportProvince, reportDateSort]);
+  }, [reports, reportQuery, reportStatus, reportModeration, reportCategory, reportProvince, reportDateSort]);
 
   const filteredUsers = useMemo(() => {
     const query = userQuery.trim().toLowerCase();
@@ -244,10 +259,12 @@ export default function Admin() {
             reports={filteredReports}
             query={reportQuery}
             status={reportStatus}
+            moderation={reportModeration}
             category={reportCategory}
             province={reportProvince}
             onQuery={setReportQuery}
             onStatusFilter={setReportStatus}
+            onModerationFilter={setReportModeration}
             onCategoryFilter={setReportCategory}
             onProvinceFilter={setReportProvince}
             dateSort={reportDateSort}
@@ -279,6 +296,7 @@ function Dashboard({ stats, reports, users, onOpenTab, isAdmin }) {
     { label: "Danger", value: stats?.dangerReports ?? 0, color: "text-red-600", tab: "reports" },
     { label: "Critique", value: stats?.critiqueReports ?? 0, color: "text-orange-600", tab: "reports" },
     { label: "Suivi", value: stats?.suiviReports ?? stats?.pendingReports ?? 0, color: "text-yellow-600", tab: "reports" },
+    { label: "A moderer", value: stats?.pendingModerationReports ?? 0, color: "text-yellow-600", tab: "reports" },
     { label: "Users", value: stats?.users ?? stats?.totalUsers ?? 0, color: "text-danger", tab: "users", adminOnly: true }
   ];
   const bannedUsers = users.filter((user) => user.banned).length;
@@ -361,10 +379,12 @@ function ReportsPanel({
   reports,
   query,
   status,
+  moderation,
   category,
   province,
   onQuery,
   onStatusFilter,
+  onModerationFilter,
   onCategoryFilter,
   onProvinceFilter,
   dateSort,
@@ -391,7 +411,7 @@ function ReportsPanel({
             Export CSV
           </Button>
         </div>
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_repeat(4,minmax(150px,180px))]">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_repeat(5,minmax(140px,170px))]">
           <label className="relative">
             <Search className="absolute left-3 top-3 text-slate-400" size={18} />
             <input
@@ -402,10 +422,18 @@ function ReportsPanel({
             />
           </label>
           <select value={status} onChange={(event) => onStatusFilter(event.target.value)} className="form-field">
-            <option value="">Tous statuts</option>
+            <option value="">Toutes gravites</option>
             {statusOptions.map((item) => (
               <option key={item} value={item}>
                 {statuses[item]}
+              </option>
+            ))}
+          </select>
+          <select value={moderation} onChange={(event) => onModerationFilter(event.target.value)} className="form-field">
+            <option value="">Toute moderation</option>
+            {Object.entries(moderationOptions).map(([key, label]) => (
+              <option key={key} value={key}>
+                {label}
               </option>
             ))}
           </select>
@@ -438,7 +466,7 @@ function ReportsPanel({
               <th className="px-4 py-3">Report</th>
               <th className="px-4 py-3">Category</th>
               <th className="px-4 py-3">User</th>
-              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Statuts</th>
               <th className="px-4 py-3">Province / Commune</th>
               <th className="px-4 py-3">GPS</th>
               <th className="px-4 py-3">Actions</th>
@@ -458,6 +486,9 @@ function ReportsPanel({
                   <p className="mb-2 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">
                     {report.source || "user"}
                   </p>
+                  <div className="mb-2">
+                    <ModerationBadge status={report.moderationStatus || "approved"} />
+                  </div>
                   <div className="mb-2">
                     <StatusBadge status={report.status} />
                   </div>
@@ -481,7 +512,19 @@ function ReportsPanel({
                   {report.location.lat.toFixed(4)}, {report.location.lng.toFixed(4)}
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    {(report.moderationStatus || "approved") === "pending" && (
+                      <>
+                        <Button type="button" variant="success" size="sm" onClick={() => onApprove(report._id)}>
+                          <CheckCircle2 size={16} />
+                          Approuver
+                        </Button>
+                        <Button type="button" variant="danger" size="sm" onClick={() => onReject(report._id)}>
+                          <XCircle size={16} />
+                          Rejeter
+                        </Button>
+                      </>
+                    )}
                     <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(report)}>
                       <Edit3 size={16} />
                       Modifier
@@ -505,6 +548,18 @@ function ReportsPanel({
         </table>
       </div>
     </Card>
+  );
+}
+
+function ModerationBadge({ status }) {
+  return (
+    <span
+      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${
+        moderationStyles[status] || moderationStyles.approved
+      }`}
+    >
+      {moderationOptions[status] || moderationOptions.approved}
+    </span>
   );
 }
 
