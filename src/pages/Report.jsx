@@ -199,6 +199,12 @@ export default function Report() {
     setImages((current) => current.filter((_, itemIndex) => itemIndex !== index));
   }
 
+  function startNewReport() {
+    setSuccess(null);
+    setMessage("");
+    window.setTimeout(() => useGps({ revealMapOnSuccess: false }), 50);
+  }
+
   async function submit(event) {
     event.preventDefault();
     if (submitting) return;
@@ -247,6 +253,35 @@ export default function Report() {
     }
   }
 
+  if (success) {
+    return (
+      <div className="flex min-h-[60vh] w-full items-center justify-center px-0 py-8 sm:px-4">
+        <Card className="w-full max-w-md p-6 text-center transition-all duration-300 animate-[fadeIn_0.25s_ease-out]">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-green-600 ring-8 ring-green-50">
+            <CheckCircle2 className="animate-[pulse_1.4s_ease-in-out_1]" size={34} />
+          </div>
+
+          <h1 className="text-lg font-semibold text-text">Alerte envoyee !</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            {success.subtitle || "Votre signalement est en attente de validation."}
+          </p>
+
+          {success.message && <p className="mt-3 rounded-lg bg-green-50 p-3 text-sm font-semibold text-primary">{success.message}</p>}
+
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Button as={Link} to={isAuthenticated ? "/my-reports" : "/"} type="button" variant="success" className="w-full sm:w-auto">
+              {isAuthenticated ? "Voir mes alertes" : "Voir les alertes"}
+            </Button>
+            <Button type="button" variant="ghost" onClick={startNewReport} className="w-full sm:w-auto">
+              <PlusCircle size={18} />
+              Nouvelle alerte
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={submit} className="animate-[fadeIn_0.2s_ease-out] space-y-4">
       <div>
@@ -255,27 +290,6 @@ export default function Report() {
           {isAuthenticated ? "Votre alerte sera publiée immédiatement" : "Votre alerte sera vérifiée avant publication"}
         </p>
       </div>
-
-      {success && (
-        <Card className="border-emerald-100 bg-emerald-50 p-4">
-          <div className="flex gap-3">
-            <CheckCircle2 className="shrink-0 text-success" size={24} />
-            <div className="min-w-0 flex-1">
-              <h2 className="font-heading text-lg font-black text-success">{success.title}</h2>
-              <p className="text-sm font-bold text-emerald-800">{success.subtitle}</p>
-              <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-                <Button as={Link} to="/" type="button" variant="success">
-                  Voir les alertes
-                </Button>
-                <Button type="button" variant="ghost" onClick={() => setSuccess(null)}>
-                  <PlusCircle size={18} />
-                  Ajouter une autre alerte
-                </Button>
-              </div>
-            </div>
-          </div>
-        </Card>
-      )}
 
       {message && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{message}</p>}
 
