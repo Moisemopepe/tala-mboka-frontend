@@ -35,7 +35,7 @@ export default function Layout() {
   }, [location.pathname, navigate]);
 
   return (
-    <div className="min-h-screen w-full bg-background pb-24 text-slate-800">
+    <div className="min-h-screen w-full bg-background pb-36 text-slate-800">
       <Header />
 
       <main className="w-full px-4 py-4 sm:px-6 sm:py-6 md:px-8 lg:px-10">

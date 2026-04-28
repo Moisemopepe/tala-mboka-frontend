@@ -8,6 +8,8 @@ import { statuses } from "../utils/categories.js";
 import { drcLocations, provinces } from "../utils/drcLocations.js";
 import { riskLevels } from "../utils/risk.js";
 
+const initialVisibleReports = 12;
+
 export default function Feed() {
   const [reports, setReports] = useState([]);
   const [sort, setSort] = useState("newest");
@@ -19,9 +21,11 @@ export default function Feed() {
   const [notice, setNotice] = useState("");
   const [locationError, setLocationError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(initialVisibleReports);
 
   useEffect(() => {
     setLoading(true);
+    setVisibleCount(initialVisibleReports);
     const params = new URLSearchParams();
     params.set("sort", sort);
     if (category) params.set("category", category);
@@ -73,7 +77,7 @@ export default function Feed() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] space-y-5 px-0 sm:px-2">
+    <div className="w-full space-y-5 px-0 pb-8">
       <div className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-sm">
         <h1 className="font-heading text-xl font-semibold text-text md:text-2xl lg:text-3xl">Alertes autour de vous</h1>
         <p className="mt-1 text-sm text-slate-500 md:text-base">Suivez les problemes signales en temps reel</p>
@@ -146,7 +150,7 @@ export default function Feed() {
       <select value={status} onChange={(event) => setStatus(event.target.value)} className="form-field text-sm font-bold">
         <option value="">Tous les statuts</option>
         {Object.entries(riskLevels)
-          .filter(([key]) => key !== "resolved")
+          .filter(([key]) => key === "danger" || key === "critique")
           .map(([key, item]) => (
             <option value={key} key={key}>
               {item.label}
@@ -156,11 +160,20 @@ export default function Feed() {
       {loading && <SkeletonList />}
 
       {!loading && reports.length > 0 ? (
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,340px),1fr))] gap-5">
-          {reports.map((report) => (
-            <ReportCard key={report._id} report={report} onLiked={updateLike} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-5">
+            {reports.slice(0, visibleCount).map((report) => (
+              <ReportCard key={report._id} report={report} onLiked={updateLike} />
+            ))}
+          </div>
+          {visibleCount < reports.length && (
+            <div className="flex justify-center pb-8 pt-2">
+              <Button type="button" variant="ghost" onClick={() => setVisibleCount((count) => count + initialVisibleReports)}>
+                Afficher plus
+              </Button>
+            </div>
+          )}
+        </>
       ) : (
         !loading && (
         <div className="w-full rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
@@ -175,8 +188,8 @@ export default function Feed() {
 
 function SkeletonList() {
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,340px),1fr))] gap-5">
-      {[1, 2, 3, 4].map((item) => (
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-5">
+      {[1, 2, 3, 4, 5, 6].map((item) => (
         <div
           key={item}
           className="h-[320px] animate-pulse rounded-xl border border-slate-200 bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 shadow-sm"

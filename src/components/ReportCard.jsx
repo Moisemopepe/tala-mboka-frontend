@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { categories } from "../utils/categories.js";
-import { formatDistance } from "../utils/risk.js";
+import { formatDistance, normalizeStatus } from "../utils/risk.js";
 import Button from "./Button.jsx";
 import Card from "./Card.jsx";
 import StatusBadge from "./StatusBadge.jsx";
@@ -30,6 +30,7 @@ export default function ReportCard({ report, onLiked }) {
   const shareUrl = `https://wa.me/?text=${shareText}`;
   const likesCount = report.likesCount ?? report.likes?.length ?? 0;
   const distance = formatDistance(report.distanceKm);
+  const normalizedStatus = normalizeStatus(report.status);
 
   async function like() {
     if (!isAuthenticated) return;
@@ -63,9 +64,11 @@ export default function ReportCard({ report, onLiked }) {
         >
           {category?.label}
         </div>
-        <div className="absolute right-3 top-3">
-          <StatusBadge status={report.status} />
-        </div>
+        {normalizedStatus !== "suivi" && (
+          <div className="absolute right-3 top-3">
+            <StatusBadge status={report.status} />
+          </div>
+        )}
       </div>
 
       <div className="space-y-3 p-4">
