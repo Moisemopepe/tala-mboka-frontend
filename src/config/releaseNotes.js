@@ -1,6 +1,22 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.4.3": {
+    adminNotes: `Version 0.4.3
+
+Signalement:
+- Ajout d'une action Prendre une photo dans l'etape image.
+- Ajout d'une action Choisir une image depuis la galerie.
+
+UX:
+- Experience plus naturelle sur mobile.
+- Le glisser-deposer reste disponible sur desktop.`,
+    userNotes: `Version 0.4.3
+
+Nouveaute:
+- Vous pouvez maintenant prendre une photo directement pendant un signalement.
+- Vous pouvez aussi choisir une image depuis votre galerie.`
+  },
   "0.4.2": {
     adminNotes: `Version 0.4.2
 

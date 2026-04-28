@@ -82,6 +82,8 @@ export default function Report() {
   const [submitting, setSubmitting] = useState(false);
   const [locating, setLocating] = useState(false);
   const autoLocateStarted = useRef(false);
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
   const fieldRefs = {
     title: useRef(null),
     description: useRef(null),
@@ -272,6 +274,11 @@ export default function Report() {
       ...current,
       images: files.length + images.length > maxImages ? "Maximum 3 images." : nextErrors.images || ""
     }));
+  }
+
+  function handleImageInput(event) {
+    addImages(event.target.files);
+    event.target.value = "";
   }
 
   function removeImage(index) {
@@ -512,19 +519,44 @@ export default function Report() {
               <p className="text-sm font-semibold text-slate-500">Une photo aide les autres a comprendre rapidement.</p>
             </div>
           </div>
-          <label
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Button type="button" variant="success" size="lg" onClick={() => cameraInputRef.current?.click()} className="w-full">
+              <Camera size={19} />
+              Prendre une photo
+            </Button>
+            <Button type="button" variant="ghost" size="lg" onClick={() => galleryInputRef.current?.click()} className="w-full">
+              <ImagePlus size={19} />
+              Choisir une image
+            </Button>
+          </div>
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="sr-only"
+            onChange={handleImageInput}
+          />
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="sr-only"
+            onChange={handleImageInput}
+          />
+          <div
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => {
               event.preventDefault();
               addImages(event.dataTransfer.files);
             }}
-            className="flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center transition hover:border-primary hover:bg-green-50"
+            className="hidden min-h-[150px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center transition hover:border-primary hover:bg-green-50 md:flex"
           >
             <ImagePlus className="text-primary" size={32} />
-            <span className="mt-2 text-sm font-black text-text">Ajouter jusqu'a 3 images</span>
-            <span className="text-xs font-semibold text-slate-500">Cliquez ou glissez ici. 5MB maximum par image.</span>
-            <input type="file" accept="image/*" multiple className="sr-only" onChange={(event) => addImages(event.target.files)} />
-          </label>
+            <span className="mt-2 text-sm font-black text-text">Glisser-deposer des images</span>
+            <span className="text-xs font-semibold text-slate-500">Jusqu'a 3 images. 5MB maximum par image.</span>
+          </div>
           {errors.images && <p className="text-xs font-bold text-red-600">{errors.images}</p>}
           {previews.length > 0 && (
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
