@@ -1,4 +1,27 @@
-import { CheckCircle2, ImagePlus, Loader2, LocateFixed, MapPin, Pencil, PlusCircle, Send, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Camera,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  CircleHelp,
+  Droplets,
+  FileQuestion,
+  ImagePlus,
+  Loader2,
+  LocateFixed,
+  MapPin,
+  MapPinned,
+  Pencil,
+  PlusCircle,
+  Route as RouteIcon,
+  Send,
+  ShieldAlert,
+  Trash2,
+  UserRound,
+  UsersRound,
+  Zap
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api/client.js";
@@ -14,7 +37,7 @@ import { reporterRoles } from "../utils/reporterRoles.js";
 const initialForm = {
   title: "",
   description: "",
-  category: "road",
+  category: "",
   reporterRole: "concerned",
   province: "Kinshasa",
   commune: "Gombe"
@@ -23,9 +46,29 @@ const initialForm = {
 const maxImages = 3;
 const maxImageSize = 5 * 1024 * 1024;
 
+const categoryFlow = ["road", "water", "electricity", "waste", "security", "fraud", "other"];
+
+const categoryIcons = {
+  road: RouteIcon,
+  water: Droplets,
+  electricity: Zap,
+  waste: FileQuestion,
+  security: ShieldAlert,
+  fraud: AlertTriangle,
+  other: CircleHelp
+};
+
+const steps = [
+  { id: 1, title: "Categorie", description: "Que voulez-vous signaler ?" },
+  { id: 2, title: "Details", description: "Expliquez rapidement la situation." },
+  { id: 3, title: "Preuves", description: "Ajoutez une photo si possible." },
+  { id: 4, title: "Position", description: "Confirmez l'emplacement." }
+];
+
 export default function Report() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const [step, setStep] = useState(1);
   const [form, setForm] = useState(initialForm);
   const [images, setImages] = useState([]);
   const [location, setLocation] = useState(null);
@@ -68,6 +111,8 @@ export default function Report() {
     return () => window.clearTimeout(timer);
   }, [isAuthenticated, navigate, success]);
 
+  const selectedCategory = categories[form.category];
+
   async function syncManualLocation(province, commune) {
     if (!province || !commune) return;
 
@@ -80,7 +125,7 @@ export default function Report() {
     setSuccess(null);
     setLocation(nextLocation);
     setErrors((current) => ({ ...current, location: "" }));
-    setLocationStatus(`Position détectée: ${province} + ${commune}`);
+    setLocationStatus(`Position detectee: ${province} + ${commune}`);
     setLocationStatusType("success");
   }
 
@@ -107,14 +152,22 @@ export default function Report() {
     }
   }
 
-  function validate() {
+  function selectCategory(category) {
+    update("category", category);
+    setStep(2);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function validate(targetStep = 4) {
     const nextErrors = {};
-    if (form.title.trim().length < 3) nextErrors.title = "Le titre doit contenir au moins 3 caracteres.";
-    if (form.description.trim().length < 10) {
-      nextErrors.description = "La description doit contenir au moins 10 caracteres.";
-    }
     if (!form.category) nextErrors.category = "Choisissez une categorie.";
-    if (!location) nextErrors.location = "Choisissez une position GPS ou cliquez sur la carte.";
+    if (targetStep >= 2) {
+      if (form.title.trim().length < 3) nextErrors.title = "Le titre doit contenir au moins 3 caracteres.";
+      if (form.description.trim().length < 10) {
+        nextErrors.description = "La description doit contenir au moins 10 caracteres.";
+      }
+    }
+    if (targetStep >= 4 && !location) nextErrors.location = "Choisissez une position GPS ou cliquez sur la carte.";
     return nextErrors;
   }
 
@@ -123,6 +176,22 @@ export default function Report() {
     const target = fieldRefs[firstKey]?.current;
     target?.scrollIntoView({ behavior: "smooth", block: "center" });
     target?.focus?.();
+  }
+
+  function goNext() {
+    const nextErrors = validate(step);
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      focusFirstError(nextErrors);
+      return;
+    }
+    setStep((current) => Math.min(current + 1, steps.length));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function goBack() {
+    setStep((current) => Math.max(current - 1, 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function applyLocation(nextLocation, source = "map") {
@@ -136,7 +205,7 @@ export default function Report() {
 
     if (resolved.province && resolved.commune) {
       setForm((current) => ({ ...current, province: resolved.province, commune: resolved.commune }));
-      setLocationStatus(`Position détectée: ${resolved.province} + ${resolved.commune}`);
+      setLocationStatus(`Position detectee: ${resolved.province} + ${resolved.commune}`);
       setLocationStatusType("success");
       return;
     }
@@ -147,12 +216,12 @@ export default function Report() {
         province: resolved.province,
         commune: drcLocations[resolved.province]?.[0] || current.commune
       }));
-      setLocationStatus(`Position détectée: ${resolved.province}. Vérifiez la commune.`);
+      setLocationStatus(`Position detectee: ${resolved.province}. Verifiez la commune.`);
       setLocationStatusType("success");
       return;
     }
 
-    setLocationStatus("Position sélectionnée. Vérifiez la province et la commune.");
+    setLocationStatus("Position selectionnee. Verifiez la province et la commune.");
     setLocationStatusType("success");
   }
 
@@ -160,7 +229,7 @@ export default function Report() {
     const { revealMapOnSuccess = true } = options;
     if (!navigator.geolocation) {
       setMapVisible(true);
-      setLocationStatus("Impossible de détecter votre position");
+      setLocationStatus("Impossible de detecter votre position");
       setLocationStatusType("error");
       return;
     }
@@ -177,7 +246,7 @@ export default function Report() {
       () => {
         setLocating(false);
         setMapVisible(true);
-        setLocationStatus("Impossible de détecter votre position");
+        setLocationStatus("Impossible de detecter votre position");
         setLocationStatusType("error");
       }
     );
@@ -212,14 +281,19 @@ export default function Report() {
   function startNewReport() {
     setSuccess(null);
     setMessage("");
+    setStep(1);
     window.setTimeout(() => useGps({ revealMapOnSuccess: false }), 50);
   }
 
   async function submit(event) {
     event.preventDefault();
+    if (step < steps.length) {
+      goNext();
+      return;
+    }
     if (submitting) return;
 
-    const nextErrors = validate();
+    const nextErrors = validate(4);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       focusFirstError(nextErrors);
@@ -243,7 +317,7 @@ export default function Report() {
     images.forEach((image) => body.append("images", image));
 
     try {
-      const data = await api(isAuthenticated ? "/reports" : "/reports/guest", { method: "POST", body });
+      await api(isAuthenticated ? "/reports" : "/reports/guest", { method: "POST", body });
       setSuccess({
         subtitle: isAuthenticated ? "Votre alerte est visible dans le fil citoyen." : "Votre signalement est en attente de validation."
       });
@@ -253,6 +327,7 @@ export default function Report() {
       setLocationStatus("");
       setLocationStatusType("idle");
       setMapVisible(false);
+      setStep(1);
       autoLocateStarted.current = false;
       setErrors({});
     } catch (err) {
@@ -267,10 +342,10 @@ export default function Report() {
       <div className="flex min-h-[60vh] w-full items-center justify-center px-0 py-8 sm:px-4">
         <Card className="w-full max-w-md p-6 text-center transition-all duration-300 ease-out scale-100 animate-[fadeIn_0.25s_ease-out]">
           <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-2xl font-semibold text-green-600">
-            ✓
+            <CheckCircle2 size={34} />
           </div>
 
-          <h1 className="mt-2 text-xl font-semibold text-text">Alerte envoyée !</h1>
+          <h1 className="mt-2 text-xl font-semibold text-text">Alerte envoyee !</h1>
           <p className="mt-1 text-sm text-gray-500">
             {success.subtitle || "Votre signalement est en attente de validation."}
           </p>
@@ -298,199 +373,284 @@ export default function Report() {
   }
 
   return (
-    <form onSubmit={submit} className="animate-[fadeIn_0.2s_ease-out] space-y-4">
-      <div>
-        <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">Nouveau signalement</h1>
+    <form onSubmit={submit} className="mx-auto w-full max-w-[980px] animate-[fadeIn_0.2s_ease-out] space-y-4">
+      <div className="space-y-2">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">Nouveau signalement</p>
+        <h1 className="font-heading text-2xl font-black text-text md:text-3xl">
+          {steps[step - 1].description}
+        </h1>
         <p className="text-sm font-medium text-slate-500 md:text-base">
-          {isAuthenticated ? "Votre alerte sera publiée immédiatement" : "Votre alerte sera vérifiée avant publication"}
+          {isAuthenticated ? "Votre alerte sera publiee immediatement" : "Votre alerte sera verifiee avant publication"}
         </p>
+      </div>
+
+      <div className="grid grid-cols-4 gap-2">
+        {steps.map((item) => (
+          <div
+            key={item.id}
+            className={`h-2 rounded-full transition ${
+              item.id <= step ? "bg-primary" : "bg-slate-200"
+            }`}
+            aria-label={item.title}
+          />
+        ))}
       </div>
 
       {message && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{message}</p>}
 
-      <Card className="space-y-3 p-4">
-        <div>
-          <h2 className="font-heading text-lg font-black text-text">Votre rôle</h2>
-          <p className="text-sm font-semibold text-slate-500">Aidez l'équipe à mieux comprendre le contexte.</p>
+      {step === 1 && (
+        <Card className="space-y-4 p-4 md:p-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="font-heading text-lg font-black text-text">Que voulez-vous signaler ?</h2>
+              <p className="text-sm font-semibold text-slate-500">Choisissez une categorie pour commencer.</p>
+            </div>
+            {errors.category && <p className="text-xs font-bold text-red-600">{errors.category}</p>}
+          </div>
+
+          <div ref={fieldRefs.category} className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {categoryFlow.map((key) => {
+              const item = categories[key];
+              const Icon = categoryIcons[key] || CircleHelp;
+              const selected = form.category === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => selectCategory(key)}
+                  className={`min-h-[118px] rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 active:scale-[0.98] ${
+                    selected
+                      ? "border-green-300 bg-green-50 text-primary shadow-sm"
+                      : "border-slate-200 bg-white text-slate-800 shadow-sm hover:border-green-200 hover:bg-green-50"
+                  }`}
+                >
+                  <span
+                    className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50"
+                    style={{ color: item?.color || "#16a34a" }}
+                  >
+                    <Icon size={22} />
+                  </span>
+                  <span className="block text-sm font-black">{item?.label || key}</span>
+                </button>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
+      {step === 2 && (
+        <div className="space-y-4">
+          <Card className="space-y-3 p-4 md:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="font-heading text-lg font-black text-text">Votre role</h2>
+                <p className="text-sm font-semibold text-slate-500">Dites si vous etes concerne, temoin ou anonyme.</p>
+              </div>
+              {selectedCategory && (
+                <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-black text-primary">{selectedCategory.label}</span>
+              )}
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {Object.entries(reporterRoles).map(([key, item]) => {
+                const selected = form.reporterRole === key;
+                const RoleIcon = key === "concerned" ? UserRound : key === "witness" ? UsersRound : ShieldAlert;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => update("reporterRole", key)}
+                    className={`rounded-xl border p-3 text-left transition active:scale-[0.98] ${
+                      selected
+                        ? "border-green-300 bg-green-50 text-primary shadow-sm"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-green-200 hover:bg-green-50"
+                    }`}
+                  >
+                    <RoleIcon size={20} />
+                    <span className="mt-2 block text-sm font-black">{item.label}</span>
+                    <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">{item.description}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </Card>
+
+          <Card className="space-y-3 p-4 md:p-5">
+            <h2 className="font-heading text-lg font-black text-text">Details du probleme</h2>
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-slate-700">Titre</label>
+              <input
+                ref={fieldRefs.title}
+                value={form.title}
+                onChange={(event) => update("title", event.target.value)}
+                placeholder="Ex: Route cassee devant l'ecole"
+                className={`form-field ${errors.title ? "border-red-300 focus:border-red-500 focus:ring-red-100" : ""}`}
+              />
+              {errors.title && <p className="mt-1 text-xs font-bold text-red-600">{errors.title}</p>}
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-slate-700">Description</label>
+              <textarea
+                ref={fieldRefs.description}
+                value={form.description}
+                onChange={(event) => update("description", event.target.value)}
+                placeholder="Expliquez ce qui se passe, depuis quand et pourquoi c'est important."
+                rows={4}
+                className={`form-field ${errors.description ? "border-red-300 focus:border-red-500 focus:ring-red-100" : ""}`}
+              />
+              {errors.description && <p className="mt-1 text-xs font-bold text-red-600">{errors.description}</p>}
+            </div>
+          </Card>
         </div>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          {Object.entries(reporterRoles).map(([key, item]) => {
-            const selected = form.reporterRole === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => update("reporterRole", key)}
-                className={`rounded-xl border p-3 text-left transition active:scale-[0.98] ${
-                  selected
-                    ? "border-green-300 bg-green-50 text-primary shadow-sm"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-green-200 hover:bg-green-50"
+      )}
+
+      {step === 3 && (
+        <Card className="space-y-3 p-4 md:p-5">
+          <div className="flex items-start gap-3">
+            <Camera className="mt-1 text-primary" size={22} />
+            <div>
+              <h2 className="font-heading text-lg font-black text-text">Ajouter une image</h2>
+              <p className="text-sm font-semibold text-slate-500">Une photo aide les autres a comprendre rapidement.</p>
+            </div>
+          </div>
+          <label
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={(event) => {
+              event.preventDefault();
+              addImages(event.dataTransfer.files);
+            }}
+            className="flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center transition hover:border-primary hover:bg-green-50"
+          >
+            <ImagePlus className="text-primary" size={32} />
+            <span className="mt-2 text-sm font-black text-text">Ajouter jusqu'a 3 images</span>
+            <span className="text-xs font-semibold text-slate-500">Cliquez ou glissez ici. 5MB maximum par image.</span>
+            <input type="file" accept="image/*" multiple className="sr-only" onChange={(event) => addImages(event.target.files)} />
+          </label>
+          {errors.images && <p className="text-xs font-bold text-red-600">{errors.images}</p>}
+          {previews.length > 0 && (
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+              {previews.map((preview, index) => (
+                <div key={`${preview.file.name}-${index}`} className="relative overflow-hidden rounded-xl border border-slate-100">
+                  <img src={preview.url} alt="" className="h-32 w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded-lg bg-white/95 text-danger shadow-sm"
+                    aria-label="Supprimer l'image"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <button type="button" onClick={goNext} className="text-sm font-bold text-slate-500 hover:text-primary">
+            Continuer sans image
+          </button>
+        </Card>
+      )}
+
+      {step === 4 && (
+        <div ref={fieldRefs.location}>
+          <Card className="space-y-3 p-4 md:p-5">
+            <div className="flex items-start gap-3">
+              <MapPinned className="mt-1 text-primary" size={22} />
+              <div>
+                <h2 className="font-heading text-lg font-black text-text">Localisation</h2>
+                <p className="text-sm font-semibold text-slate-500">Confirmez ou corrigez la position du signalement.</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <label className="block">
+                <span className="mb-1 block text-sm font-semibold text-slate-700">Province</span>
+                <select value={form.province} onChange={(event) => update("province", event.target.value)} className="form-field">
+                  {provinces.map((province) => (
+                    <option value={province} key={province}>
+                      {province}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-semibold text-slate-700">Commune</span>
+                <select value={form.commune} onChange={(event) => update("commune", event.target.value)} className="form-field">
+                  {(drcLocations[form.province] || []).map((commune) => (
+                    <option value={commune} key={commune}>
+                      {commune}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <Button type="button" onClick={() => useGps({ revealMapOnSuccess: false })} variant="ghost" className="w-full" disabled={locating}>
+                <LocateFixed size={18} />
+                {locating ? "Localisation..." : "Utiliser ma position"}
+              </Button>
+              <Button type="button" onClick={() => setMapVisible(true)} variant="ghost" className="w-full">
+                <Pencil size={18} />
+                Modifier l'emplacement
+              </Button>
+            </div>
+            <div className="rounded-xl bg-slate-50 p-3 text-sm font-bold text-slate-600">
+              {location ? (
+                <span className="flex items-center gap-2 text-text">
+                  <MapPin size={17} className="text-primary" />
+                  Position detectee: {form.province} + {form.commune}
+                </span>
+              ) : (
+                locationStatus || "Aucune position selectionnee"
+              )}
+            </div>
+            {locationStatus && location && (
+              <p
+                className={`rounded-xl p-3 text-xs font-bold ${
+                  locationStatusType === "error"
+                    ? "bg-red-50 text-red-700"
+                    : locationStatusType === "loading"
+                      ? "bg-green-50 text-primary"
+                      : "bg-emerald-50 text-emerald-700"
                 }`}
               >
-                <span className="block text-sm font-black">{item.label}</span>
-                <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">{item.description}</span>
-              </button>
-            );
-          })}
+                {locationStatus}
+              </p>
+            )}
+            {manualSyncing && <p className="text-xs font-bold text-slate-500">Synchronisation avec la carte...</p>}
+            {errors.location && <p className="text-xs font-bold text-red-600">{errors.location}</p>}
+            {mapVisible && (
+              <>
+                <p className="text-sm font-bold text-slate-600">Cliquez sur la carte pour choisir l'emplacement. Vous pouvez deplacer le marqueur.</p>
+                <ReportMap height="min(500px, 55vh)" onPick={(nextLocation) => applyLocation(nextLocation, "map")} pickedLocation={location} />
+              </>
+            )}
+            {location && (
+              <p className="text-xs font-bold text-slate-500">
+                Coordonnees: {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+              </p>
+            )}
+          </Card>
         </div>
-      </Card>
+      )}
 
-      <Card className="space-y-3 p-4">
-        <h2 className="font-heading text-lg font-black text-text">Formulaire</h2>
-        <div>
-          <label className="mb-1 block text-sm font-semibold text-slate-700">Titre</label>
-          <input
-            ref={fieldRefs.title}
-            value={form.title}
-            onChange={(event) => update("title", event.target.value)}
-            placeholder="Titre du probleme"
-            className={`form-field ${errors.title ? "border-red-300 focus:border-red-500 focus:ring-red-100" : ""}`}
-          />
-          {errors.title && <p className="mt-1 text-xs font-bold text-red-600">{errors.title}</p>}
+      <Card className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
+        <Button type="button" variant="ghost" onClick={goBack} disabled={step === 1} className="w-full sm:w-auto">
+          <ChevronLeft size={18} />
+          Precedent
+        </Button>
+        <div className="text-center text-xs font-bold text-slate-500">
+          Etape {step} sur {steps.length}
         </div>
-        <div>
-          <label className="mb-1 block text-sm font-semibold text-slate-700">Description</label>
-          <textarea
-            ref={fieldRefs.description}
-            value={form.description}
-            onChange={(event) => update("description", event.target.value)}
-            placeholder="Description courte et claire"
-            rows={3}
-            className={`form-field ${errors.description ? "border-red-300 focus:border-red-500 focus:ring-red-100" : ""}`}
-          />
-          {errors.description && <p className="mt-1 text-xs font-bold text-red-600">{errors.description}</p>}
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-semibold text-slate-700">Categorie</label>
-          <select
-            ref={fieldRefs.category}
-            value={form.category}
-            onChange={(event) => update("category", event.target.value)}
-            className={`form-field ${errors.category ? "border-red-300 focus:border-red-500 focus:ring-red-100" : ""}`}
-          >
-            {Object.entries(categories).map(([key, item]) => (
-              <option value={key} key={key}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-          {errors.category && <p className="mt-1 text-xs font-bold text-red-600">{errors.category}</p>}
-        </div>
-      </Card>
-
-      <Card className="space-y-3 p-4">
-        <h2 className="font-heading text-lg font-black text-text">Image</h2>
-        <label
-          onDragOver={(event) => event.preventDefault()}
-          onDrop={(event) => {
-            event.preventDefault();
-            addImages(event.dataTransfer.files);
-          }}
-          className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center transition hover:border-primary hover:bg-green-50"
-        >
-          <ImagePlus className="text-primary" size={28} />
-          <span className="mt-2 text-sm font-black text-text">Ajouter jusqu'a 3 images</span>
-          <span className="text-xs font-semibold text-slate-500">Cliquez ou glissez ici. 5MB maximum par image.</span>
-          <input type="file" accept="image/*" multiple className="sr-only" onChange={(event) => addImages(event.target.files)} />
-        </label>
-        {errors.images && <p className="text-xs font-bold text-red-600">{errors.images}</p>}
-        {previews.length > 0 && (
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-            {previews.map((preview, index) => (
-              <div key={`${preview.file.name}-${index}`} className="relative overflow-hidden rounded-xl border border-slate-100">
-                <img src={preview.url} alt="" className="h-24 w-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => removeImage(index)}
-                  className="absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded-lg bg-white/95 text-danger shadow-sm"
-                  aria-label="Supprimer l'image"
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-
-      <div ref={fieldRefs.location}>
-      <Card className="space-y-3 p-4">
-        <h2 className="font-heading text-lg font-black text-text">Localisation</h2>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <label className="block">
-          <span className="mb-1 block text-sm font-semibold text-slate-700">Province</span>
-          <select value={form.province} onChange={(event) => update("province", event.target.value)} className="form-field">
-            {provinces.map((province) => (
-              <option value={province} key={province}>
-                {province}
-              </option>
-            ))}
-          </select>
-          </label>
-          <label className="block">
-          <span className="mb-1 block text-sm font-semibold text-slate-700">Commune</span>
-          <select value={form.commune} onChange={(event) => update("commune", event.target.value)} className="form-field">
-            {(drcLocations[form.province] || []).map((commune) => (
-              <option value={commune} key={commune}>
-                {commune}
-              </option>
-            ))}
-          </select>
-          </label>
-        </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <Button type="button" onClick={() => useGps({ revealMapOnSuccess: false })} variant="ghost" className="w-full" disabled={locating}>
-            <LocateFixed size={18} />
-            {locating ? "Localisation..." : "Utiliser ma position"}
+        {step < steps.length ? (
+          <Button type="button" variant="success" onClick={goNext} className="w-full sm:w-auto">
+            Suivant
+            <ChevronRight size={18} />
           </Button>
-          <Button type="button" onClick={() => setMapVisible(true)} variant="ghost" className="w-full">
-            <Pencil size={18} />
-            Modifier l'emplacement
+        ) : (
+          <Button type="submit" variant="success" size="lg" className="w-full sm:w-auto" disabled={submitting}>
+            {submitting ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
+            {submitting ? "Envoi en cours..." : "Envoyer le signalement"}
           </Button>
-        </div>
-        <div className="rounded-xl bg-slate-50 p-3 text-sm font-bold text-slate-600">
-          {location ? (
-            <span className="flex items-center gap-2 text-text">
-              <MapPin size={17} className="text-primary" />
-              Position détectée: {form.province} + {form.commune}
-            </span>
-          ) : (
-            locationStatus || "Aucune position sélectionnée"
-          )}
-        </div>
-        {locationStatus && location && (
-          <p
-            className={`rounded-xl p-3 text-xs font-bold ${
-              locationStatusType === "error"
-                ? "bg-red-50 text-red-700"
-                : locationStatusType === "loading"
-                  ? "bg-green-50 text-primary"
-                  : "bg-emerald-50 text-emerald-700"
-            }`}
-          >
-            {locationStatus}
-          </p>
-        )}
-        {manualSyncing && <p className="text-xs font-bold text-slate-500">Synchronisation avec la carte...</p>}
-        {errors.location && <p className="text-xs font-bold text-red-600">{errors.location}</p>}
-        {mapVisible && (
-          <>
-            <p className="text-sm font-bold text-slate-600">Cliquez sur la carte pour choisir l'emplacement. Vous pouvez deplacer le marqueur.</p>
-            <ReportMap height="min(500px, 55vh)" onPick={(nextLocation) => applyLocation(nextLocation, "map")} pickedLocation={location} />
-          </>
-        )}
-        {location && (
-          <p className="text-xs font-bold text-slate-500">
-            Coordonnées: {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
-          </p>
         )}
       </Card>
-      </div>
-
-      <Button type="submit" variant="success" size="lg" className="w-full" disabled={submitting}>
-        {submitting ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
-        {submitting ? "Envoi en cours..." : "Envoyer le signalement"}
-      </Button>
     </form>
   );
 }

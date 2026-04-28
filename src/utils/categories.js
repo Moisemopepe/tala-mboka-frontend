@@ -5,7 +5,8 @@ export const categories = {
   waste: { label: "Salubrité", color: "#16a34a" },
   security: { label: "Insécurité", color: "#ef4444" },
   fraud: { label: "Escroquerie", color: "#9333EA" },
-  kidnapping: { label: "Enlèvement", color: "#BE123C" }
+  kidnapping: { label: "Enlèvement", color: "#BE123C" },
+  other: { label: "Autre", color: "#64748b" }
 };
 
 export const statuses = {

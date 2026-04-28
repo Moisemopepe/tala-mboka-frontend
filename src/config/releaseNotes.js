@@ -1,6 +1,23 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.4.2": {
+    adminNotes: `Version 0.4.2
+
+Signalement:
+- Transformation du formulaire en parcours guide par etapes.
+- Premiere etape dediee au choix de categorie.
+- Ajout de la categorie Autre.
+
+UX:
+- Experience plus mobile-first, plus claire et plus rapide.
+- Navigation Precedent / Suivant avant l'envoi final.`,
+    userNotes: `Version 0.4.2
+
+Nouveaute:
+- Signaler un probleme se fait maintenant etape par etape.
+- Vous choisissez d'abord ce que vous voulez signaler, puis vous completez les details.`
+  },
   "0.4.1": {
     adminNotes: `Version 0.4.1
 
