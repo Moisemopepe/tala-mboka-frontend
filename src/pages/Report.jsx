@@ -1,6 +1,6 @@
 import { CheckCircle2, ImagePlus, Loader2, LocateFixed, MapPin, Pencil, PlusCircle, Send, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api/client.js";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
@@ -22,6 +22,7 @@ const maxImages = 3;
 const maxImageSize = 5 * 1024 * 1024;
 
 export default function Report() {
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [form, setForm] = useState(initialForm);
   const [images, setImages] = useState([]);
@@ -57,6 +58,13 @@ export default function Report() {
     autoLocateStarted.current = true;
     useGps({ revealMapOnSuccess: false });
   }, []);
+
+  useEffect(() => {
+    if (!success) return undefined;
+    const target = isAuthenticated ? "/my-reports" : "/";
+    const timer = window.setTimeout(() => navigate(target), 3000);
+    return () => window.clearTimeout(timer);
+  }, [isAuthenticated, navigate, success]);
 
   async function syncManualLocation(province, commune) {
     if (!province || !commune) return;
@@ -234,9 +242,7 @@ export default function Report() {
     try {
       const data = await api(isAuthenticated ? "/reports" : "/reports/guest", { method: "POST", body });
       setSuccess({
-        title: isAuthenticated ? "Alerte publiee" : "Alerte envoyee avec succes",
-        subtitle: isAuthenticated ? "Votre alerte est visible dans le fil citoyen." : "En attente de validation",
-        message: data.message
+        subtitle: isAuthenticated ? "Votre alerte est visible dans le fil citoyen." : "Votre signalement est en attente de validation."
       });
       setForm(initialForm);
       setImages([]);
@@ -256,26 +262,32 @@ export default function Report() {
   if (success) {
     return (
       <div className="flex min-h-[60vh] w-full items-center justify-center px-0 py-8 sm:px-4">
-        <Card className="w-full max-w-md p-6 text-center transition-all duration-300 animate-[fadeIn_0.25s_ease-out]">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-green-600 ring-8 ring-green-50">
-            <CheckCircle2 className="animate-[pulse_1.4s_ease-in-out_1]" size={34} />
+        <Card className="w-full max-w-md p-6 text-center transition-all duration-300 ease-out scale-100 animate-[fadeIn_0.25s_ease-out]">
+          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-2xl font-semibold text-green-600">
+            ✓
           </div>
 
-          <h1 className="text-lg font-semibold text-text">Alerte envoyee !</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
+          <h1 className="mt-2 text-xl font-semibold text-text">Alerte envoyee !</h1>
+          <p className="mt-1 text-sm text-gray-500">
             {success.subtitle || "Votre signalement est en attente de validation."}
           </p>
+          <p className="mt-2 text-xs font-medium text-gray-400">Redirection automatique...</p>
 
-          {success.message && <p className="mt-3 rounded-lg bg-green-50 p-3 text-sm font-semibold text-primary">{success.message}</p>}
-
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Button as={Link} to={isAuthenticated ? "/my-reports" : "/"} type="button" variant="success" className="w-full sm:w-auto">
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Link
+              to={isAuthenticated ? "/my-reports" : "/"}
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700 active:scale-95 sm:w-auto"
+            >
               {isAuthenticated ? "Voir mes alertes" : "Voir les alertes"}
-            </Button>
-            <Button type="button" variant="ghost" onClick={startNewReport} className="w-full sm:w-auto">
+            </Link>
+            <button
+              type="button"
+              onClick={startNewReport}
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-gray-100 active:scale-95 sm:w-auto"
+            >
               <PlusCircle size={18} />
               Nouvelle alerte
-            </Button>
+            </button>
           </div>
         </Card>
       </div>
