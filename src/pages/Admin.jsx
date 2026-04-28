@@ -33,7 +33,7 @@ const tabs = [
   { key: "tools", label: "Outils", icon: Wrench }
 ];
 
-const statusOptions = ["pending", "approved", "rejected"];
+const statusOptions = ["danger", "critique", "suivi"];
 const categoryOptions = Object.keys(categories);
 const versionNotesMaxLength = 2000;
 
@@ -276,13 +276,13 @@ export default function Admin() {
 function Dashboard({ stats, reports, users, onOpenTab, isAdmin }) {
   const cards = [
     { label: "Total reports", value: stats?.reports ?? stats?.totalReports ?? 0, color: "text-primary", tab: "reports" },
-    { label: "Pending", value: stats?.pending ?? stats?.pendingReports ?? 0, color: "text-amber-600", tab: "reports" },
-    { label: "Approved", value: stats?.approved ?? stats?.resolved ?? 0, color: "text-success", tab: "reports" },
-    { label: "Rejected", value: stats?.rejected ?? 0, color: "text-danger", tab: "reports" },
+    { label: "Danger", value: stats?.dangerReports ?? 0, color: "text-red-600", tab: "reports" },
+    { label: "Critique", value: stats?.critiqueReports ?? 0, color: "text-orange-600", tab: "reports" },
+    { label: "Suivi", value: stats?.suiviReports ?? stats?.pendingReports ?? 0, color: "text-yellow-600", tab: "reports" },
     { label: "Users", value: stats?.users ?? stats?.totalUsers ?? 0, color: "text-danger", tab: "users", adminOnly: true }
   ];
   const bannedUsers = users.filter((user) => user.banned).length;
-  const urgentReports = reports.filter((report) => report.status === "pending").slice(0, 4);
+  const dangerReports = reports.filter((report) => report.status === "danger").slice(0, 4);
 
   return (
     <div className="space-y-4">
@@ -323,7 +323,7 @@ function Dashboard({ stats, reports, users, onOpenTab, isAdmin }) {
           <h2 className="font-heading text-lg font-black text-text">Actions rapides</h2>
           <div className="mt-4 space-y-2">
             <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("reports")}>
-              Pending Reports
+              Alertes danger
             </Button>
             {isAdmin && (
               <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("users")}>
@@ -341,16 +341,16 @@ function Dashboard({ stats, reports, users, onOpenTab, isAdmin }) {
       </div>
 
       <Card className="p-4">
-        <h2 className="font-heading text-lg font-black text-text">Pending Reports</h2>
+        <h2 className="font-heading text-lg font-black text-text">Alertes danger</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          {urgentReports.map((report) => (
+          {dangerReports.map((report) => (
             <div key={report._id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
               <p className="text-xs font-black uppercase text-primary">{categories[report.category]?.label}</p>
               <p className="font-bold text-text">{report.title}</p>
               <p className="mt-1 line-clamp-2 text-sm text-slate-600">{report.description}</p>
             </div>
           ))}
-          {urgentReports.length === 0 && <p className="text-sm font-semibold text-slate-500">Aucune alerte urgente.</p>}
+          {dangerReports.length === 0 && <p className="text-sm font-semibold text-slate-500">Aucune alerte danger.</p>}
         </div>
       </Card>
     </div>
@@ -482,16 +482,6 @@ function ReportsPanel({
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
-                    {report.status === "pending" && (
-                      <>
-                        <Button type="button" variant="success" size="sm" onClick={() => onApprove(report._id)}>
-                          Approve
-                        </Button>
-                        <Button type="button" variant="danger" size="sm" onClick={() => onReject(report._id)}>
-                          Reject
-                        </Button>
-                      </>
-                    )}
                     <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(report)}>
                       <Edit3 size={16} />
                       Modifier
@@ -772,7 +762,7 @@ function EditReportModal({ report, onClose, onSave }) {
     title: report.title || "",
     description: report.description || "",
     category: report.category || "road",
-    status: report.status || "pending",
+    status: report.status || "suivi",
     province: report.province || "Kinshasa",
     commune: report.commune || "Gombe",
     lat: report.location?.lat || "",

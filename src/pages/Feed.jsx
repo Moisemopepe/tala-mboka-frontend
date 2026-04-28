@@ -4,12 +4,15 @@ import { api } from "../api/client.js";
 import CategoryFilter from "../components/CategoryFilter.jsx";
 import Button from "../components/Button.jsx";
 import ReportCard from "../components/ReportCard.jsx";
+import { statuses } from "../utils/categories.js";
 import { drcLocations, provinces } from "../utils/drcLocations.js";
+import { riskLevels } from "../utils/risk.js";
 
 export default function Feed() {
   const [reports, setReports] = useState([]);
   const [sort, setSort] = useState("newest");
   const [category, setCategory] = useState("");
+  const [status, setStatus] = useState("");
   const [province, setProvince] = useState("");
   const [commune, setCommune] = useState("");
   const [nearby, setNearby] = useState(null);
@@ -20,6 +23,7 @@ export default function Feed() {
     const params = new URLSearchParams();
     params.set("sort", sort);
     if (category) params.set("category", category);
+    if (status) params.set("status", status);
     if (province) params.set("province", province);
     if (commune) params.set("commune", commune);
     if (nearby) {
@@ -37,14 +41,14 @@ export default function Feed() {
         });
 
         if (changed) {
-          setNotice(`Mise a jour: "${changed.title}" est maintenant ${changed.status}.`);
+          setNotice(`Mise a jour: "${changed.title}" est maintenant ${statuses[changed.status] || changed.status}.`);
         }
 
         localStorage.setItem("tala_report_statuses", JSON.stringify(current));
         setReports(items);
       })
       .catch(console.error);
-  }, [sort, category, province, commune, nearby]);
+  }, [sort, category, status, province, commune, nearby]);
 
   function updateLike(id, likesCount) {
     setReports((items) => items.map((item) => (item._id === id ? { ...item, likesCount } : item)));
@@ -136,6 +140,16 @@ export default function Feed() {
         </select>
       </div>
       <CategoryFilter value={category} onChange={setCategory} />
+      <select value={status} onChange={(event) => setStatus(event.target.value)} className="form-field text-sm font-bold">
+        <option value="">Tous les statuts</option>
+        {Object.entries(riskLevels)
+          .filter(([key]) => key !== "resolved")
+          .map(([key, item]) => (
+            <option value={key} key={key}>
+              {item.label}
+            </option>
+          ))}
+      </select>
       {reports.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {reports.map((report) => (

@@ -1,17 +1,19 @@
 export const riskLevels = {
-  urgent: { label: "Urgent", color: "#DC3545", weight: 0.95 },
-  important: { label: "Important", color: "#F97316", weight: 0.72 },
-  watch: { label: "A surveiller", color: "#FFD60A", weight: 0.45 },
+  danger: { label: "Danger", color: "#ef4444", weight: 0.95 },
+  critique: { label: "Critique", color: "#f97316", weight: 0.72 },
+  suivi: { label: "Suivi", color: "#eab308", weight: 0.45 },
   resolved: { label: "Resolu", color: "#198754", weight: 0.18 }
 };
 
 export function getRiskLevel(report) {
-  if (report.status === "rejected") return "resolved";
-  if (["security", "kidnapping"].includes(report.category)) return "urgent";
-  if ((report.likesCount || report.likes?.length || 0) >= 10) return "urgent";
-  if (["water", "electricity", "fraud"].includes(report.category)) return "important";
-  if ((report.likesCount || report.likes?.length || 0) >= 5) return "important";
-  return "watch";
+  return normalizeStatus(report.status);
+}
+
+export function normalizeStatus(status) {
+  if (status === "danger") return "danger";
+  if (status === "critique") return "critique";
+  if (status === "resolved" || status === "rejected") return "resolved";
+  return "suivi";
 }
 
 export function distanceKm(from, to) {

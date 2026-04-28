@@ -23,7 +23,7 @@ export default function Home() {
   const [reports, setReports] = useState([]);
   const [category, setCategory] = useState("");
   const [province, setProvince] = useState("");
-  const [risk, setRisk] = useState("");
+  const [status, setStatus] = useState("");
   const [distance, setDistance] = useState("");
   const [mode, setMode] = useState("map");
   const [userLocation, setUserLocation] = useState(null);
@@ -41,11 +41,12 @@ export default function Home() {
     const params = new URLSearchParams();
     if (debouncedFilters.category) params.set("category", debouncedFilters.category);
     if (debouncedFilters.province) params.set("province", debouncedFilters.province);
+    if (status) params.set("status", status);
     api(`/reports${params.toString() ? `?${params.toString()}` : ""}`)
       .then(setReports)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [debouncedFilters]);
+  }, [debouncedFilters, status]);
 
   const enrichedReports = useMemo(() => {
     return reports
@@ -54,14 +55,14 @@ export default function Home() {
         const km = userLocation ? distanceKm(userLocation, reportLocation) : null;
         return { ...report, risk: getRiskLevel(report), distanceKm: km };
       })
-      .filter((report) => !risk || report.risk === risk)
+      .filter((report) => !status || report.risk === status)
       .filter((report) => !distance || (typeof report.distanceKm === "number" && report.distanceKm <= Number(distance)))
       .sort((a, b) => {
         if (userLocation) return (a.distanceKm || 0) - (b.distanceKm || 0);
         return new Date(b.createdAt) - new Date(a.createdAt);
       })
       .slice(0, 500);
-  }, [reports, risk, distance, userLocation]);
+  }, [reports, status, distance, userLocation]);
 
   const selectedReport = enrichedReports.find((report) => report._id === searchParams.get("report"));
   const selectedLocation = selectedReport
@@ -71,7 +72,7 @@ export default function Home() {
   function resetFilters() {
     setCategory("");
     setProvince("");
-    setRisk("");
+    setStatus("");
     setDistance("");
   }
 
@@ -117,12 +118,14 @@ export default function Home() {
         </select>
         <CategoryFilter value={category} onChange={setCategory} />
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-[1fr_1fr_auto]">
-          <select value={risk} onChange={(event) => setRisk(event.target.value)} className="form-field text-sm font-bold">
-            <option value="">Tous les risques</option>
+          <select value={status} onChange={(event) => setStatus(event.target.value)} className="form-field text-sm font-bold">
+            <option value="">Tous les statuts</option>
             {Object.entries(riskLevels).map(([key, item]) => (
+              key !== "resolved" && (
               <option value={key} key={key}>
                 {item.label}
               </option>
+              )
             ))}
           </select>
           <select
@@ -190,7 +193,7 @@ export default function Home() {
       )}
 
       <div className="grid grid-cols-1 gap-2 text-xs font-black text-slate-600 sm:grid-cols-2 lg:grid-cols-4">
-        {Object.entries(riskLevels).map(([key, item]) => (
+        {Object.entries(riskLevels).filter(([key]) => key !== "resolved").map(([key, item]) => (
           <div key={key} className="flex items-center gap-2 rounded-xl bg-white p-3 shadow-soft">
             <span className="h-3 w-3 rounded-full" style={{ background: item.color }} />
             {item.label}

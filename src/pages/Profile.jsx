@@ -117,8 +117,8 @@ export default function Profile() {
 
   if (isAuthenticated) {
     const initial = (user?.name || user?.phone || "U").trim().charAt(0).toUpperCase();
-    const approvedCount = reports.filter((report) => report.status === "approved").length;
-    const pendingCount = reports.filter((report) => report.status === "pending").length;
+    const dangerCount = reports.filter((report) => report.status === "danger").length;
+    const suiviCount = reports.filter((report) => !["danger", "critique", "resolved", "rejected"].includes(report.status)).length;
     const latestReports = reports.slice(0, 3);
 
     return (
@@ -147,12 +147,12 @@ export default function Profile() {
             <p className="font-heading text-2xl font-black text-text">{reports.length}</p>
           </Card>
           <Card className="p-3 text-center">
-            <p className="text-xs font-black uppercase text-slate-500">Validees</p>
-            <p className="font-heading text-2xl font-black text-success">{approvedCount}</p>
+            <p className="text-xs font-black uppercase text-slate-500">Danger</p>
+            <p className="font-heading text-2xl font-black text-red-600">{dangerCount}</p>
           </Card>
           <Card className="p-3 text-center">
-            <p className="text-xs font-black uppercase text-slate-500">En attente</p>
-            <p className="font-heading text-2xl font-black text-amber-600">{pendingCount}</p>
+            <p className="text-xs font-black uppercase text-slate-500">Suivi</p>
+            <p className="font-heading text-2xl font-black text-yellow-600">{suiviCount}</p>
           </Card>
         </div>
 

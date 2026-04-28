@@ -9,7 +9,12 @@ export const categories = {
 };
 
 export const statuses = {
-  pending: "En attente",
-  approved: "Approuvee",
-  rejected: "Rejetee"
+  danger: "Danger",
+  critique: "Critique",
+  suivi: "Suivi",
+  resolved: "Resolu",
+  pending: "Suivi",
+  in_progress: "Suivi",
+  approved: "Suivi",
+  rejected: "Resolu"
 };
