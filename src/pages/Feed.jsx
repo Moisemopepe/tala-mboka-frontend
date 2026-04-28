@@ -77,11 +77,23 @@ export default function Feed() {
   }
 
   return (
-    <div className="w-full space-y-5 px-0 pb-8">
-      <div className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-sm">
-        <h1 className="font-heading text-xl font-semibold text-text md:text-2xl lg:text-3xl">Alertes autour de vous</h1>
-        <p className="mt-1 text-sm text-slate-500 md:text-base">Suivez les problemes signales en temps reel</p>
-      </div>
+    <div className="w-full space-y-5 px-0 pb-10">
+      <section className="overflow-hidden rounded-xl border border-slate-200/70 bg-white shadow-sm">
+        <div className="bg-gradient-to-br from-white via-green-50/40 to-white p-4 sm:p-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-primary">Fil citoyen</p>
+              <h1 className="mt-1 font-heading text-2xl font-semibold leading-tight text-text md:text-3xl">
+                Alertes autour de vous
+              </h1>
+              <p className="mt-1 text-sm text-slate-500 md:text-base">Suivez les problemes signales en temps reel.</p>
+            </div>
+            <Button type="button" variant="success" onClick={() => (window.location.href = "/report")} className="w-full md:w-auto">
+              Signaler un probleme
+            </Button>
+          </div>
+        </div>
+      </section>
       {notice && (
         <button
           type="button"
@@ -91,6 +103,7 @@ export default function Feed() {
           {notice}
         </button>
       )}
+      <section className="space-y-3 rounded-xl border border-slate-200/70 bg-white p-3 shadow-sm">
       <div className="flex flex-col gap-2 md:flex-row">
         <select
           value={sort}
@@ -157,11 +170,12 @@ export default function Feed() {
             </option>
           ))}
       </select>
+      </section>
       {loading && <SkeletonList />}
 
       {!loading && reports.length > 0 ? (
         <>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-5">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,290px),1fr))] gap-4 sm:gap-5">
             {reports.slice(0, visibleCount).map((report) => (
               <ReportCard key={report._id} report={report} onLiked={updateLike} />
             ))}
@@ -179,6 +193,9 @@ export default function Feed() {
         <div className="w-full rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
           <p className="text-lg font-semibold text-text">Aucune alerte pour le moment</p>
           <p className="mt-2 text-sm text-slate-500">Soyez le premier a signaler.</p>
+          <Button type="button" variant="success" className="mt-4" onClick={() => (window.location.href = "/report")}>
+            Creer une alerte
+          </Button>
         </div>
         )
       )}
@@ -188,7 +205,7 @@ export default function Feed() {
 
 function SkeletonList() {
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-5">
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,290px),1fr))] gap-4 sm:gap-5">
       {[1, 2, 3, 4, 5, 6].map((item) => (
         <div
           key={item}

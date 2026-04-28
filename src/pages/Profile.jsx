@@ -118,7 +118,7 @@ export default function Profile() {
   if (isAuthenticated) {
     const initial = (user?.name || user?.phone || "U").trim().charAt(0).toUpperCase();
     const dangerCount = reports.filter((report) => report.status === "danger").length;
-    const suiviCount = reports.filter((report) => !["danger", "critique", "resolved", "rejected"].includes(report.status)).length;
+    const critiqueCount = reports.filter((report) => report.status === "critique").length;
     const latestReports = reports.slice(0, 3);
 
     return (
@@ -151,8 +151,8 @@ export default function Profile() {
             <p className="font-heading text-2xl font-black text-red-600">{dangerCount}</p>
           </Card>
           <Card className="p-3 text-center">
-            <p className="text-xs font-black uppercase text-slate-500">Suivi</p>
-            <p className="font-heading text-2xl font-black text-yellow-600">{suiviCount}</p>
+            <p className="text-xs font-black uppercase text-slate-500">Critique</p>
+            <p className="font-heading text-2xl font-black text-orange-600">{critiqueCount}</p>
           </Card>
         </div>
 
@@ -197,7 +197,7 @@ export default function Profile() {
           </div>
         </Card>
 
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <Link to="/report">
             <Button type="button" variant="success" className="w-full">
               <PlusCircle size={18} />

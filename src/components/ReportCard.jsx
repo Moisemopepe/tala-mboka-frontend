@@ -1,7 +1,7 @@
 import { Clock3, Eye, Heart, Image as ImageIcon, MapPin, Share2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { api } from "../api/client.js";
+import { api, assetUrl } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { categories } from "../utils/categories.js";
 import { formatDistance, normalizeStatus } from "../utils/risk.js";
@@ -25,7 +25,7 @@ export default function ReportCard({ report, onLiked }) {
   const [expanded, setExpanded] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const category = categories[report.category];
-  const image = report.imageUrl || report.imageUrls?.[0] || "";
+  const image = assetUrl(report.imageUrl || report.imageUrls?.[0] || "");
   const shareText = encodeURIComponent(`${report.title} - ${report.description}`);
   const shareUrl = `https://wa.me/?text=${shareText}`;
   const likesCount = report.likesCount ?? report.likes?.length ?? 0;
@@ -41,7 +41,7 @@ export default function ReportCard({ report, onLiked }) {
   return (
     <Card
       as="article"
-      className="group overflow-hidden transition-all duration-300 ease-out hover:-translate-y-1 hover:border-green-200 hover:shadow-[0_18px_40px_rgba(15,23,42,0.10)]"
+      className="group h-full overflow-hidden transition-all duration-300 ease-out hover:-translate-y-1 hover:border-green-200 hover:shadow-[0_18px_40px_rgba(15,23,42,0.10)]"
     >
       <div className="relative h-[200px] overflow-hidden bg-slate-100">
         {image && !imageFailed ? (
@@ -50,6 +50,7 @@ export default function ReportCard({ report, onLiked }) {
             alt=""
             className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
             loading="lazy"
+            decoding="async"
             onError={() => setImageFailed(true)}
           />
         ) : (
@@ -64,7 +65,7 @@ export default function ReportCard({ report, onLiked }) {
         >
           {category?.label}
         </div>
-        {normalizedStatus !== "suivi" && (
+        {(normalizedStatus === "danger" || normalizedStatus === "critique") && (
           <div className="absolute right-3 top-3">
             <StatusBadge status={report.status} />
           </div>
@@ -89,7 +90,7 @@ export default function ReportCard({ report, onLiked }) {
             {report.province || "Province non renseignee"} / {report.commune || "Commune non renseignee"}
           </p>
           <p className="mt-1 text-slate-500">
-            {report.location.lat.toFixed(4)}, {report.location.lng.toFixed(4)}
+            {report.location?.lat?.toFixed(4) || "-"}, {report.location?.lng?.toFixed(4) || "-"}
             {distance && <span className="ml-2 text-primary">- {distance}</span>}
           </p>
         </div>

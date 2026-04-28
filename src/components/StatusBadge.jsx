@@ -3,28 +3,28 @@ import { normalizeStatus } from "../utils/risk.js";
 
 const statusStyles = {
   danger: "bg-red-50 text-red-700 ring-red-200",
-  critique: "bg-orange-50 text-orange-700 ring-orange-200",
-  suivi: "bg-yellow-50 text-yellow-700 ring-yellow-200",
-  resolved: "bg-emerald-50 text-emerald-700 ring-emerald-200"
+  critique: "bg-orange-50 text-orange-700 ring-orange-200"
 };
 
-const statusDots = {
-  danger: "🔴",
-  critique: "🟠",
-  suivi: "🟡",
-  resolved: "🟢"
+const dotStyles = {
+  danger: "bg-red-500",
+  critique: "bg-orange-500"
 };
 
-export default function StatusBadge({ status }) {
+export default function StatusBadge({ status, showNeutral = false }) {
   const normalizedStatus = normalizeStatus(status);
+
+  if (!showNeutral && normalizedStatus !== "danger" && normalizedStatus !== "critique") {
+    return null;
+  }
 
   return (
     <span
       className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${
-        statusStyles[normalizedStatus] || "bg-slate-50 text-slate-700 ring-slate-200"
+        statusStyles[normalizedStatus] || "bg-slate-50 text-slate-600 ring-slate-200"
       }`}
     >
-      <span className="mr-1">{statusDots[normalizedStatus]}</span>
+      <span className={`mr-1.5 h-2.5 w-2.5 rounded-full ${dotStyles[normalizedStatus] || "bg-slate-400"}`} />
       {statuses[normalizedStatus] || normalizedStatus}
     </span>
   );

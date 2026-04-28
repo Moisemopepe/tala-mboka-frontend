@@ -121,7 +121,7 @@ export default function Home() {
           <select value={status} onChange={(event) => setStatus(event.target.value)} className="form-field text-sm font-bold">
             <option value="">Tous les statuts</option>
             {Object.entries(riskLevels).map(([key, item]) => (
-              key !== "resolved" && (
+              (key === "danger" || key === "critique") && (
               <option value={key} key={key}>
                 {item.label}
               </option>
@@ -193,7 +193,7 @@ export default function Home() {
       )}
 
       <div className="grid grid-cols-1 gap-2 text-xs font-black text-slate-600 sm:grid-cols-2 lg:grid-cols-4">
-        {Object.entries(riskLevels).filter(([key]) => key !== "resolved").map(([key, item]) => (
+        {Object.entries(riskLevels).filter(([key]) => key === "danger" || key === "critique").map(([key, item]) => (
           <div key={key} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
             <span className="h-3 w-3 rounded-full" style={{ background: item.color }} />
             {item.label}

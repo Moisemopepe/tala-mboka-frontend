@@ -1,7 +1,12 @@
 import { API_URL } from "../config/api.js";
 
 export function assetUrl(url) {
-  return url || "";
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url)) return url;
+
+  const apiRoot = API_URL.replace(/\/api\/?$/, "");
+  const normalizedPath = url.startsWith("/") ? url : `/${url}`;
+  return `${apiRoot}${normalizedPath}`;
 }
 
 export async function api(path, options = {}) {

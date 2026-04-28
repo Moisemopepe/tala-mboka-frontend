@@ -1,6 +1,23 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.4.0": {
+    adminNotes: `Version 0.4.0
+
+UX:
+- Fil citoyen plus professionnel et plus lisible.
+- Images des alertes mieux resolues depuis le backend Render.
+- Statut neutre masque dans l'interface publique pour reduire le bruit.
+
+Qualite:
+- Badges de gravite uniformises.
+- Espacement et cartes ameliores sur mobile, tablette et desktop.`,
+    userNotes: `Version 0.4.0
+
+Amelioration:
+- Le fil des alertes est plus clair, plus rapide a parcourir et plus agreable a utiliser.
+- Les alertes importantes restent visibles sans surcharge visuelle.`
+  },
   "0.2.7": {
     adminNotes: `Version 0.2.7
 

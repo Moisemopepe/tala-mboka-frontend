@@ -1,8 +1,8 @@
 export const riskLevels = {
   danger: { label: "Danger", color: "#ef4444", weight: 0.95 },
   critique: { label: "Critique", color: "#f97316", weight: 0.72 },
-  suivi: { label: "Suivi", color: "#eab308", weight: 0.45 },
-  resolved: { label: "Resolu", color: "#16a34a", weight: 0.18 }
+  suivi: { label: "Normal", color: "#16a34a", weight: 0.35 },
+  resolved: { label: "Résolu", color: "#16a34a", weight: 0.18 }
 };
 
 export function getRiskLevel(report) {

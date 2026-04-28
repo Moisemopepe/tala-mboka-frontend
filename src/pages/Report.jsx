@@ -267,7 +267,7 @@ export default function Report() {
             ✓
           </div>
 
-          <h1 className="mt-2 text-xl font-semibold text-text">Alerte envoyee !</h1>
+          <h1 className="mt-2 text-xl font-semibold text-text">Alerte envoyée !</h1>
           <p className="mt-1 text-sm text-gray-500">
             {success.subtitle || "Votre signalement est en attente de validation."}
           </p>
@@ -451,7 +451,7 @@ export default function Report() {
         )}
         {location && (
           <p className="text-xs font-bold text-slate-500">
-            Coordonnees: {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+            Coordonnées: {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
           </p>
         )}
       </Card>

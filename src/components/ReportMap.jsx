@@ -87,7 +87,7 @@ function ClusterLayer({ reports, userLocation }) {
         `<article class="map-popup-card">
           <div class="map-popup-top">
             <span style="color:${category?.color || "#16a34a"}">${escapeHtml(category?.label || report.category)}</span>
-            <strong style="background:${riskMeta.color}">${escapeHtml(riskMeta.label)}</strong>
+            ${risk === "danger" || risk === "critique" ? `<strong style="background:${riskMeta.color}">${escapeHtml(riskMeta.label)}</strong>` : ""}
           </div>
           <h3>${escapeHtml(report.title)}</h3>
           <p>${escapeHtml(report.description || "").slice(0, 120)}</p>
@@ -137,7 +137,7 @@ function HeatLayer({ reports }) {
 function RiskLegend() {
   return (
     <div className="absolute bottom-4 right-4 z-[450] rounded-xl bg-white/90 p-3 text-xs font-semibold text-slate-700 shadow-lg backdrop-blur">
-      {Object.entries(riskLevels).filter(([key]) => key !== "resolved").map(([key, item]) => (
+      {Object.entries(riskLevels).filter(([key]) => key === "danger" || key === "critique").map(([key, item]) => (
         <p key={key} className="flex items-center gap-2 py-0.5">
           <span className="h-3 w-3 rounded-full" style={{ background: item.color }} />
           {item.label}

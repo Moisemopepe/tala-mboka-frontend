@@ -35,7 +35,7 @@ const tabs = [
   { key: "tools", label: "Outils", icon: Wrench }
 ];
 
-const statusOptions = ["danger", "critique", "suivi"];
+const statusOptions = ["danger", "critique"];
 const moderationOptions = {
   pending: "En attente",
   approved: "Publie",
@@ -295,7 +295,6 @@ function Dashboard({ stats, reports, users, onOpenTab, isAdmin }) {
     { label: "Total reports", value: stats?.reports ?? stats?.totalReports ?? 0, color: "text-primary", tab: "reports" },
     { label: "Danger", value: stats?.dangerReports ?? 0, color: "text-red-600", tab: "reports" },
     { label: "Critique", value: stats?.critiqueReports ?? 0, color: "text-orange-600", tab: "reports" },
-    { label: "Suivi", value: stats?.suiviReports ?? stats?.pendingReports ?? 0, color: "text-yellow-600", tab: "reports" },
     { label: "A moderer", value: stats?.pendingModerationReports ?? 0, color: "text-yellow-600", tab: "reports" },
     { label: "Users", value: stats?.users ?? stats?.totalUsers ?? 0, color: "text-danger", tab: "users", adminOnly: true }
   ];
@@ -493,10 +492,11 @@ function ReportsPanel({
                     <StatusBadge status={report.status} />
                   </div>
                   <select
-                    value={report.status}
+                    value={["danger", "critique"].includes(report.status) ? report.status : "suivi"}
                     onChange={(event) => onStatus(report._id, event.target.value)}
                     className="rounded-xl border border-slate-200 bg-white px-3 py-2 font-bold text-text"
                   >
+                    <option value="suivi">Normal</option>
                     {statusOptions.map((item) => (
                       <option key={item} value={item}>
                         {statuses[item]}
@@ -817,7 +817,7 @@ function EditReportModal({ report, onClose, onSave }) {
     title: report.title || "",
     description: report.description || "",
     category: report.category || "road",
-    status: report.status || "suivi",
+    status: ["danger", "critique"].includes(report.status) ? report.status : "",
     province: report.province || "Kinshasa",
     commune: report.commune || "Gombe",
     lat: report.location?.lat || "",
@@ -832,7 +832,7 @@ function EditReportModal({ report, onClose, onSave }) {
   async function submit(event) {
     event.preventDefault();
     try {
-      await onSave(report._id, form);
+      await onSave(report._id, { ...form, status: form.status || "suivi" });
     } catch (err) {
       setError(err.message);
     }
@@ -863,6 +863,7 @@ function EditReportModal({ report, onClose, onSave }) {
               ))}
             </select>
             <select value={form.status} onChange={(event) => update("status", event.target.value)} className="form-field">
+              <option value="">Normal</option>
               {statusOptions.map((item) => (
                 <option key={item} value={item}>
                   {statuses[item]}
