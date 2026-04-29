@@ -29,18 +29,18 @@ import { drcLocations, provinces } from "../utils/drcLocations.js";
 import { reporterRoles, reporterRoleLabel } from "../utils/reporterRoles.js";
 
 const tabs = [
-  { key: "dashboard", label: "Dashboard", icon: BarChart3 },
-  { key: "reports", label: "Reports", icon: FileText },
-  { key: "users", label: "Users", icon: Users, adminOnly: true },
-  { key: "map", label: "Map", icon: MapPinned },
+  { key: "dashboard", label: "Tableau de bord", icon: BarChart3 },
+  { key: "reports", label: "Alertes", icon: FileText },
+  { key: "users", label: "Utilisateurs", icon: Users, adminOnly: true },
+  { key: "map", label: "Carte", icon: MapPinned },
   { key: "tools", label: "Outils", icon: Wrench }
 ];
 
 const statusOptions = ["danger", "critique"];
 const moderationOptions = {
   pending: "En attente",
-  approved: "Publie",
-  rejected: "Rejete"
+  approved: "Publié",
+  rejected: "Rejeté"
 };
 const moderationStyles = {
   pending: "bg-yellow-50 text-yellow-700 ring-yellow-200",
@@ -229,13 +229,13 @@ export default function Admin() {
       <section className="space-y-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-          <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">{isAdmin ? "Admin Dashboard" : "Moderateur Dashboard"}</h1>
+          <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">{isAdmin ? "Tableau de bord admin" : "Tableau de bord modérateur"}</h1>
             <p className="text-sm font-medium text-slate-600 md:text-base">
-              Modifier les alertes, gerer les users, suivre les stats et la carte.
+                Modifiez les alertes, gérez les utilisateurs, suivez les statistiques et la carte.
             </p>
             {lastRefresh && (
               <p className="mt-1 text-xs font-bold text-slate-400">
-                Refresh auto toutes les 30s. Derniere mise a jour: {lastRefresh.toLocaleTimeString()}
+                Actualisation automatique toutes les 30 s. Dernière mise à jour : {lastRefresh.toLocaleTimeString()}
               </p>
             )}
           </div>
@@ -294,11 +294,11 @@ export default function Admin() {
 
 function Dashboard({ stats, reports, users, onOpenTab, isAdmin }) {
   const cards = [
-    { label: "Total reports", value: stats?.reports ?? stats?.totalReports ?? 0, color: "text-primary", tab: "reports" },
+    { label: "Total alertes", value: stats?.reports ?? stats?.totalReports ?? 0, color: "text-primary", tab: "reports" },
     { label: "Danger", value: stats?.dangerReports ?? 0, color: "text-red-600", tab: "reports" },
     { label: "Critique", value: stats?.critiqueReports ?? 0, color: "text-orange-600", tab: "reports" },
-    { label: "A moderer", value: stats?.pendingModerationReports ?? 0, color: "text-yellow-600", tab: "reports" },
-    { label: "Users", value: stats?.users ?? stats?.totalUsers ?? 0, color: "text-danger", tab: "users", adminOnly: true }
+    { label: "À modérer", value: stats?.pendingModerationReports ?? 0, color: "text-yellow-600", tab: "reports" },
+    { label: "Utilisateurs", value: stats?.users ?? stats?.totalUsers ?? 0, color: "text-danger", tab: "users", adminOnly: true }
   ];
   const bannedUsers = users.filter((user) => user.banned).length;
   const dangerReports = reports.filter((report) => report.status === "danger").slice(0, 4);
@@ -318,7 +318,7 @@ function Dashboard({ stats, reports, users, onOpenTab, isAdmin }) {
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <Card className="p-4">
-          <h2 className="font-heading text-lg font-black text-text">Category breakdown</h2>
+          <h2 className="font-heading text-lg font-black text-text">Répartition par catégorie</h2>
           <div className="mt-4 space-y-3">
             {(stats?.categoryBreakdown || []).map((item) => (
               <div key={item.category}>
@@ -334,7 +334,7 @@ function Dashboard({ stats, reports, users, onOpenTab, isAdmin }) {
                 </div>
               </div>
             ))}
-            {(stats?.categoryBreakdown || []).length === 0 && <p className="text-sm font-semibold text-slate-500">No data.</p>}
+            {(stats?.categoryBreakdown || []).length === 0 && <p className="text-sm font-semibold text-slate-500">Aucune donnée.</p>}
           </div>
         </Card>
 
@@ -346,7 +346,7 @@ function Dashboard({ stats, reports, users, onOpenTab, isAdmin }) {
             </Button>
             {isAdmin && (
               <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("users")}>
-                Gerer les utilisateurs
+                Gérer les utilisateurs
               </Button>
             )}
             <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("map")}>
@@ -354,7 +354,7 @@ function Dashboard({ stats, reports, users, onOpenTab, isAdmin }) {
             </Button>
           </div>
           <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm font-bold text-slate-700">
-            Utilisateurs bannis: {bannedUsers}
+            Utilisateurs bannis : {bannedUsers}
           </p>
         </Card>
       </div>
@@ -403,7 +403,7 @@ function ReportsPanel({
           <div>
             <h2 className="font-heading text-lg font-black text-text">Gestion des alertes</h2>
             <p className="text-sm font-semibold text-slate-600">
-              {reports.length} alerte{reports.length > 1 ? "s" : ""} affichee{reports.length > 1 ? "s" : ""}. Modifier,
+              {reports.length} alerte{reports.length > 1 ? "s" : ""} affichée{reports.length > 1 ? "s" : ""}. Modifier,
               filtrer, resoudre ou supprimer les signalements.
             </p>
           </div>
@@ -418,7 +418,7 @@ function ReportsPanel({
             <input
               value={query}
               onChange={(event) => onQuery(event.target.value)}
-              placeholder="Chercher titre, description, user..."
+              placeholder="Rechercher un titre, une description ou un utilisateur..."
               className="form-field pl-10"
             />
           </label>
@@ -439,7 +439,7 @@ function ReportsPanel({
             ))}
           </select>
           <select value={category} onChange={(event) => onCategoryFilter(event.target.value)} className="form-field">
-            <option value="">Toutes categories</option>
+            <option value="">Toutes les catégories</option>
             {categoryOptions.map((item) => (
               <option key={item} value={item}>
                 {categories[item].label}
@@ -455,7 +455,7 @@ function ReportsPanel({
             ))}
           </select>
           <select value={dateSort} onChange={(event) => onDateSort(event.target.value)} className="form-field">
-            <option value="newest">Plus recentes</option>
+            <option value="newest">Plus récentes</option>
             <option value="oldest">Plus anciennes</option>
           </select>
         </div>
@@ -464,9 +464,9 @@ function ReportsPanel({
         <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-600">
             <tr>
-              <th className="px-4 py-3">Report</th>
-              <th className="px-4 py-3">Category</th>
-              <th className="px-4 py-3">User</th>
+              <th className="px-4 py-3">Alerte</th>
+              <th className="px-4 py-3">Catégorie</th>
+              <th className="px-4 py-3">Utilisateur</th>
               <th className="px-4 py-3">Statuts</th>
               <th className="px-4 py-3">Province / Commune</th>
               <th className="px-4 py-3">GPS</th>
@@ -483,14 +483,14 @@ function ReportsPanel({
                 </td>
                 <td className="px-4 py-3 font-semibold">{categories[report.category]?.label}</td>
                 <td className="px-4 py-3 text-slate-700">
-                  <p className="font-semibold">{report.userId?.name || (report.source === "guest" ? "Invité" : "Unknown")}</p>
+                  <p className="font-semibold">{report.userId?.name || (report.source === "guest" ? "Invité" : "Inconnu")}</p>
                   <p className="mt-1 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
                     {reporterRoleLabel(report.reporterRole)}
                   </p>
                 </td>
                 <td className="px-4 py-3">
                   <p className="mb-2 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">
-                    {report.source || "user"}
+                    {report.source === "guest" ? "invité" : "utilisateur"}
                   </p>
                   <div className="mb-2">
                     <ModerationBadge status={report.moderationStatus || "approved"} />
@@ -538,7 +538,7 @@ function ReportsPanel({
                     </Button>
                     <Button type="button" variant="danger" size="sm" onClick={() => onDelete(report._id)}>
                       <Trash2 size={16} />
-                      Delete
+                          Supprimer
                     </Button>
                   </div>
                 </td>
@@ -577,27 +577,27 @@ function UsersPanel({ users, query, onQuery, onToggleBan, onRole }) {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-heading text-lg font-black text-text">Utilisateurs</h2>
-            <p className="text-sm font-semibold text-slate-600">Bannir, debannir et gerer les roles.</p>
+            <p className="text-sm font-semibold text-slate-600">Bannir, réactiver et gérer les rôles.</p>
           </div>
           <Button type="button" variant="ghost" onClick={() => exportCsv("users.csv", users)}>
             <Download size={17} />
-            Export CSV
+            Exporter CSV
           </Button>
         </div>
         <label className="relative block w-full">
           <Search className="absolute left-3 top-3 text-slate-400" size={18} />
-          <input value={query} onChange={(event) => onQuery(event.target.value)} placeholder="Chercher nom ou telephone..." className="form-field pl-10" />
+          <input value={query} onChange={(event) => onQuery(event.target.value)} placeholder="Rechercher un nom ou un téléphone..." className="form-field pl-10" />
         </label>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-600">
             <tr>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Phone</th>
-              <th className="px-4 py-3">Role</th>
-              <th className="px-4 py-3">Reports</th>
-              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Nom</th>
+              <th className="px-4 py-3">Téléphone</th>
+              <th className="px-4 py-3">Rôle</th>
+              <th className="px-4 py-3">Alertes</th>
+              <th className="px-4 py-3">Statut</th>
               <th className="px-4 py-3">Action</th>
             </tr>
           </thead>
@@ -612,20 +612,20 @@ function UsersPanel({ users, query, onQuery, onToggleBan, onRole }) {
                     onChange={(event) => onRole(user, event.target.value)}
                     className="rounded-xl border border-slate-200 bg-white px-3 py-2 font-bold text-text"
                   >
-                    <option value="user">user</option>
-                    <option value="moderator">moderator</option>
+                    <option value="user">utilisateur</option>
+                    <option value="moderator">modérateur</option>
                     <option value="admin">admin</option>
                   </select>
                 </td>
                 <td className="px-4 py-3 font-bold">{user.reportCount}</td>
                 <td className="px-4 py-3">
                   <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${user.banned ? "bg-red-50 text-danger" : "bg-emerald-50 text-success"}`}>
-                    {user.banned ? "Banned" : "Active"}
+                    {user.banned ? "Banni" : "Actif"}
                   </span>
                 </td>
                 <td className="px-4 py-3">
                   <Button type="button" variant={user.banned ? "ghost" : "danger"} size="sm" onClick={() => onToggleBan(user)}>
-                    {user.banned ? "Unban" : "Ban"}
+                    {user.banned ? "Réactiver" : "Bannir"}
                   </Button>
                 </td>
               </tr>
@@ -641,8 +641,8 @@ function AdminMap({ reports, heatPoints }) {
   return (
     <Card className="overflow-hidden">
       <div className="border-b border-slate-100 p-4">
-        <h2 className="font-heading text-lg font-black text-text">Map analytics</h2>
-        <p className="text-sm font-semibold text-slate-600">Tous les signalements + heatmap par zone.</p>
+        <h2 className="font-heading text-lg font-black text-text">Carte analytique</h2>
+        <p className="text-sm font-semibold text-slate-600">Carte des signalements et heatmap par zone.</p>
       </div>
       <div className="h-[300px] md:h-[400px] lg:h-[500px]">
         <MapContainer center={[-4.325, 15.3222]} zoom={12} scrollWheelZoom>
@@ -676,16 +676,16 @@ function AdminMap({ reports, heatPoints }) {
 
 function AdminTools({ reports, users, onOpenTab, isAdmin }) {
   const tools = [
-    "Modifier titre, description, categorie, statut et coordonnees des alertes",
-    "Approuver ou rejeter les alertes invitees",
+    "Modifier le titre, la description, la catégorie, le statut et les coordonnées des alertes",
+    "Approuver ou rejeter les alertes invitées",
     "Supprimer une alerte incorrecte ou abusive",
-    "Chercher et filtrer les alertes par categorie, statut ou utilisateur",
+    "Rechercher et filtrer les alertes par catégorie, statut ou utilisateur",
     "Exporter les rapports et utilisateurs en CSV",
-    "Visualiser toutes les alertes sur la carte analytics avec heatmap"
+    "Visualiser toutes les alertes sur la carte d’analyse avec heatmap"
   ].concat(
     isAdmin
-      ? ["Bannir ou debannir un utilisateur", "Promouvoir un utilisateur en moderateur ou admin"]
-      : ["Gerer les alertes sans modifier les roles utilisateurs"]
+      ? ["Bannir ou réactiver un utilisateur", "Promouvoir un utilisateur en modérateur ou admin"]
+      : ["Gérer les alertes sans modifier les rôles utilisateurs"]
   );
 
   return (
@@ -707,15 +707,15 @@ function AdminTools({ reports, users, onOpenTab, isAdmin }) {
         <h2 className="font-heading text-lg font-black text-text">Raccourcis</h2>
         <div className="mt-4 space-y-2">
           <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("reports")}>
-            Reports: {reports.length}
+            Alertes : {reports.length}
           </Button>
           {isAdmin && (
             <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("users")}>
-              Users: {users.length}
+              Utilisateurs : {users.length}
             </Button>
           )}
           <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("map")}>
-            Map analytics
+            Carte analytique
           </Button>
         </div>
       </Card>
@@ -745,7 +745,7 @@ function VersionNotificationForm() {
     const userNotesLength = form.userNotes.trim().length;
 
     if (adminNotesLength > versionNotesMaxLength || userNotesLength > versionNotesMaxLength) {
-      setMessage(`Les notes ne peuvent pas depasser ${versionNotesMaxLength} caracteres.`);
+      setMessage(`Les notes ne peuvent pas dépasser ${versionNotesMaxLength} caractères.`);
       return;
     }
 
@@ -774,14 +774,14 @@ function VersionNotificationForm() {
     <Card className="p-4">
       <h2 className="font-heading text-lg font-black text-text">Notification de version</h2>
       <p className="text-sm font-semibold text-slate-600">
-        Admin/moderateur recoit les notes completes. User recoit seulement les details utiles cote public.
+          L’admin ou le modérateur reçoit les notes complètes. L’utilisateur reçoit seulement les détails utiles côté public.
       </p>
       <form onSubmit={submit} className="mt-4 space-y-3">
         <input
           value={form.version}
           onChange={(event) => update("version", event.target.value)}
           className="form-field"
-          placeholder="Version ex: 0.0.9"
+          placeholder="Version, ex. : 0.0.9"
         />
         <textarea
           value={form.adminNotes}
@@ -792,7 +792,7 @@ function VersionNotificationForm() {
           placeholder="Notes admin: toutes les modifications techniques et moderation"
         />
         <p className="text-right text-xs font-bold text-slate-500">
-          {form.adminNotes.trim().length}/{versionNotesMaxLength} caracteres admin
+          {form.adminNotes.trim().length}/{versionNotesMaxLength} caractères admin
         </p>
         <textarea
           value={form.userNotes}
@@ -800,10 +800,10 @@ function VersionNotificationForm() {
           className="form-field"
           rows={3}
           maxLength={versionNotesMaxLength}
-          placeholder="Notes user: changements visibles par les utilisateurs"
+          placeholder="Notes utilisateur : changements visibles par les utilisateurs"
         />
         <p className="text-right text-xs font-bold text-slate-500">
-          {form.userNotes.trim().length}/{versionNotesMaxLength} caracteres user
+          {form.userNotes.trim().length}/{versionNotesMaxLength} caractères utilisateur
         </p>
         {message && <p className="rounded-xl bg-green-50 p-3 text-sm font-bold text-primary">{message}</p>}
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -852,7 +852,7 @@ function EditReportModal({ report, onClose, onSave }) {
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <h2 className="font-heading text-xl font-black text-text">Modifier l'alerte</h2>
-            <p className="text-sm font-semibold text-slate-600">Tu peux corriger les infos publiees par l'utilisateur.</p>
+            <p className="text-sm font-semibold text-slate-600">Vous pouvez corriger les informations publiées par l’utilisateur.</p>
           </div>
           <button type="button" onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-text">
             <X size={18} />

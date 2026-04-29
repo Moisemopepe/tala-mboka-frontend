@@ -20,12 +20,12 @@ export default function Layout() {
   const accountItem = { to: "/profile", label: currentUser ? "Profil" : "Compte", icon: User };
   const userItems = currentUser
     ? [...items, accountItem, { to: "/my-reports", label: "Alertes", icon: FileText }]
-    : [...items, accountItem, { to: "/about", label: "A propos", icon: Info }];
+    : [...items, accountItem, { to: "/about", label: "À propos", icon: Info }];
   const navItems = canManage ? [...userItems, { to: "/admin", label: "Admin", icon: LayoutDashboard }] : userItems;
 
   useEffect(() => {
     function handleSessionExpired() {
-      localStorage.setItem("tala_session_message", "Votre session a expire. Reconnectez-vous.");
+      localStorage.setItem("tala_session_message", "Votre session a expiré. Reconnectez-vous.");
       const loginPath = location.pathname.startsWith("/admin") ? "/admin/login" : "/profile";
       navigate(loginPath, { replace: true });
     }

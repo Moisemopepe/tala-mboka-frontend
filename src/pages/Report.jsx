@@ -59,10 +59,10 @@ const categoryIcons = {
 };
 
 const steps = [
-  { id: 1, title: "Categorie", description: "Que voulez-vous signaler ?" },
-  { id: 2, title: "Details", description: "Expliquez rapidement la situation." },
+  { id: 1, title: "Catégorie", description: "Que voulez-vous signaler ?" },
+  { id: 2, title: "Détails", description: "Expliquez rapidement la situation." },
   { id: 3, title: "Preuves", description: "Ajoutez une photo si possible." },
-  { id: 4, title: "Position", description: "Confirmez l'emplacement." }
+  { id: 4, title: "Position", description: "Confirmez l’emplacement." }
 ];
 
 export default function Report() {
@@ -127,7 +127,7 @@ export default function Report() {
     setSuccess(null);
     setLocation(nextLocation);
     setErrors((current) => ({ ...current, location: "" }));
-    setLocationStatus(`Position detectee: ${province} + ${commune}`);
+    setLocationStatus(`Position détectée : ${province} + ${commune}`);
     setLocationStatusType("success");
   }
 
@@ -162,11 +162,11 @@ export default function Report() {
 
   function validate(targetStep = 4) {
     const nextErrors = {};
-    if (!form.category) nextErrors.category = "Choisissez une categorie.";
+    if (!form.category) nextErrors.category = "Choisissez une catégorie.";
     if (targetStep >= 2) {
-      if (form.title.trim().length < 3) nextErrors.title = "Le titre doit contenir au moins 3 caracteres.";
+      if (form.title.trim().length < 3) nextErrors.title = "Le titre doit contenir au moins 3 caractères.";
       if (form.description.trim().length < 10) {
-        nextErrors.description = "La description doit contenir au moins 10 caracteres.";
+        nextErrors.description = "La description doit contenir au moins 10 caractères.";
       }
     }
     if (targetStep >= 4 && !location) nextErrors.location = "Choisissez une position GPS ou cliquez sur la carte.";
@@ -207,7 +207,7 @@ export default function Report() {
 
     if (resolved.province && resolved.commune) {
       setForm((current) => ({ ...current, province: resolved.province, commune: resolved.commune }));
-      setLocationStatus(`Position detectee: ${resolved.province} + ${resolved.commune}`);
+      setLocationStatus(`Position détectée : ${resolved.province} + ${resolved.commune}`);
       setLocationStatusType("success");
       return;
     }
@@ -218,12 +218,12 @@ export default function Report() {
         province: resolved.province,
         commune: drcLocations[resolved.province]?.[0] || current.commune
       }));
-      setLocationStatus(`Position detectee: ${resolved.province}. Verifiez la commune.`);
+      setLocationStatus(`Position détectée : ${resolved.province}. Vérifiez la commune.`);
       setLocationStatusType("success");
       return;
     }
 
-    setLocationStatus("Position selectionnee. Verifiez la province et la commune.");
+    setLocationStatus("Position sélectionnée. Vérifiez la province et la commune.");
     setLocationStatusType("success");
   }
 
@@ -231,7 +231,7 @@ export default function Report() {
     const { revealMapOnSuccess = true } = options;
     if (!navigator.geolocation) {
       setMapVisible(true);
-      setLocationStatus("Impossible de detecter votre position");
+      setLocationStatus("Impossible de détecter votre position");
       setLocationStatusType("error");
       return;
     }
@@ -248,7 +248,7 @@ export default function Report() {
       () => {
         setLocating(false);
         setMapVisible(true);
-        setLocationStatus("Impossible de detecter votre position");
+        setLocationStatus("Impossible de détecter votre position");
         setLocationStatusType("error");
       }
     );
@@ -263,7 +263,7 @@ export default function Report() {
         return false;
       }
       if (file.size > maxImageSize) {
-        nextErrors.images = "Chaque image doit faire 5MB maximum.";
+        nextErrors.images = "Chaque image doit faire 5 Mo maximum.";
         return false;
       }
       return true;
@@ -338,7 +338,7 @@ export default function Report() {
       autoLocateStarted.current = false;
       setErrors({});
     } catch (err) {
-      setMessage(err.message || "Impossible d'envoyer l'alerte.");
+      setMessage(err.message || "Impossible d’envoyer l’alerte.");
     } finally {
       setSubmitting(false);
     }
@@ -352,7 +352,7 @@ export default function Report() {
             <CheckCircle2 size={34} />
           </div>
 
-          <h1 className="mt-2 text-xl font-semibold text-text">Alerte envoyee !</h1>
+          <h1 className="mt-2 text-xl font-semibold text-text">Alerte envoyée !</h1>
           <p className="mt-1 text-sm text-gray-500">
             {success.subtitle || "Votre signalement est en attente de validation."}
           </p>
@@ -387,7 +387,7 @@ export default function Report() {
           {steps[step - 1].description}
         </h1>
         <p className="text-sm font-medium text-slate-500 md:text-base">
-          {isAuthenticated ? "Votre alerte sera publiee immediatement" : "Votre alerte sera verifiee avant publication"}
+          {isAuthenticated ? "Votre alerte sera publiée immédiatement" : "Votre alerte sera vérifiée avant publication"}
         </p>
       </div>
 
@@ -410,7 +410,7 @@ export default function Report() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="font-heading text-lg font-black text-text">Que voulez-vous signaler ?</h2>
-              <p className="text-sm font-semibold text-slate-500">Choisissez une categorie pour commencer.</p>
+              <p className="text-sm font-semibold text-slate-500">Choisissez une catégorie pour commencer.</p>
             </div>
             {errors.category && <p className="text-xs font-bold text-red-600">{errors.category}</p>}
           </div>
@@ -450,8 +450,8 @@ export default function Report() {
           <Card className="space-y-3 p-4 md:p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="font-heading text-lg font-black text-text">Votre role</h2>
-                <p className="text-sm font-semibold text-slate-500">Dites si vous etes concerne, temoin ou anonyme.</p>
+                <h2 className="font-heading text-lg font-black text-text">Votre rôle</h2>
+                <p className="text-sm font-semibold text-slate-500">Dites si vous êtes concerné, témoin ou anonyme.</p>
               </div>
               {selectedCategory && (
                 <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-black text-primary">{selectedCategory.label}</span>
@@ -482,14 +482,14 @@ export default function Report() {
           </Card>
 
           <Card className="space-y-3 p-4 md:p-5">
-            <h2 className="font-heading text-lg font-black text-text">Details du probleme</h2>
+            <h2 className="font-heading text-lg font-black text-text">Détails du problème</h2>
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-700">Titre</label>
               <input
                 ref={fieldRefs.title}
                 value={form.title}
                 onChange={(event) => update("title", event.target.value)}
-                placeholder="Ex: Route cassee devant l'ecole"
+                placeholder="Ex. : route cassée devant l’école"
                 className={`form-field ${errors.title ? "border-red-300 focus:border-red-500 focus:ring-red-100" : ""}`}
               />
               {errors.title && <p className="mt-1 text-xs font-bold text-red-600">{errors.title}</p>}
@@ -500,7 +500,7 @@ export default function Report() {
                 ref={fieldRefs.description}
                 value={form.description}
                 onChange={(event) => update("description", event.target.value)}
-                placeholder="Expliquez ce qui se passe, depuis quand et pourquoi c'est important."
+                placeholder="Expliquez ce qui se passe, depuis quand et pourquoi c’est important."
                 rows={4}
                 className={`form-field ${errors.description ? "border-red-300 focus:border-red-500 focus:ring-red-100" : ""}`}
               />
@@ -516,7 +516,7 @@ export default function Report() {
             <Camera className="mt-1 text-primary" size={22} />
             <div>
               <h2 className="font-heading text-lg font-black text-text">Ajouter une image</h2>
-              <p className="text-sm font-semibold text-slate-500">Une photo aide les autres a comprendre rapidement.</p>
+              <p className="text-sm font-semibold text-slate-500">Une photo aide les autres à comprendre rapidement.</p>
             </div>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -554,8 +554,8 @@ export default function Report() {
             className="hidden min-h-[150px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center transition hover:border-primary hover:bg-green-50 md:flex"
           >
             <ImagePlus className="text-primary" size={32} />
-            <span className="mt-2 text-sm font-black text-text">Glisser-deposer des images</span>
-            <span className="text-xs font-semibold text-slate-500">Jusqu'a 3 images. 5MB maximum par image.</span>
+            <span className="mt-2 text-sm font-black text-text">Glisser-déposer des images</span>
+            <span className="text-xs font-semibold text-slate-500">Jusqu’à 3 images. 5 Mo maximum par image.</span>
           </div>
           {errors.images && <p className="text-xs font-bold text-red-600">{errors.images}</p>}
           {previews.length > 0 && (
@@ -620,17 +620,17 @@ export default function Report() {
               </Button>
               <Button type="button" onClick={() => setMapVisible(true)} variant="ghost" className="w-full">
                 <Pencil size={18} />
-                Modifier l'emplacement
+                Modifier l’emplacement
               </Button>
             </div>
             <div className="rounded-xl bg-slate-50 p-3 text-sm font-bold text-slate-600">
               {location ? (
                 <span className="flex items-center gap-2 text-text">
                   <MapPin size={17} className="text-primary" />
-                  Position detectee: {form.province} + {form.commune}
+                  Position détectée : {form.province} + {form.commune}
                 </span>
               ) : (
-                locationStatus || "Aucune position selectionnee"
+                locationStatus || "Aucune position sélectionnée"
               )}
             </div>
             {locationStatus && location && (
@@ -650,13 +650,13 @@ export default function Report() {
             {errors.location && <p className="text-xs font-bold text-red-600">{errors.location}</p>}
             {mapVisible && (
               <>
-                <p className="text-sm font-bold text-slate-600">Cliquez sur la carte pour choisir l'emplacement. Vous pouvez deplacer le marqueur.</p>
+                <p className="text-sm font-bold text-slate-600">Cliquez sur la carte pour choisir l’emplacement. Vous pouvez déplacer le marqueur.</p>
                 <ReportMap height="min(500px, 55vh)" onPick={(nextLocation) => applyLocation(nextLocation, "map")} pickedLocation={location} />
               </>
             )}
             {location && (
               <p className="text-xs font-bold text-slate-500">
-                Coordonnees: {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+                Coordonnées : {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
               </p>
             )}
           </Card>
@@ -666,10 +666,10 @@ export default function Report() {
       <Card className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
         <Button type="button" variant="ghost" onClick={goBack} disabled={step === 1} className="w-full sm:w-auto">
           <ChevronLeft size={18} />
-          Precedent
+          Précédent
         </Button>
         <div className="text-center text-xs font-bold text-slate-500">
-          Etape {step} sur {steps.length}
+          Étape {step} sur {steps.length}
         </div>
         {step < steps.length ? (
           <Button type="button" variant="success" onClick={goNext} className="w-full sm:w-auto">

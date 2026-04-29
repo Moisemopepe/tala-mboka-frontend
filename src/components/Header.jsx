@@ -19,7 +19,7 @@ export default function Header() {
         <Link
           to="/"
           className="min-w-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          aria-label="Retour a l'accueil"
+          aria-label="Retour à l’accueil"
         >
           <Logo compact />
         </Link>

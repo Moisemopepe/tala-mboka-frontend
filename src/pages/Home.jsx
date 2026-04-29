@@ -11,7 +11,7 @@ import { provinces } from "../utils/drcLocations.js";
 import { distanceKm, getRiskLevel, riskLevels } from "../utils/risk.js";
 
 const distanceOptions = [
-  { value: "", label: "Toutes distances" },
+  { value: "", label: "Toutes les distances" },
   { value: "1", label: "Moins de 1 km" },
   { value: "5", label: "Moins de 5 km" },
   { value: "10", label: "Moins de 10 km" },
@@ -81,7 +81,7 @@ export default function Home() {
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">Carte des alertes</h1>
-          <p className="text-sm font-medium text-slate-500 md:text-base">Comprendre les zones a risque et l'impact citoyen.</p>
+          <p className="text-sm font-medium text-slate-500 md:text-base">Comprendre les zones à risque et l’impact citoyen.</p>
         </div>
         <div className="grid grid-cols-2 rounded-xl bg-slate-100 p-1">
           <button
@@ -142,12 +142,12 @@ export default function Home() {
           </select>
           <Button type="button" variant="ghost" onClick={resetFilters}>
             <RotateCcw size={17} />
-            Reset
+            Réinitialiser
           </Button>
         </div>
         {!userLocation && distance && (
           <p className="rounded-xl bg-amber-50 p-3 text-sm font-bold text-amber-800">
-            Localisez-vous d'abord pour filtrer par distance.
+            Localisez-vous d’abord pour filtrer par distance.
           </p>
         )}
         {locationError && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{locationError}</p>}
@@ -155,7 +155,7 @@ export default function Home() {
 
       {selectedReport && (
         <p className="rounded-xl bg-green-50 p-3 text-sm font-bold text-primary">
-          Carte centree sur: {selectedReport.title}
+          Carte centrée sur : {selectedReport.title}
         </p>
       )}
 

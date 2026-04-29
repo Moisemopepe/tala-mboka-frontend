@@ -52,8 +52,8 @@ export default function Profile() {
   function validateField(field, value, nextForm = form) {
     if (mode !== "register") return "";
     if (field === "name" && value.trim().length < 2) return "Le nom est obligatoire.";
-    if (field === "phone" && !/^[0-9+()\s-]{8,}$/.test(value.trim())) return "Entrez un telephone valide.";
-    if (field === "password" && value.length < 6) return "Le mot de passe doit contenir au moins 6 caracteres.";
+    if (field === "phone" && !/^[0-9+()\s-]{8,}$/.test(value.trim())) return "Entrez un téléphone valide.";
+    if (field === "password" && value.length < 6) return "Le mot de passe doit contenir au moins 6 caractères.";
     if (field === "confirmPassword" && value !== nextForm.password) return "Les mots de passe ne correspondent pas.";
     return "";
   }
@@ -101,11 +101,11 @@ export default function Profile() {
     try {
       if (mode === "login") {
         await login(form.phone, form.password);
-        setSuccessMessage("Connexion reussie.");
+        setSuccessMessage("Connexion réussie.");
         navigate("/", { replace: true });
       } else {
         await register(form.name, form.phone, form.password);
-        setSuccessMessage("Compte cree avec succes.");
+        setSuccessMessage("Compte créé avec succès.");
         navigate("/", { replace: true });
       }
     } catch (err) {
@@ -172,7 +172,7 @@ export default function Profile() {
           {!reportsLoading && !reportsError && latestReports.length === 0 && (
             <div className="rounded-2xl bg-slate-50 p-5 text-center">
               <Bell className="mx-auto text-slate-400" size={26} />
-              <p className="mt-2 font-bold text-slate-600">Tu n'as encore publie aucune alerte</p>
+              <p className="mt-2 font-bold text-slate-600">Vous n’avez encore publié aucune alerte.</p>
             </div>
           )}
 
@@ -213,12 +213,12 @@ export default function Profile() {
           <Link to="/about">
             <Button type="button" variant="ghost" className="w-full">
               <Info size={18} />
-              A propos
+              À propos
             </Button>
           </Link>
           <Button type="button" onClick={logout} variant="ghost" className="w-full">
             <LogOut size={18} />
-            Deconnexion
+            Déconnexion
           </Button>
         </div>
       </div>
@@ -232,7 +232,7 @@ export default function Profile() {
           <h1 className="font-heading text-xl font-black leading-tight text-text md:text-2xl lg:text-3xl">Rejoignez Tala Mboka</h1>
           <p className="mt-1 text-sm font-bold text-slate-600 md:text-base">Signalez et améliorez votre quartier</p>
           <p className="mt-3 rounded-2xl bg-white/80 p-3 text-sm font-bold leading-6 text-slate-700 shadow-sm">
-            Chaque alerte aide votre quartier a etre vu, compris et mieux pris en charge.
+            Chaque alerte aide votre quartier à être vu, compris et mieux pris en charge.
           </p>
         </div>
       </Card>
@@ -240,8 +240,8 @@ export default function Profile() {
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
         {[
           { icon: Zap, text: "Publier des alertes rapidement" },
-          { icon: MapPinned, text: "Suivre les problemes proches" },
-          { icon: HeartHandshake, text: "Aider la communaute" }
+          { icon: MapPinned, text: "Suivre les problèmes proches" },
+          { icon: HeartHandshake, text: "Aider la communauté" }
         ].map(({ icon: Icon, text }) => (
           <div
             key={text}
@@ -299,12 +299,12 @@ export default function Profile() {
           </label>
         )}
         <label className="block">
-          <span className="mb-1 block text-sm font-semibold text-slate-700">Telephone</span>
+          <span className="mb-1 block text-sm font-semibold text-slate-700">Téléphone</span>
           <input
             required
             value={form.phone}
             onChange={(event) => update("phone", event.target.value)}
-            placeholder="Telephone"
+            placeholder="Téléphone"
             className={`form-field ${fieldClass("phone")}`}
           />
           {(fieldErrors.phone || (mode === "register" && form.phone && registerErrors.phone)) && (
@@ -352,11 +352,6 @@ export default function Profile() {
           </label>
         )}
 
-        {mode === "login" && (
-          <button type="button" className="text-left text-sm font-black text-primary">
-            Mot de passe oublié
-          </button>
-        )}
         {sessionMessage && <p className="rounded-xl bg-green-50 p-3 text-sm font-bold text-primary">{sessionMessage}</p>}
         {successMessage && <p className="rounded-xl bg-emerald-50 p-3 text-sm font-bold text-primary">{successMessage}</p>}
         {error && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p>}

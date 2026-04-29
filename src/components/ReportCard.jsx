@@ -13,12 +13,12 @@ import StatusBadge from "./StatusBadge.jsx";
 function relativeTime(dateValue) {
   const diff = Date.now() - new Date(dateValue).getTime();
   const minutes = Math.max(Math.floor(diff / 60000), 0);
-  if (minutes < 1) return "a l'instant";
-  if (minutes < 60) return `il y a ${minutes}min`;
+  if (minutes < 1) return "à l’instant";
+  if (minutes < 60) return `il y a ${minutes} min`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `il y a ${hours}h`;
+  if (hours < 24) return `il y a ${hours} h`;
   const days = Math.floor(hours / 24);
-  return `il y a ${days}j`;
+  return `il y a ${days} j`;
 }
 
 export default function ReportCard({ report, onLiked }) {
@@ -91,7 +91,7 @@ export default function ReportCard({ report, onLiked }) {
         <div className="rounded-lg bg-slate-50 p-3 text-xs font-semibold text-slate-600">
           <p className="flex items-center gap-1.5">
             <MapPin size={14} className="text-primary" />
-            {report.province || "Province non renseignee"} / {report.commune || "Commune non renseignee"}
+            {report.province || "Province non renseignée"} / {report.commune || "Commune non renseignée"}
           </p>
           <p className="mt-1 text-slate-500">
             {report.location?.lat?.toFixed(4) || "-"}, {report.location?.lng?.toFixed(4) || "-"}
@@ -108,7 +108,7 @@ export default function ReportCard({ report, onLiked }) {
         </div>
 
         <div className="flex items-center justify-between rounded-lg bg-green-50 px-3 py-2 text-sm font-semibold text-primary">
-          <span>{likesCount} personne{likesCount > 1 ? "s" : ""} concernee{likesCount > 1 ? "s" : ""}</span>
+          <span>{likesCount} personne{likesCount > 1 ? "s" : ""} concernée{likesCount > 1 ? "s" : ""}</span>
         </div>
 
         <div className="grid grid-cols-[1fr_auto_auto] gap-2">

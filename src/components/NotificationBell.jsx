@@ -63,12 +63,12 @@ export default function NotificationBell() {
           <div className="border-b border-slate-100 p-3">
             <p className="font-heading text-sm font-black text-text">Notifications</p>
             <p className="text-xs font-semibold text-slate-500">
-              {isAuthenticated ? "Mises a jour recentes" : "Connectez-vous pour recevoir vos mises a jour"}
+              {isAuthenticated ? "Mises à jour récentes" : "Connectez-vous pour recevoir vos mises à jour"}
             </p>
           </div>
 
           <div className="max-h-96 overflow-y-auto">
-            {!isAuthenticated && <p className="p-4 text-sm font-semibold text-slate-500">Aucune notification invite.</p>}
+            {!isAuthenticated && <p className="p-4 text-sm font-semibold text-slate-500">Aucune notification pour le moment.</p>}
             {error && <p className="p-4 text-sm font-bold text-danger">{error}</p>}
             {isAuthenticated && items.length === 0 && !error && (
               <p className="p-4 text-sm font-semibold text-slate-500">Aucune notification.</p>

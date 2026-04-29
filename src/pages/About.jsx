@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronDown, ChevronUp, Copy, ExternalLink, Mail, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Mail, ShieldCheck, UserRound } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../components/Button.jsx";
@@ -35,14 +35,7 @@ const faqs = [
 
 export default function About() {
   const navigate = useNavigate();
-  const [copied, setCopied] = useState(false);
   const [openFaq, setOpenFaq] = useState(0);
-
-  async function copyVersion() {
-    await navigator.clipboard?.writeText(VERSION);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
-  }
 
   return (
     <div className="mx-auto w-full max-w-[920px] pb-8">
@@ -137,27 +130,19 @@ export default function About() {
         </div>
       </section>
 
-      <section className="mt-6 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Version</p>
-            <Link to="/about" className="mt-1 inline-flex items-center gap-2 text-sm font-black text-primary">
-              Version {VERSION}
-              <ExternalLink size={14} />
-            </Link>
-            {copied && <p className="mt-1 text-xs font-bold text-primary">Version copiée</p>}
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button type="button" variant="ghost" onClick={copyVersion}>
-              <Copy size={17} />
-              Copier la version
-            </Button>
-            <Button as={Link} to="/report" type="button" variant="success">
-              Signaler maintenant
-            </Button>
-          </div>
+      <section className="mt-6 rounded-2xl bg-white p-5 text-center shadow-sm ring-1 ring-slate-200">
+        <h2 className="text-xl font-black text-text">Un problème dans votre quartier ?</h2>
+        <p className="mx-auto mt-2 max-w-xl text-sm font-semibold leading-6 text-slate-600">
+          Décrivez la situation, ajoutez une photo si possible et localisez le problème en quelques secondes.
+        </p>
+        <div className="mt-4 flex justify-center">
+          <Button as={Link} to="/report" type="button" variant="success">
+            Signaler maintenant
+          </Button>
         </div>
       </section>
+
+      <p className="mt-5 text-center text-xs font-semibold text-slate-400">Tala Mboka · Version {VERSION}</p>
     </div>
   );
 }

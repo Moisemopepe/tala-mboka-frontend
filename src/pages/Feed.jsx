@@ -47,7 +47,7 @@ export default function Feed() {
         });
 
         if (changed) {
-          setNotice(`Mise a jour: "${changed.title}" est maintenant ${statuses[changed.status] || changed.status}.`);
+          setNotice(`Mise à jour : « ${changed.title} » est maintenant ${statuses[changed.status] || changed.status}.`);
         }
 
         localStorage.setItem("tala_report_statuses", JSON.stringify(current));
@@ -72,7 +72,7 @@ export default function Feed() {
         setNearby({ lat: position.coords.latitude, lng: position.coords.longitude });
         setLocationError("");
       },
-      () => setLocationError("Impossible de recuperer votre position.")
+      () => setLocationError("Impossible de récupérer votre position.")
     );
   }
 
@@ -86,10 +86,10 @@ export default function Feed() {
               <h1 className="mt-1 font-heading text-2xl font-semibold leading-tight text-text md:text-3xl">
                 Alertes autour de vous
               </h1>
-              <p className="mt-1 text-sm text-slate-500 md:text-base">Suivez les problemes signales en temps reel.</p>
+              <p className="mt-1 text-sm text-slate-500 md:text-base">Suivez les problèmes signalés en temps réel.</p>
             </div>
             <Button type="button" variant="success" onClick={() => (window.location.href = "/report")} className="w-full md:w-auto">
-              Signaler un probleme
+              Signaler un problème
             </Button>
           </div>
         </div>
@@ -110,7 +110,7 @@ export default function Feed() {
           onChange={(event) => setSort(event.target.value)}
           className="form-field w-full flex-1 text-sm font-bold"
         >
-          <option value="newest">Plus recents</option>
+          <option value="newest">Plus récents</option>
           <option value="liked">Plus soutenus</option>
         </select>
         <Button
@@ -120,12 +120,12 @@ export default function Feed() {
           className={`w-full md:w-auto md:shrink-0 ${nearby ? "border-green-200 bg-green-50 text-primary" : ""}`}
         >
           {nearby ? <X size={18} /> : <LocateFixed size={18} />}
-          {nearby ? "Reset" : "Proche"}
+          {nearby ? "Retirer" : "Autour de moi"}
         </Button>
       </div>
       {nearby && (
         <p className="rounded-xl bg-green-50 p-3 text-sm font-bold text-primary">
-          Filtre distance actif: alertes proches de vous en premier.
+          Filtre distance actif : les alertes proches de vous apparaissent en premier.
         </p>
       )}
       {locationError && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{locationError}</p>}
@@ -192,9 +192,9 @@ export default function Feed() {
         !loading && (
         <div className="w-full rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
           <p className="text-lg font-semibold text-text">Aucune alerte pour le moment</p>
-          <p className="mt-2 text-sm text-slate-500">Soyez le premier a signaler.</p>
+          <p className="mt-2 text-sm text-slate-500">Soyez le premier à signaler.</p>
           <Button type="button" variant="success" className="mt-4" onClick={() => (window.location.href = "/report")}>
-            Creer une alerte
+            Créer une alerte
           </Button>
         </div>
         )

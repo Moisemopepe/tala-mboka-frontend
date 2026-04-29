@@ -174,7 +174,7 @@ export default function ReportMap({
         onUserLocation?.(nextLocation);
         onPick?.(nextLocation);
       },
-      () => onLocationError?.("Permission refusee ou GPS indisponible.")
+      () => onLocationError?.("Permission refusée ou GPS indisponible.")
     );
   }
 
@@ -227,7 +227,7 @@ export default function ReportMap({
               }
             }}
           >
-            <Popup>Position selectionnee</Popup>
+            <Popup>Position sélectionnée</Popup>
           </Marker>
         )}
         {!analytics &&

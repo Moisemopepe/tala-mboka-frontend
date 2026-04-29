@@ -30,7 +30,7 @@ export default function MyReports() {
       })
       .catch((err) => {
         if (err.status === 401) {
-          localStorage.setItem("tala_session_message", "Votre session a expire. Reconnectez-vous.");
+          localStorage.setItem("tala_session_message", "Votre session a expiré. Reconnectez-vous.");
           navigate("/profile", { replace: true });
           return;
         }
@@ -66,7 +66,7 @@ export default function MyReports() {
         <Card className="p-6 text-center">
           <FileText className="mx-auto text-slate-400" size={28} />
           <p className="mt-3 font-heading text-lg font-black text-text">Aucune alerte disponible</p>
-          <p className="mt-1 text-sm font-semibold text-slate-500">Vos prochains signalements apparaitront ici.</p>
+          <p className="mt-1 text-sm font-semibold text-slate-500">Vos prochains signalements apparaîtront ici.</p>
         </Card>
       )}
 

@@ -53,11 +53,11 @@ export default function AdminLogin() {
         <Logo />
         <div>
           <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">Connexion admin</h1>
-          <p className="text-sm font-semibold text-slate-600 md:text-base">Accedez au dashboard admin ou moderateur.</p>
+          <p className="text-sm font-semibold text-slate-600 md:text-base">Accédez au tableau de bord admin ou modérateur.</p>
         </div>
         <form onSubmit={submit} className="space-y-3">
           <label className="block">
-            <span className="mb-1 block text-sm font-semibold text-slate-700">Telephone admin</span>
+            <span className="mb-1 block text-sm font-semibold text-slate-700">Téléphone admin</span>
             <input
               required
               value={form.phone}
