@@ -1,6 +1,23 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.4.8": {
+    adminNotes: `Version 0.4.8
+
+Performance :
+- Audit WebPageTest analysé.
+- Ajout de règles de cache Vercel pour les fichiers statiques.
+- Les fichiers versionnés dans /assets sont maintenant cacheables longtemps.
+
+Impact :
+- Navigation plus rapide lors des prochaines visites.
+- Moins de requêtes inutiles vers Vercel.`,
+    userNotes: `Version 0.4.8
+
+Amélioration :
+- L'application se recharge plus rapidement après une première visite.
+- Les fichiers statiques sont mieux optimisés.`
+  },
   "0.4.7": {
     adminNotes: `Version 0.4.7
 
