@@ -1,0 +1,17 @@
+{
+  "appId": "app.talamboka.mobile",
+  "appName": "Tala Mboka",
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "launchShowDuration": 1200,
+      "backgroundColor": "#16a34a",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "backgroundColor": "#ffffff",
+      "style": "LIGHT"
+    }
+  }
+}
