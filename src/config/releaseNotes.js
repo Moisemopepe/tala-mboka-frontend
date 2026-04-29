@@ -1,6 +1,23 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.4.5": {
+    adminNotes: `Version 0.4.5
+
+A propos:
+- Refonte complete de la page A propos.
+- Ajout d'un discours plus clair, plus citoyen et plus professionnel.
+- Ajout d'une FAQ deroulante.
+
+UX:
+- Page plus lisible sur mobile.
+- Textes corriges et mieux structures.`,
+    userNotes: `Version 0.4.5
+
+Amelioration:
+- La page A propos est plus claire, plus professionnelle et plus facile a lire.
+- Une FAQ repond maintenant aux questions principales.`
+  },
   "0.4.4": {
     adminNotes: `Version 0.4.4
 

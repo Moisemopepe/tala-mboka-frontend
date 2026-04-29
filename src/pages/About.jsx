@@ -1,21 +1,42 @@
-import { CheckCircle2, Copy, ExternalLink, Mail, ShieldCheck, Target, UserRound } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Copy, ExternalLink, Mail, ShieldCheck, UserRound } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Button from "../components/Button.jsx";
-import Card from "../components/Card.jsx";
 import Logo from "../components/Logo.jsx";
 import { VERSION } from "../config/version.js";
 
-const features = [
-  "Signaler un probleme en quelques secondes",
-  "Voir les incidents autour de soi",
-  "Suivre l'evolution des situations signalees",
-  "Contribuer a rendre son quartier plus sur et plus propre",
-  "Donner de la visibilite aux problemes souvent ignores"
+const faqs = [
+  {
+    question: "À quoi sert Tala Mboka ?",
+    answer:
+      "Tala Mboka permet aux citoyens de signaler les problèmes rencontrés dans leur quartier afin de les rendre visibles, localisés et plus faciles à suivre. L’objectif est de donner une voix aux habitants et de mieux comprendre les réalités du terrain."
+  },
+  {
+    question: "Comment signaler un incident ?",
+    answer:
+      "Il suffit d’appuyer sur « Signaler », de choisir le type de problème, d’ajouter une courte description, une photo si possible, puis de confirmer l’emplacement. Le signalement est ensuite publié ou vérifié selon votre statut de connexion."
+  },
+  {
+    question: "Pourquoi activer la géolocalisation ?",
+    answer:
+      "La géolocalisation permet de placer le signalement au bon endroit. Si elle ne fonctionne pas, vous pouvez sélectionner manuellement la province, la commune et ajuster la position sur la carte."
+  },
+  {
+    question: "Dois-je créer un compte pour signaler ?",
+    answer:
+      "Non. Vous pouvez envoyer un signalement sans compte. Les signalements envoyés comme invité peuvent être vérifiés avant publication. Avec un compte, vous pouvez suivre plus facilement vos alertes."
+  },
+  {
+    question: "Que deviennent les signalements ?",
+    answer:
+      "Chaque signalement contribue à rendre un problème visible. Il peut être consulté dans le fil citoyen, affiché sur la carte et suivi selon son évolution."
+  }
 ];
 
 export default function About() {
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [openFaq, setOpenFaq] = useState(0);
 
   async function copyVersion() {
     await navigator.clipboard?.writeText(VERSION);
@@ -24,116 +45,119 @@ export default function About() {
   }
 
   return (
-    <div className="w-full">
-      <Card className="w-full overflow-hidden">
-        <div className="bg-white p-5 sm:p-7">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <Logo />
-              <h1 className="mt-5 font-heading text-xl font-black leading-tight text-text md:text-2xl lg:text-3xl">A propos</h1>
-              <p className="mt-2 text-sm font-bold leading-7 text-slate-700 md:text-base">
-                Tala Mboka est une plateforme citoyenne qui permet a chacun de signaler facilement les problemes de son
-                quartier : routes degradees, coupures d'electricite, insecurite, insalubrite, et bien plus.
-              </p>
-              <p className="mt-3 text-sm font-semibold leading-6 text-slate-600 md:text-base">
-                Grace a Tala Mboka, chaque signalement devient visible, localise et suivi. Les citoyens peuvent ainsi
-                alerter, informer et contribuer a ameliorer leur environnement au quotidien.
-              </p>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-white/85 p-3 shadow-sm">
-              <p className="text-xs font-black uppercase text-slate-500">Version</p>
-              <div className="mt-2 flex items-center gap-2">
-                <Link
-                  to="/about"
-                  className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-green-50 px-3 text-sm font-semibold text-primary"
-                  title="Changelog a venir"
-                >
-                  v{VERSION}
-                  <ExternalLink size={14} />
-                </Link>
+    <div className="mx-auto w-full max-w-[920px] pb-8">
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:bg-slate-50 active:scale-95"
+        aria-label="Retour"
+      >
+        <ArrowLeft size={22} />
+      </button>
+
+      <section className="rounded-[28px] bg-white px-5 py-9 text-center shadow-sm ring-1 ring-slate-200 sm:px-8 md:py-12">
+        <div className="flex justify-center">
+          <Logo />
+        </div>
+
+        <h1 className="mx-auto mt-8 max-w-2xl font-heading text-3xl font-black leading-tight text-[#071066] sm:text-4xl md:text-5xl">
+          Votre allié pour un quartier plus propre, plus sûr et mieux suivi
+        </h1>
+
+        <p className="mx-auto mt-8 max-w-2xl text-lg font-medium leading-8 text-slate-800 md:text-xl md:leading-9">
+          Grâce à Tala Mboka, chaque citoyen peut contribuer activement à l’amélioration de son cadre de vie.
+        </p>
+
+        <p className="mx-auto mt-16 max-w-3xl text-base font-medium leading-8 text-slate-700 md:text-lg md:leading-9">
+          Où que vous soyez, signalez en toute simplicité depuis votre smartphone, votre tablette ou votre ordinateur :
+          route dégradée, coupure d’électricité, problème d’eau, insalubrité, insécurité, escroquerie ou tout autre
+          incident qui mérite d’être vu.
+        </p>
+
+        <p className="mx-auto mt-6 max-w-3xl text-base font-medium leading-8 text-slate-700 md:text-lg md:leading-9">
+          Il vous suffit de vous géolocaliser, d’ajouter une photo, de décrire la situation et d’envoyer votre
+          signalement. Chaque alerte devient visible, localisée et suivie pour aider la communauté à mieux comprendre
+          les problèmes du quotidien.
+        </p>
+
+        <h2 className="mx-auto mt-14 max-w-2xl text-2xl font-semibold leading-snug text-slate-950 md:text-3xl">
+          Avec Tala Mboka, engagez-vous dans une démarche citoyenne simple, utile et moderne.
+        </h2>
+      </section>
+
+      <section className="mt-6 rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-8">
+        <div className="rounded-3xl bg-[#071066] px-6 py-6 text-white">
+          <h2 className="text-3xl font-semibold leading-tight sm:text-4xl">Les questions les plus fréquentes.</h2>
+        </div>
+
+        <div className="mt-6 divide-y divide-slate-200">
+          {faqs.map((item, index) => {
+            const isOpen = openFaq === index;
+            return (
+              <div key={item.question} className="py-5">
                 <button
                   type="button"
-                  onClick={copyVersion}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:border-green-200 hover:bg-green-50 hover:text-primary"
-                  aria-label="Copier la version"
-                  title="Copier la version"
+                  onClick={() => setOpenFaq(isOpen ? -1 : index)}
+                  className="flex w-full items-center justify-between gap-4 text-left text-xl font-semibold leading-8 text-[#071066] transition hover:text-primary"
                 >
-                  <Copy size={17} />
+                  <span>{item.question}</span>
+                  {isOpen ? <ChevronUp className="shrink-0 text-slate-300" size={30} /> : <ChevronDown className="shrink-0 text-slate-300" size={30} />}
                 </button>
+                {isOpen && <p className="mt-5 text-base font-medium leading-8 text-slate-600 md:text-lg">{item.answer}</p>}
               </div>
-              {copied && <p className="mt-2 text-xs font-bold text-success">Version copiee</p>}
-            </div>
-          </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <ShieldCheck className="text-primary" size={24} />
+          <h3 className="mt-3 text-lg font-black text-text">Impact</h3>
+          <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+            Tala Mboka donne une voix aux citoyens et aide à rendre les problèmes locaux plus visibles.
+          </p>
         </div>
 
-        <div className="space-y-5 p-5 sm:p-7">
-          <section>
-            <div className="flex items-center gap-2">
-              <Target className="text-primary" size={20} />
-              <h2 className="font-heading text-lg font-black text-text">Pourquoi utiliser Tala Mboka ?</h2>
-            </div>
-            <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
-              {features.map((feature) => (
-                <div key={feature} className="flex items-start gap-2 rounded-xl bg-slate-50 p-3 text-sm font-bold text-slate-700">
-                  <CheckCircle2 className="mt-0.5 shrink-0 text-success" size={17} />
-                  <span>{feature}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-xl bg-emerald-50 p-4">
-            <div className="flex items-start gap-3">
-              <ShieldCheck className="mt-0.5 shrink-0 text-success" size={22} />
-              <div>
-                <h2 className="font-heading text-lg font-black text-emerald-950">Impact</h2>
-                <p className="mt-2 text-sm font-bold leading-6 text-emerald-900">
-                  Tala Mboka donne une voix aux citoyens. Chaque signalement aide a mieux comprendre les realites du
-                  terrain et a encourager des actions concretes pour ameliorer les conditions de vie.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-xl border border-slate-100 p-4">
-            <h2 className="font-heading text-lg font-black text-text">Vision</h2>
-            <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-              Notre ambition est de creer une communaute active ou chaque citoyen peut participer au changement de son
-              environnement, simplement avec son telephone.
-            </p>
-          </section>
-
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <section className="rounded-xl border border-slate-100 p-4">
-              <div className="flex items-center gap-2">
-                <Mail className="text-primary" size={20} />
-                <h2 className="font-heading text-lg font-black text-text">Contact</h2>
-              </div>
-              <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-                Pour une assistance, une suggestion ou un partenariat, contactez l'equipe Tala Mboka.
-              </p>
-              <a href="mailto:contact@talamboka.app" className="mt-3 inline-flex text-sm font-black text-primary">
-                contact@talamboka.app
-              </a>
-            </section>
-
-            <section className="rounded-xl border border-slate-100 p-4">
-              <div className="flex items-center gap-2">
-                <UserRound className="text-primary" size={20} />
-                <h2 className="font-heading text-lg font-black text-text">Developpeur</h2>
-              </div>
-              <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-                Application developpee par Moise Mopepe pour encourager la participation citoyenne et moderniser le
-                suivi des problemes urbains.
-              </p>
-            </section>
-          </div>
-
-          <Button as={Link} to="/profile" type="button" variant="ghost" className="w-full sm:w-auto">
-            Retour au profil
-          </Button>
+        <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <Mail className="text-primary" size={24} />
+          <h3 className="mt-3 text-lg font-black text-text">Contact</h3>
+          <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">Une suggestion, une question ou un partenariat ?</p>
+          <a href="mailto:contact@talamboka.app" className="mt-2 inline-flex text-sm font-black text-primary">
+            contact@talamboka.app
+          </a>
         </div>
-      </Card>
+
+        <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <UserRound className="text-primary" size={24} />
+          <h3 className="mt-3 text-lg font-black text-text">Développeur</h3>
+          <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+            Application développée par Moïse Mopepe pour encourager la participation citoyenne.
+          </p>
+        </div>
+      </section>
+
+      <section className="mt-6 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Version</p>
+            <Link to="/about" className="mt-1 inline-flex items-center gap-2 text-sm font-black text-primary">
+              Version {VERSION}
+              <ExternalLink size={14} />
+            </Link>
+            {copied && <p className="mt-1 text-xs font-bold text-primary">Version copiée</p>}
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button type="button" variant="ghost" onClick={copyVersion}>
+              <Copy size={17} />
+              Copier la version
+            </Button>
+            <Button as={Link} to="/report" type="button" variant="success">
+              Signaler maintenant
+            </Button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
