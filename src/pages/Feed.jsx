@@ -106,6 +106,7 @@ export default function Feed() {
       <section className="space-y-3 rounded-xl border border-slate-200/70 bg-white p-3 shadow-sm">
       <div className="flex flex-col gap-2 md:flex-row">
         <select
+          aria-label="Trier les alertes"
           value={sort}
           onChange={(event) => setSort(event.target.value)}
           className="form-field w-full flex-1 text-sm font-bold"
@@ -117,7 +118,7 @@ export default function Feed() {
           type="button"
           onClick={nearby ? () => setNearby(null) : useLocation}
           variant="ghost"
-          className={`w-full md:w-auto md:shrink-0 ${nearby ? "border-green-200 bg-green-50 text-primary" : ""}`}
+          className={`w-full md:w-auto md:shrink-0 ${nearby ? "border-green-200 bg-green-50 text-green-700" : ""}`}
         >
           {nearby ? <X size={18} /> : <LocateFixed size={18} />}
           {nearby ? "Retirer" : "Autour de moi"}
@@ -131,6 +132,7 @@ export default function Feed() {
       {locationError && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{locationError}</p>}
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <select
+          aria-label="Filtrer par province"
           value={province}
           onChange={(event) => {
             setProvince(event.target.value);
@@ -146,6 +148,7 @@ export default function Feed() {
           ))}
         </select>
         <select
+          aria-label="Filtrer par commune"
           value={commune}
           onChange={(event) => setCommune(event.target.value)}
           disabled={!province}
@@ -160,7 +163,7 @@ export default function Feed() {
         </select>
       </div>
       <CategoryFilter value={category} onChange={setCategory} />
-      <select value={status} onChange={(event) => setStatus(event.target.value)} className="form-field text-sm font-bold">
+      <select aria-label="Filtrer par statut" value={status} onChange={(event) => setStatus(event.target.value)} className="form-field text-sm font-bold">
         <option value="">Tous les statuts</option>
         {Object.entries(riskLevels)
           .filter(([key]) => key === "danger" || key === "critique")

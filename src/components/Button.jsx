@@ -1,9 +1,9 @@
 const variants = {
-  primary: "bg-primary text-white shadow-sm hover:bg-green-700",
-  success: "bg-primary text-white shadow-sm hover:bg-green-700",
+  primary: "bg-green-700 text-white shadow-sm hover:bg-green-800",
+  success: "bg-green-700 text-white shadow-sm hover:bg-green-800",
   danger: "bg-danger text-white shadow-sm hover:bg-red-600",
   secondary: "bg-info text-slate-950 shadow-sm hover:bg-yellow-400",
-  ghost: "border border-slate-200 bg-white text-slate-800 shadow-sm hover:border-green-200 hover:bg-green-50 hover:text-primary"
+  ghost: "border border-slate-200 bg-white text-slate-800 shadow-sm hover:border-green-200 hover:bg-green-50 hover:text-green-700"
 };
 
 const sizes = {

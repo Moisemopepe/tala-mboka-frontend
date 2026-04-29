@@ -1,6 +1,23 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.4.7": {
+    adminNotes: `Version 0.4.7
+
+Audit :
+- Correction des points détectés par Lighthouse.
+- Ajout des libellés accessibles sur les filtres du fil citoyen.
+- Ajout d'un fichier robots.txt valide et d'un sitemap.
+
+Qualité :
+- Contraste renforcé sur les boutons et les onglets actifs.`,
+    userNotes: `Version 0.4.7
+
+Amélioration :
+- Le site est plus lisible et plus accessible.
+- Les filtres du fil citoyen sont mieux reconnus par les lecteurs d'écran.
+- Le référencement technique est mieux préparé.`
+  },
   "0.4.6": {
     adminNotes: `Version 0.4.6
 

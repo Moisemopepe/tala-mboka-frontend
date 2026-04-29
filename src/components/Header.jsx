@@ -19,7 +19,7 @@ export default function Header() {
         <Link
           to="/"
           className="min-w-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          aria-label="Retour à l’accueil"
+          aria-label="Tala Mboka - Signaler pour changer"
         >
           <Logo compact />
         </Link>
@@ -31,7 +31,7 @@ export default function Header() {
               end={to === "/"}
               className={({ isActive }) =>
                 `inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition ${
-                  isActive ? "bg-white text-primary shadow-sm" : "text-slate-600 hover:bg-white hover:text-primary"
+                  isActive ? "bg-white text-green-700 shadow-sm" : "text-slate-600 hover:bg-white hover:text-green-700"
                 }`
               }
             >
