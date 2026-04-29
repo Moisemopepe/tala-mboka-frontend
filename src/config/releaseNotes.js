@@ -1,6 +1,22 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.5.1": {
+    adminNotes: `Version 0.5.1
+
+Notifications :
+- Les notifications sont marquées comme lues dès l'ouverture.
+- Le panneau se ferme automatiquement après quelques secondes.
+- Un clic en dehors du panneau ou la touche Échap le ferme aussi.
+
+UX :
+- Comportement plus fluide et moins statique.`,
+    userNotes: `Version 0.5.1
+
+Amélioration :
+- Les notifications disparaissent plus naturellement après consultation.
+- L'interface demande moins d'actions manuelles.`
+  },
   "0.5.0": {
     adminNotes: `Version 0.5.0
 

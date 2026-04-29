@@ -1,5 +1,5 @@
 import { Bell } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -9,6 +9,7 @@ export default function NotificationBell() {
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
   const [error, setError] = useState("");
+  const panelRef = useRef(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -25,8 +26,10 @@ export default function NotificationBell() {
       setItems(data.notifications || []);
       setUnread(data.unread || 0);
       setError("");
+      return data;
     } catch (err) {
       setError(err.message);
+      return null;
     }
   }
 
@@ -34,16 +37,48 @@ export default function NotificationBell() {
     const nextOpen = !open;
     setOpen(nextOpen);
     if (nextOpen && isAuthenticated) {
-      await loadNotifications();
-      if (unread > 0) {
-        await api("/notifications/read", { method: "PATCH" });
+      const data = await loadNotifications();
+      const notifications = data?.notifications || [];
+      if ((data?.unread || unread) > 0) {
         setUnread(0);
+        setItems(notifications.map((item) => ({ ...item, read: true })));
+        api("/notifications/read", { method: "PATCH" }).catch(() => {});
       }
     }
   }
 
+  useEffect(() => {
+    if (!open) return;
+
+    function closeOnOutsideClick(event) {
+      if (!panelRef.current?.contains(event.target)) {
+        setOpen(false);
+      }
+    }
+
+    function closeOnEscape(event) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const timer = window.setTimeout(() => setOpen(false), 6000);
+    return () => window.clearTimeout(timer);
+  }, [open, items.length]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={panelRef}>
       <button
         type="button"
         onClick={toggleOpen}
