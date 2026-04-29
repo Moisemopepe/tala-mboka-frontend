@@ -1,5 +1,6 @@
 import { FileText, Home, Map, PlusCircle, UserCircle } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 import Logo from "./Logo.jsx";
 import NotificationBell from "./NotificationBell.jsx";
 
@@ -10,6 +11,8 @@ const desktopNav = [
 ];
 
 export default function Header() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-200/70 bg-white/95 shadow-sm backdrop-blur">
       <div className="flex w-full items-center justify-between gap-3 px-4 py-3 sm:px-6 md:px-8 lg:px-12">
@@ -42,7 +45,7 @@ export default function Header() {
           <Link
             to="/profile"
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-sm transition hover:bg-green-700 active:scale-95"
-            aria-label="Profil"
+            aria-label={isAuthenticated ? "Profil" : "Compte"}
           >
             <UserCircle size={21} />
           </Link>

@@ -7,8 +7,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 const items = [
   { to: "/", label: "Fil", icon: List },
   { to: "/report", label: "Signaler", icon: PlusCircle },
-  { to: "/feed", label: "Carte", icon: Home },
-  { to: "/profile", label: "Profil", icon: User }
+  { to: "/feed", label: "Carte", icon: Home }
 ];
 
 export default function Layout() {
@@ -18,9 +17,10 @@ export default function Layout() {
   const storedUser = JSON.parse(localStorage.getItem("tala_user") || "null");
   const currentUser = user || storedUser;
   const canManage = ["admin", "moderator"].includes(currentUser?.role);
+  const accountItem = { to: "/profile", label: currentUser ? "Profil" : "Compte", icon: User };
   const userItems = currentUser
-    ? [...items, { to: "/my-reports", label: "Alertes", icon: FileText }]
-    : [...items, { to: "/about", label: "A propos", icon: Info }];
+    ? [...items, accountItem, { to: "/my-reports", label: "Alertes", icon: FileText }]
+    : [...items, accountItem, { to: "/about", label: "A propos", icon: Info }];
   const navItems = canManage ? [...userItems, { to: "/admin", label: "Admin", icon: LayoutDashboard }] : userItems;
 
   useEffect(() => {

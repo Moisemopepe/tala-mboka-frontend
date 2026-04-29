@@ -1,6 +1,21 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.4.4": {
+    adminNotes: `Version 0.4.4
+
+Navigation:
+- L'onglet Profil devient Compte quand l'utilisateur n'est pas connecte.
+- L'onglet Profil reste affiche uniquement pour les utilisateurs connectes.
+
+UX:
+- Navigation plus claire pour les invites et les utilisateurs connectes.`,
+    userNotes: `Version 0.4.4
+
+Amelioration:
+- Si vous n'etes pas connecte, l'onglet s'appelle maintenant Compte.
+- Une fois connecte, il devient Profil.`
+  },
   "0.4.3": {
     adminNotes: `Version 0.4.3
 
