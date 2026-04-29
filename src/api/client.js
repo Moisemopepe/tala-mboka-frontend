@@ -18,10 +18,16 @@ export async function api(path, options = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers: { ...headers, ...options.headers }
-  });
+  let response;
+
+  try {
+    response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers: { ...headers, ...options.headers }
+    });
+  } catch {
+    throw new Error("Impossible de joindre le serveur. Vérifiez votre connexion puis réessayez.");
+  }
 
   const data = await response.json().catch(() => ({}));
 

@@ -60,9 +60,10 @@ const categoryIcons = {
 
 const steps = [
   { id: 1, title: "Catégorie", description: "Que voulez-vous signaler ?" },
-  { id: 2, title: "Détails", description: "Expliquez rapidement la situation." },
-  { id: 3, title: "Preuves", description: "Ajoutez une photo si possible." },
-  { id: 4, title: "Position", description: "Confirmez l’emplacement." }
+  { id: 2, title: "Rôle", description: "Quel est votre rôle ?" },
+  { id: 3, title: "Détails", description: "Expliquez rapidement la situation." },
+  { id: 4, title: "Preuves", description: "Ajoutez une photo si possible." },
+  { id: 5, title: "Position", description: "Confirmez l’emplacement." }
 ];
 
 export default function Report() {
@@ -160,16 +161,16 @@ export default function Report() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function validate(targetStep = 4) {
+  function validate(targetStep = 5) {
     const nextErrors = {};
     if (!form.category) nextErrors.category = "Choisissez une catégorie.";
-    if (targetStep >= 2) {
+    if (targetStep >= 3) {
       if (form.title.trim().length < 3) nextErrors.title = "Le titre doit contenir au moins 3 caractères.";
       if (form.description.trim().length < 10) {
         nextErrors.description = "La description doit contenir au moins 10 caractères.";
       }
     }
-    if (targetStep >= 4 && !location) nextErrors.location = "Choisissez une position GPS ou cliquez sur la carte.";
+    if (targetStep >= 5 && !location) nextErrors.location = "Choisissez une position GPS ou cliquez sur la carte.";
     return nextErrors;
   }
 
@@ -300,7 +301,7 @@ export default function Report() {
     }
     if (submitting) return;
 
-    const nextErrors = validate(4);
+    const nextErrors = validate(5);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       focusFirstError(nextErrors);
@@ -391,7 +392,7 @@ export default function Report() {
         </p>
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}>
         {steps.map((item) => (
           <div
             key={item.id}
@@ -446,71 +447,71 @@ export default function Report() {
       )}
 
       {step === 2 && (
-        <div className="space-y-4">
-          <Card className="space-y-3 p-4 md:p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="font-heading text-lg font-black text-text">Votre rôle</h2>
-                <p className="text-sm font-semibold text-slate-500">Dites si vous êtes concerné, témoin ou anonyme.</p>
-              </div>
-              {selectedCategory && (
-                <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-black text-primary">{selectedCategory.label}</span>
-              )}
-            </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              {Object.entries(reporterRoles).map(([key, item]) => {
-                const selected = form.reporterRole === key;
-                const RoleIcon = key === "concerned" ? UserRound : key === "witness" ? UsersRound : ShieldAlert;
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => update("reporterRole", key)}
-                    className={`rounded-xl border p-3 text-left transition active:scale-[0.98] ${
-                      selected
-                        ? "border-green-300 bg-green-50 text-primary shadow-sm"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-green-200 hover:bg-green-50"
-                    }`}
-                  >
-                    <RoleIcon size={20} />
-                    <span className="mt-2 block text-sm font-black">{item.label}</span>
-                    <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">{item.description}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </Card>
-
-          <Card className="space-y-3 p-4 md:p-5">
-            <h2 className="font-heading text-lg font-black text-text">Détails du problème</h2>
+        <Card className="space-y-3 p-4 md:p-5">
+          <div className="flex items-start justify-between gap-3">
             <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Titre</label>
-              <input
-                ref={fieldRefs.title}
-                value={form.title}
-                onChange={(event) => update("title", event.target.value)}
-                placeholder="Ex. : route cassée devant l’école"
-                className={`form-field ${errors.title ? "border-red-300 focus:border-red-500 focus:ring-red-100" : ""}`}
-              />
-              {errors.title && <p className="mt-1 text-xs font-bold text-red-600">{errors.title}</p>}
+              <h2 className="font-heading text-lg font-black text-text">Votre rôle</h2>
+              <p className="text-sm font-semibold text-slate-500">Dites si vous êtes concerné, témoin ou anonyme.</p>
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-slate-700">Description</label>
-              <textarea
-                ref={fieldRefs.description}
-                value={form.description}
-                onChange={(event) => update("description", event.target.value)}
-                placeholder="Expliquez ce qui se passe, depuis quand et pourquoi c’est important."
-                rows={4}
-                className={`form-field ${errors.description ? "border-red-300 focus:border-red-500 focus:ring-red-100" : ""}`}
-              />
-              {errors.description && <p className="mt-1 text-xs font-bold text-red-600">{errors.description}</p>}
-            </div>
-          </Card>
-        </div>
+            {selectedCategory && (
+              <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-black text-primary">{selectedCategory.label}</span>
+            )}
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {Object.entries(reporterRoles).map(([key, item]) => {
+              const selected = form.reporterRole === key;
+              const RoleIcon = key === "concerned" ? UserRound : key === "witness" ? UsersRound : ShieldAlert;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => update("reporterRole", key)}
+                  className={`rounded-xl border p-3 text-left transition active:scale-[0.98] ${
+                    selected
+                      ? "border-green-300 bg-green-50 text-primary shadow-sm"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-green-200 hover:bg-green-50"
+                  }`}
+                >
+                  <RoleIcon size={20} />
+                  <span className="mt-2 block text-sm font-black">{item.label}</span>
+                  <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">{item.description}</span>
+                </button>
+              );
+            })}
+          </div>
+        </Card>
       )}
 
       {step === 3 && (
+        <Card className="space-y-3 p-4 md:p-5">
+          <h2 className="font-heading text-lg font-black text-text">Détails du problème</h2>
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-slate-700">Titre</label>
+            <input
+              ref={fieldRefs.title}
+              value={form.title}
+              onChange={(event) => update("title", event.target.value)}
+              placeholder="Ex. : route cassée devant l’école"
+              className={`form-field ${errors.title ? "border-red-300 focus:border-red-500 focus:ring-red-100" : ""}`}
+            />
+            {errors.title && <p className="mt-1 text-xs font-bold text-red-600">{errors.title}</p>}
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-slate-700">Description</label>
+            <textarea
+              ref={fieldRefs.description}
+              value={form.description}
+              onChange={(event) => update("description", event.target.value)}
+              placeholder="Expliquez ce qui se passe, depuis quand et pourquoi c’est important."
+              rows={4}
+              className={`form-field ${errors.description ? "border-red-300 focus:border-red-500 focus:ring-red-100" : ""}`}
+            />
+            {errors.description && <p className="mt-1 text-xs font-bold text-red-600">{errors.description}</p>}
+          </div>
+        </Card>
+      )}
+
+      {step === 4 && (
         <Card className="space-y-3 p-4 md:p-5">
           <div className="flex items-start gap-3">
             <Camera className="mt-1 text-primary" size={22} />
@@ -581,7 +582,7 @@ export default function Report() {
         </Card>
       )}
 
-      {step === 4 && (
+      {step === 5 && (
         <div ref={fieldRefs.location}>
           <Card className="space-y-3 p-4 md:p-5">
             <div className="flex items-start gap-3">

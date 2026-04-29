@@ -1,6 +1,22 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.5.3": {
+    adminNotes: `Version 0.5.3
+
+Mobile :
+- L'application Android utilise automatiquement l'API en ligne quand la configuration locale pointe vers localhost.
+- Les erreurs réseau affichent maintenant un message clair pour l'utilisateur.
+
+Signalement :
+- Le choix du rôle et les détails du problème sont séparés en deux étapes distinctes.
+- Le parcours de signalement passe à 5 étapes pour une saisie plus lisible.`,
+    userNotes: `Version 0.5.3
+
+Amélioration :
+- Le formulaire de signalement est plus simple à remplir.
+- Les problèmes de connexion au serveur sont expliqués plus clairement.`
+  },
   "0.5.2": {
     adminNotes: `Version 0.5.2
 
