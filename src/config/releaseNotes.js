@@ -1,6 +1,21 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.5.4": {
+    adminNotes: `Version 0.5.4
+
+Signalement :
+- La sélection de catégorie et de rôle fait avancer automatiquement le formulaire.
+- Le parcours suit maintenant l'ordre Catégorie, Rôle, Photo, Détails, Localisation.
+
+Mobile :
+- Build Android vérifié après réinstallation propre sur émulateur.`,
+    userNotes: `Version 0.5.4
+
+Amélioration :
+- Le signalement est plus rapide.
+- La photo est demandée plus tôt dans le parcours.`
+  },
   "0.5.3": {
     adminNotes: `Version 0.5.3
 

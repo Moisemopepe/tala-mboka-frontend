@@ -61,8 +61,8 @@ const categoryIcons = {
 const steps = [
   { id: 1, title: "Catégorie", description: "Que voulez-vous signaler ?" },
   { id: 2, title: "Rôle", description: "Quel est votre rôle ?" },
-  { id: 3, title: "Détails", description: "Expliquez rapidement la situation." },
-  { id: 4, title: "Preuves", description: "Ajoutez une photo si possible." },
+  { id: 3, title: "Photo", description: "Ajoutez une photo si possible." },
+  { id: 4, title: "Détails", description: "Expliquez rapidement la situation." },
   { id: 5, title: "Position", description: "Confirmez l’emplacement." }
 ];
 
@@ -161,10 +161,18 @@ export default function Report() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function selectRole(role) {
+    update("reporterRole", role);
+    window.setTimeout(() => {
+      setStep(3);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 120);
+  }
+
   function validate(targetStep = 5) {
     const nextErrors = {};
     if (!form.category) nextErrors.category = "Choisissez une catégorie.";
-    if (targetStep >= 3) {
+    if (targetStep >= 4) {
       if (form.title.trim().length < 3) nextErrors.title = "Le titre doit contenir au moins 3 caractères.";
       if (form.description.trim().length < 10) {
         nextErrors.description = "La description doit contenir au moins 10 caractères.";
@@ -465,7 +473,7 @@ export default function Report() {
                 <button
                   key={key}
                   type="button"
-                  onClick={() => update("reporterRole", key)}
+                  onClick={() => selectRole(key)}
                   className={`rounded-xl border p-3 text-left transition active:scale-[0.98] ${
                     selected
                       ? "border-green-300 bg-green-50 text-primary shadow-sm"
@@ -482,7 +490,7 @@ export default function Report() {
         </Card>
       )}
 
-      {step === 3 && (
+      {step === 4 && (
         <Card className="space-y-3 p-4 md:p-5">
           <h2 className="font-heading text-lg font-black text-text">Détails du problème</h2>
           <div>
@@ -511,7 +519,7 @@ export default function Report() {
         </Card>
       )}
 
-      {step === 4 && (
+      {step === 3 && (
         <Card className="space-y-3 p-4 md:p-5">
           <div className="flex items-start gap-3">
             <Camera className="mt-1 text-primary" size={22} />
@@ -672,6 +680,7 @@ export default function Report() {
         </div>
       )}
 
+      {step > 1 && (
       <Card className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
         <Button type="button" variant="ghost" onClick={goBack} disabled={step === 1} className="w-full sm:w-auto">
           <ChevronLeft size={18} />
@@ -680,7 +689,9 @@ export default function Report() {
         <div className="text-center text-xs font-bold text-slate-500">
           Étape {step} sur {steps.length}
         </div>
-        {step < steps.length ? (
+        {step === 2 ? (
+          <p className="text-center text-xs font-bold text-slate-500 sm:text-left">La suite s’ouvre automatiquement après votre choix.</p>
+        ) : step < steps.length ? (
           <Button type="button" variant="success" onClick={goNext} className="w-full sm:w-auto">
             Suivant
             <ChevronRight size={18} />
@@ -692,6 +703,7 @@ export default function Report() {
           </Button>
         )}
       </Card>
+      )}
     </form>
   );
 }
