@@ -1,16 +1,25 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout.jsx";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute.jsx";
 
-const About = lazy(() => import("./pages/About.jsx"));
-const Admin = lazy(() => import("./pages/Admin.jsx"));
-const AdminLogin = lazy(() => import("./pages/AdminLogin.jsx"));
-const Feed = lazy(() => import("./pages/Feed.jsx"));
-const Home = lazy(() => import("./pages/Home.jsx"));
-const MyReports = lazy(() => import("./pages/MyReports.jsx"));
-const Profile = lazy(() => import("./pages/Profile.jsx"));
-const Report = lazy(() => import("./pages/Report.jsx"));
+const loadAbout = () => import("./pages/About.jsx");
+const loadAdmin = () => import("./pages/Admin.jsx");
+const loadAdminLogin = () => import("./pages/AdminLogin.jsx");
+const loadFeed = () => import("./pages/Feed.jsx");
+const loadHome = () => import("./pages/Home.jsx");
+const loadMyReports = () => import("./pages/MyReports.jsx");
+const loadProfile = () => import("./pages/Profile.jsx");
+const loadReport = () => import("./pages/Report.jsx");
+
+const About = lazy(loadAbout);
+const Admin = lazy(loadAdmin);
+const AdminLogin = lazy(loadAdminLogin);
+const Feed = lazy(loadFeed);
+const Home = lazy(loadHome);
+const MyReports = lazy(loadMyReports);
+const Profile = lazy(loadProfile);
+const Report = lazy(loadReport);
 
 function PageLoader() {
   return (
@@ -21,6 +30,19 @@ function PageLoader() {
 }
 
 export default function App() {
+  useEffect(() => {
+    const warmNavigation = () => {
+      loadReport();
+      loadProfile();
+      loadAbout();
+    };
+    const schedule = window.requestIdleCallback || ((callback) => window.setTimeout(callback, 1800));
+    const cancel = window.cancelIdleCallback || window.clearTimeout;
+    const id = schedule(warmNavigation);
+
+    return () => cancel(id);
+  }, []);
+
   return (
     <BrowserRouter>
       <Suspense fallback={<PageLoader />}>

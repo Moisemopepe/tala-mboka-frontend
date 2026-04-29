@@ -9,6 +9,26 @@ import { drcLocations, provinces } from "../utils/drcLocations.js";
 import { riskLevels } from "../utils/risk.js";
 
 const initialVisibleReports = 12;
+const feedCachePrefix = "tala_feed_cache:";
+const feedCacheMaxAge = 1000 * 60 * 3;
+
+function readFeedCache(key) {
+  try {
+    const cached = JSON.parse(localStorage.getItem(key) || "null");
+    if (!cached?.items || Date.now() - cached.savedAt > feedCacheMaxAge) return null;
+    return cached.items;
+  } catch {
+    return null;
+  }
+}
+
+function writeFeedCache(key, items) {
+  try {
+    localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), items }));
+  } catch {
+    // Cache is only a UX improvement. If storage is full, the app still works.
+  }
+}
 
 export default function Feed() {
   const [reports, setReports] = useState([]);
@@ -21,10 +41,10 @@ export default function Feed() {
   const [notice, setNotice] = useState("");
   const [locationError, setLocationError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [visibleCount, setVisibleCount] = useState(initialVisibleReports);
 
   useEffect(() => {
-    setLoading(true);
     setVisibleCount(initialVisibleReports);
     const params = new URLSearchParams();
     params.set("sort", sort);
@@ -36,8 +56,23 @@ export default function Feed() {
       params.set("nearLat", nearby.lat);
       params.set("nearLng", nearby.lng);
     }
-    api(`/reports?${params.toString()}`)
+    const query = params.toString();
+    const cacheKey = `${feedCachePrefix}${query}`;
+    const cachedItems = readFeedCache(cacheKey);
+    let cancelled = false;
+
+    if (cachedItems) {
+      setReports(cachedItems);
+      setLoading(false);
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+      setRefreshing(false);
+    }
+
+    api(`/reports?${query}`)
       .then((items) => {
+        if (cancelled) return;
         const previous = JSON.parse(localStorage.getItem("tala_report_statuses") || "{}");
         const current = {};
         const changed = items.find((item) => previous[item._id] && previous[item._id] !== item.status);
@@ -51,10 +86,20 @@ export default function Feed() {
         }
 
         localStorage.setItem("tala_report_statuses", JSON.stringify(current));
+        writeFeedCache(cacheKey, items);
         setReports(items);
       })
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+          setRefreshing(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [sort, category, status, province, commune, nearby]);
 
   function updateLike(id, likesCount) {
@@ -129,6 +174,11 @@ export default function Feed() {
           Filtre distance actif : les alertes proches de vous apparaissent en premier.
         </p>
       )}
+      {refreshing && (
+        <p className="rounded-xl bg-slate-50 p-3 text-sm font-semibold text-slate-600">
+          Mise à jour du fil en arrière-plan...
+        </p>
+      )}
       {locationError && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{locationError}</p>}
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <select
@@ -174,7 +224,7 @@ export default function Feed() {
           ))}
       </select>
       </section>
-      {loading && <SkeletonList />}
+      {loading && reports.length === 0 && <SkeletonList />}
 
       {!loading && reports.length > 0 ? (
         <>

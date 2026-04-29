@@ -1,6 +1,22 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.4.9": {
+    adminNotes: `Version 0.4.9
+
+Performance perçue :
+- Le fil citoyen réutilise les dernières alertes en cache avant de rafraîchir l'API.
+- Les pages fréquentes sont préchargées discrètement après le premier rendu.
+
+UX :
+- Moins d'écran vide pendant les appels réseau.
+- Navigation plus fluide entre Fil, Signaler et Compte.`,
+    userNotes: `Version 0.4.9
+
+Amélioration :
+- Le fil s'affiche plus vite après une première visite.
+- L'application semble plus fluide lors de la navigation.`
+  },
   "0.4.8": {
     adminNotes: `Version 0.4.8
 
