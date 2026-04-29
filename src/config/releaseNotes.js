@@ -1,6 +1,21 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.5.0": {
+    adminNotes: `Version 0.5.0
+
+Navigation :
+- La cloche de notifications est maintenant réservée aux utilisateurs connectés.
+- Les visiteurs gardent uniquement l'accès au compte, au fil, à la carte, au signalement et à la page À propos.
+
+UX :
+- Header plus simple pour les visiteurs non connectés.`,
+    userNotes: `Version 0.5.0
+
+Amélioration :
+- Les notifications s'affichent uniquement après connexion.
+- L'interface est plus claire pour les visiteurs.`
+  },
   "0.4.9": {
     adminNotes: `Version 0.4.9
 

@@ -41,7 +41,7 @@ export default function Header() {
           ))}
         </nav>
         <div className="flex shrink-0 items-center gap-2">
-          <NotificationBell />
+          {isAuthenticated && <NotificationBell />}
           <Link
             to="/profile"
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-sm transition hover:bg-green-700 active:scale-95"

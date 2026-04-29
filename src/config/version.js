@@ -1,2 +1,2 @@
 export const VERSION =
-  typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : import.meta.env.VITE_APP_VERSION || "0.4.9";
+  typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : import.meta.env.VITE_APP_VERSION || "0.5.0";
