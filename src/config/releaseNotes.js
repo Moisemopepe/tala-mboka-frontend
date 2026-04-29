@@ -1,6 +1,23 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.5.5": {
+    adminNotes: `Version 0.5.5
+
+Notifications :
+- Les notifications disposent maintenant d'une page dédiée.
+- Ajout de l'action "Tout lu" pour organiser rapidement les mises à jour.
+- La cloche ouvre la page notifications au lieu d'afficher un panneau flottant.
+
+Mobile :
+- L'icône Android utilise le logo Tala Mboka.`,
+    userNotes: `Version 0.5.5
+
+Amélioration :
+- Les notifications sont plus lisibles sur téléphone.
+- Vous pouvez tout marquer comme lu en un clic.
+- L'application affiche maintenant le logo Tala Mboka comme icône.`
+  },
   "0.5.4": {
     adminNotes: `Version 0.5.4
 

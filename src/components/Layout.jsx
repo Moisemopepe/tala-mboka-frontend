@@ -85,7 +85,7 @@ export default function Layout() {
               }
             >
               <Icon size={21} strokeWidth={2.4} />
-              {label}
+              <span className="max-w-full truncate px-1">{label}</span>
             </NavLink>
           ))}
         </div>
