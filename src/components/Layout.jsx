@@ -1,6 +1,6 @@
 import { FileText, Home, Info, LayoutDashboard, List, PlusCircle, User } from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Header from "./Header.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -14,6 +14,7 @@ export default function Layout() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const storedUser = JSON.parse(localStorage.getItem("tala_user") || "null");
   const currentUser = user || storedUser;
   const canManage = ["admin", "moderator"].includes(currentUser?.role);
@@ -34,15 +35,37 @@ export default function Layout() {
     return () => window.removeEventListener("tala:session-expired", handleSessionExpired);
   }, [location.pathname, navigate]);
 
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return undefined;
+
+    function updateKeyboardState() {
+      setKeyboardOpen(window.innerHeight - viewport.height > 140);
+    }
+
+    updateKeyboardState();
+    viewport.addEventListener("resize", updateKeyboardState);
+    viewport.addEventListener("scroll", updateKeyboardState);
+
+    return () => {
+      viewport.removeEventListener("resize", updateKeyboardState);
+      viewport.removeEventListener("scroll", updateKeyboardState);
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen w-full bg-background pb-36 text-slate-800">
+    <div className={`min-h-screen w-full bg-background text-slate-800 ${keyboardOpen ? "pb-6" : "pb-[calc(13rem+env(safe-area-inset-bottom))]"}`}>
       <Header />
 
       <main className="w-full px-4 py-4 sm:px-6 sm:py-6 md:px-8 lg:px-10">
         <Outlet />
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200/80 bg-white/95 shadow-[0_-10px_26px_rgba(15,23,42,0.06)] backdrop-blur">
+      <nav
+        className={`fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200/80 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-10px_26px_rgba(15,23,42,0.06)] backdrop-blur transition-transform duration-200 ${
+          keyboardOpen ? "translate-y-full" : "translate-y-0"
+        }`}
+      >
         <div
           className={`grid w-full px-2 py-2 sm:px-4 md:px-6 ${
             navItems.length === 6 ? "grid-cols-6" : navItems.length === 5 ? "grid-cols-5" : "grid-cols-4"

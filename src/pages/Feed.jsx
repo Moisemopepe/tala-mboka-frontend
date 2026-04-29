@@ -246,7 +246,7 @@ export default function Feed() {
         <div className="w-full rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
           <p className="text-lg font-semibold text-text">Aucune alerte pour le moment</p>
           <p className="mt-2 text-sm text-slate-500">Soyez le premier à signaler.</p>
-          <Button type="button" variant="success" className="mt-4" onClick={() => (window.location.href = "/report")}>
+          <Button type="button" variant="success" className="mt-4 hidden sm:inline-flex" onClick={() => (window.location.href = "/report")}>
             Créer une alerte
           </Button>
         </div>

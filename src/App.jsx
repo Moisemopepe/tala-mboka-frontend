@@ -32,7 +32,6 @@ function PageLoader() {
 export default function App() {
   useEffect(() => {
     const warmNavigation = () => {
-      loadReport();
       loadProfile();
       loadAbout();
     };

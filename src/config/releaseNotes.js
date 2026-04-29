@@ -1,6 +1,23 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.5.2": {
+    adminNotes: `Version 0.5.2
+
+Mobile :
+- Audit rapide de l'application Android sur émulateur.
+- La barre de navigation du bas se masque automatiquement quand le clavier est ouvert.
+- La marge basse a été augmentée pour éviter que les boutons soient coupés.
+- La carte du signalement se charge seulement quand elle est nécessaire.
+
+UX :
+- Saisie plus confortable dans les formulaires mobiles.`,
+    userNotes: `Version 0.5.2
+
+Amélioration :
+- Les formulaires sont plus faciles à remplir sur mobile.
+- Les boutons en bas d'écran ne sont plus masqués par la navigation.`
+  },
   "0.5.1": {
     adminNotes: `Version 0.5.1
 

@@ -22,12 +22,11 @@ import {
   UsersRound,
   Zap
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api/client.js";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
-import ReportMap from "../components/ReportMap.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { categories } from "../utils/categories.js";
 import { drcLocations, provinces } from "../utils/drcLocations.js";
@@ -45,6 +44,7 @@ const initialForm = {
 
 const maxImages = 3;
 const maxImageSize = 5 * 1024 * 1024;
+const ReportMap = lazy(() => import("../components/ReportMap.jsx"));
 
 const categoryFlow = ["road", "water", "electricity", "waste", "security", "fraud", "other"];
 
@@ -651,7 +651,15 @@ export default function Report() {
             {mapVisible && (
               <>
                 <p className="text-sm font-bold text-slate-600">Cliquez sur la carte pour choisir l’emplacement. Vous pouvez déplacer le marqueur.</p>
-                <ReportMap height="min(500px, 55vh)" onPick={(nextLocation) => applyLocation(nextLocation, "map")} pickedLocation={location} />
+                <Suspense
+                  fallback={
+                    <div className="flex h-[300px] w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold text-slate-500 md:h-[400px]">
+                      Chargement de la carte...
+                    </div>
+                  }
+                >
+                  <ReportMap height="min(500px, 55vh)" onPick={(nextLocation) => applyLocation(nextLocation, "map")} pickedLocation={location} />
+                </Suspense>
               </>
             )}
             {location && (
