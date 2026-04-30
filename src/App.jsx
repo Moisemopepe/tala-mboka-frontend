@@ -33,12 +33,6 @@ function PageLoader() {
 
 export default function App() {
   useEffect(() => {
-    import("@capacitor/splash-screen")
-      .then(({ SplashScreen }) => SplashScreen.hide())
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
     const warmNavigation = () => {
       loadProfile();
       loadAbout();
