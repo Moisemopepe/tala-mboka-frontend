@@ -19,7 +19,7 @@ export default function MyReports() {
   useEffect(() => {
     if (!isAuthenticated) {
       localStorage.setItem("tala_session_message", "Connectez-vous pour voir vos alertes.");
-      navigate("/profile", { replace: true });
+      navigate("/app/profile", { replace: true });
       return;
     }
 
@@ -31,7 +31,7 @@ export default function MyReports() {
       .catch((err) => {
         if (err.status === 401) {
           localStorage.setItem("tala_session_message", "Votre session a expiré. Reconnectez-vous.");
-          navigate("/profile", { replace: true });
+          navigate("/app/profile", { replace: true });
           return;
         }
         setError(err.message);
@@ -46,7 +46,7 @@ export default function MyReports() {
           <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">Mes alertes</h1>
           <p className="text-sm font-medium text-slate-500 md:text-base">Suivez le statut de vos signalements.</p>
         </div>
-        <Link to="/report">
+        <Link to="/app/report">
           <Button type="button" variant="success" className="w-full md:w-auto">
             <PlusCircle size={18} />
             Signaler

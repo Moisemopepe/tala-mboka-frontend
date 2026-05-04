@@ -66,7 +66,7 @@ export default function Notifications() {
           <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
             Connectez-vous pour recevoir les mises à jour importantes de Tala Mboka.
           </p>
-          <Button as={Link} to="/profile" variant="success" className="mt-5 w-full sm:w-auto">
+          <Button as={Link} to="/app/profile" variant="success" className="mt-5 w-full sm:w-auto">
             Se connecter
           </Button>
         </Card>

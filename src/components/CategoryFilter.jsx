@@ -1,5 +1,7 @@
 import { categories } from "../utils/categories.js";
 
+const primaryCategories = ["residential", "commercial", "government", "utility", "transport", "communication", "health", "education", "public_space", "other"];
+
 export default function CategoryFilter({ value, onChange }) {
   return (
     <div className="flex gap-2 overflow-x-auto pb-2">
@@ -10,9 +12,11 @@ export default function CategoryFilter({ value, onChange }) {
           value === "" ? "border-green-200 bg-green-50 text-green-700" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
         }`}
       >
-        Tous
+        All
       </button>
-      {Object.entries(categories).map(([key, item]) => (
+      {primaryCategories.map((key) => {
+        const item = categories[key];
+        return (
         <button
           type="button"
           key={key}
@@ -23,7 +27,8 @@ export default function CategoryFilter({ value, onChange }) {
         >
           {item.label}
         </button>
-      ))}
+        );
+      })}
     </div>
   );
 }

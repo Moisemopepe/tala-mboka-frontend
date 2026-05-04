@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout.jsx";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute.jsx";
 
@@ -11,6 +11,7 @@ const loadHome = () => import("./pages/Home.jsx");
 const loadMyReports = () => import("./pages/MyReports.jsx");
 const loadNotifications = () => import("./pages/Notifications.jsx");
 const loadProfile = () => import("./pages/Profile.jsx");
+const loadPublicSite = () => import("./pages/PublicSite.jsx");
 const loadReport = () => import("./pages/Report.jsx");
 
 const About = lazy(loadAbout);
@@ -21,6 +22,7 @@ const Home = lazy(loadHome);
 const MyReports = lazy(loadMyReports);
 const Notifications = lazy(loadNotifications);
 const Profile = lazy(loadProfile);
+const PublicSite = lazy(loadPublicSite);
 const Report = lazy(loadReport);
 
 function PageLoader() {
@@ -48,14 +50,21 @@ export default function App() {
     <BrowserRouter>
       <Suspense fallback={<PageLoader />}>
         <Routes>
+          <Route path="/" element={<PublicSite />} />
+          <Route path="/report" element={<Navigate to="/app/report" replace />} />
+          <Route path="/feed" element={<Navigate to="/app/map" replace />} />
+          <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
+          <Route path="/my-reports" element={<Navigate to="/app/my-reports" replace />} />
+          <Route path="/notifications" element={<Navigate to="/app/notifications" replace />} />
+          <Route path="/about" element={<Navigate to="/app/about" replace />} />
           <Route element={<Layout />}>
-            <Route path="/" element={<Feed />} />
-            <Route path="/report" element={<Report />} />
-            <Route path="/feed" element={<Home />} />
-            <Route path="/my-reports" element={<MyReports />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/about" element={<About />} />
+            <Route path="/app" element={<Feed />} />
+            <Route path="/app/report" element={<Report />} />
+            <Route path="/app/map" element={<Home />} />
+            <Route path="/app/my-reports" element={<MyReports />} />
+            <Route path="/app/notifications" element={<Notifications />} />
+            <Route path="/app/profile" element={<Profile />} />
+            <Route path="/app/about" element={<About />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route
               path="/admin"

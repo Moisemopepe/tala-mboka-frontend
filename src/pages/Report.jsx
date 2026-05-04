@@ -1,13 +1,12 @@
 import {
   AlertTriangle,
+  Building2,
   Camera,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   CircleHelp,
-  Droplets,
   FileQuestion,
   ImagePlus,
+  Landmark,
   Loader2,
   LocateFixed,
   MapPin,
@@ -15,10 +14,10 @@ import {
   Pencil,
   PlusCircle,
   Route as RouteIcon,
+  School,
   Send,
-  ShieldAlert,
+  Stethoscope,
   Trash2,
-  UserRound,
   UsersRound,
   Zap
 } from "lucide-react";
@@ -29,68 +28,72 @@ import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { categories } from "../utils/categories.js";
+import { crisisTypes, damageLevels, debrisOptions } from "../utils/crisisOptions.js";
 import { drcLocations, provinces } from "../utils/drcLocations.js";
 import { resolveDrcCoordinates, resolveDrcLocation } from "../utils/geoLocation.js";
-import { reporterRoles } from "../utils/reporterRoles.js";
+import { languageOptions } from "../utils/languageOptions.js";
+import { buildReportFormData, listOfflineReports, saveOfflineReport, syncOfflineReports } from "../utils/offlineReports.js";
+import { getReportCopy } from "../utils/reportI18n.js";
+
+const ReportMap = lazy(() => import("../components/ReportMap.jsx"));
 
 const initialForm = {
   title: "",
   description: "",
   category: "",
-  reporterRole: "concerned",
+  infrastructureType: "",
+  infrastructureName: "",
+  assetId: "",
+  language: "en",
+  crisisType: "flood",
+  damageLevel: "partial",
+  debris: "unknown",
+  locationDescription: "",
+  accessBlocked: false,
+  servicesDisrupted: false,
+  livelihoodsAffected: false,
+  peopleAtRisk: false,
+  reporterRole: "witness",
   province: "Kinshasa",
   commune: "Gombe"
 };
 
 const maxImages = 3;
 const maxImageSize = 5 * 1024 * 1024;
-const ReportMap = lazy(() => import("../components/ReportMap.jsx"));
+const infrastructureFlow = ["residential", "commercial", "government", "utility", "transport", "communication", "health", "education", "public_space", "other"];
 
-const categoryFlow = ["road", "water", "electricity", "waste", "security", "fraud", "other"];
-
-const categoryIcons = {
-  road: RouteIcon,
-  water: Droplets,
-  electricity: Zap,
-  waste: FileQuestion,
-  security: ShieldAlert,
-  fraud: AlertTriangle,
+const infrastructureIcons = {
+  residential: Building2,
+  commercial: FileQuestion,
+  government: Landmark,
+  utility: Zap,
+  transport: RouteIcon,
+  communication: UsersRound,
+  health: Stethoscope,
+  education: School,
+  public_space: UsersRound,
   other: CircleHelp
 };
-
-const steps = [
-  { id: 1, title: "Catégorie", description: "Que voulez-vous signaler ?" },
-  { id: 2, title: "Rôle", description: "Quel est votre rôle ?" },
-  { id: 3, title: "Photo", description: "Ajoutez une photo si possible." },
-  { id: 4, title: "Détails", description: "Expliquez rapidement la situation." },
-  { id: 5, title: "Position", description: "Confirmez l’emplacement." }
-];
 
 export default function Report() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const [step, setStep] = useState(1);
   const [form, setForm] = useState(initialForm);
   const [images, setImages] = useState([]);
   const [location, setLocation] = useState(null);
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");
-  const [locationStatus, setLocationStatus] = useState("");
-  const [locationStatusType, setLocationStatusType] = useState("idle");
-  const [mapVisible, setMapVisible] = useState(false);
-  const [manualSyncing, setManualSyncing] = useState(false);
   const [success, setSuccess] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [offlineCount, setOfflineCount] = useState(0);
+  const [syncingOffline, setSyncingOffline] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [mapVisible, setMapVisible] = useState(false);
+  const [locationStatus, setLocationStatus] = useState("");
   const autoLocateStarted = useRef(false);
   const cameraInputRef = useRef(null);
   const galleryInputRef = useRef(null);
-  const fieldRefs = {
-    title: useRef(null),
-    description: useRef(null),
-    category: useRef(null),
-    location: useRef(null)
-  };
+  const copy = getReportCopy(form.language);
 
   const previews = useMemo(
     () => images.map((file) => ({ file, url: URL.createObjectURL(file) })),
@@ -105,32 +108,20 @@ export default function Report() {
     if (autoLocateStarted.current) return;
     autoLocateStarted.current = true;
     useGps({ revealMapOnSuccess: false });
+    refreshOfflineCount();
   }, []);
+
+  async function refreshOfflineCount() {
+    if (!("indexedDB" in window)) return;
+    const items = await listOfflineReports().catch(() => []);
+    setOfflineCount(items.length);
+  }
 
   useEffect(() => {
     if (!success) return undefined;
-    const target = isAuthenticated ? "/my-reports" : "/";
-    const timer = window.setTimeout(() => navigate(target), 3000);
+    const timer = window.setTimeout(() => navigate(isAuthenticated ? "/app/my-reports" : "/app"), 2500);
     return () => window.clearTimeout(timer);
   }, [isAuthenticated, navigate, success]);
-
-  const selectedCategory = categories[form.category];
-
-  async function syncManualLocation(province, commune) {
-    if (!province || !commune) return;
-
-    setManualSyncing(true);
-    const nextLocation = await resolveDrcCoordinates(province, commune);
-    setManualSyncing(false);
-
-    if (!nextLocation) return;
-
-    setSuccess(null);
-    setLocation(nextLocation);
-    setErrors((current) => ({ ...current, location: "" }));
-    setLocationStatus(`Position détectée : ${province} + ${commune}`);
-    setLocationStatusType("success");
-  }
 
   function update(field, value) {
     setSuccess(null);
@@ -144,9 +135,7 @@ export default function Report() {
         nextCommune = drcLocations[value]?.[0] || "";
         return { ...current, province: nextProvince, commune: nextCommune };
       }
-      if (field === "commune") {
-        nextCommune = value;
-      }
+      if (field === "commune") nextCommune = value;
       return { ...current, [field]: value };
     });
 
@@ -155,99 +144,47 @@ export default function Report() {
     }
   }
 
-  function selectCategory(category) {
-    update("category", category);
-    setStep(2);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  function updateBoolean(field, value) {
+    setForm((current) => ({ ...current, [field]: value }));
   }
 
-  function selectRole(role) {
-    update("reporterRole", role);
-    window.setTimeout(() => {
-      setStep(3);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 120);
-  }
-
-  function validate(targetStep = 5) {
-    const nextErrors = {};
-    if (!form.category) nextErrors.category = "Choisissez une catégorie.";
-    if (targetStep >= 4) {
-      if (form.title.trim().length < 3) nextErrors.title = "Le titre doit contenir au moins 3 caractères.";
-      if (form.description.trim().length < 10) {
-        nextErrors.description = "La description doit contenir au moins 10 caractères.";
-      }
-    }
-    if (targetStep >= 5 && !location) nextErrors.location = "Choisissez une position GPS ou cliquez sur la carte.";
-    return nextErrors;
-  }
-
-  function focusFirstError(nextErrors) {
-    const firstKey = Object.keys(nextErrors)[0];
-    const target = fieldRefs[firstKey]?.current;
-    target?.scrollIntoView({ behavior: "smooth", block: "center" });
-    target?.focus?.();
-  }
-
-  function goNext() {
-    const nextErrors = validate(step);
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) {
-      focusFirstError(nextErrors);
-      return;
-    }
-    setStep((current) => Math.min(current + 1, steps.length));
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function goBack() {
-    setStep((current) => Math.max(current - 1, 1));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  async function syncManualLocation(province, commune) {
+    if (!province || !commune) return;
+    const nextLocation = await resolveDrcCoordinates(province, commune);
+    if (!nextLocation) return;
+    setLocation(nextLocation);
+    setErrors((current) => ({ ...current, location: "" }));
+    setLocationStatus(`Location resolved: ${province} / ${commune}`);
   }
 
   async function applyLocation(nextLocation, source = "map") {
-    setSuccess(null);
     setLocation(nextLocation);
     setErrors((current) => ({ ...current, location: "" }));
-    setLocationStatus(source === "gps" ? "Localisation en cours..." : "Recherche province et commune...");
-    setLocationStatusType("loading");
+    setLocationStatus(source === "gps" ? "Resolving GPS location..." : "Resolving selected point...");
 
     const resolved = await resolveDrcLocation(nextLocation.lat, nextLocation.lng);
-
-    if (resolved.province && resolved.commune) {
-      setForm((current) => ({ ...current, province: resolved.province, commune: resolved.commune }));
-      setLocationStatus(`Position détectée : ${resolved.province} + ${resolved.commune}`);
-      setLocationStatusType("success");
-      return;
-    }
-
     if (resolved.province) {
       setForm((current) => ({
         ...current,
         province: resolved.province,
-        commune: drcLocations[resolved.province]?.[0] || current.commune
+        commune: resolved.commune || drcLocations[resolved.province]?.[0] || current.commune
       }));
-      setLocationStatus(`Position détectée : ${resolved.province}. Vérifiez la commune.`);
-      setLocationStatusType("success");
+      setLocationStatus(`Location resolved: ${resolved.province}${resolved.commune ? ` / ${resolved.commune}` : ""}`);
       return;
     }
-
-    setLocationStatus("Position sélectionnée. Vérifiez la province et la commune.");
-    setLocationStatusType("success");
+    setLocationStatus("Location selected. Please verify the administrative area.");
   }
 
   function useGps(options = {}) {
     const { revealMapOnSuccess = true } = options;
     if (!navigator.geolocation) {
       setMapVisible(true);
-      setLocationStatus("Impossible de détecter votre position");
-      setLocationStatusType("error");
+      setLocationStatus("GPS is not available on this device.");
       return;
     }
 
     setLocating(true);
-    setLocationStatus("Localisation en cours...");
-    setLocationStatusType("loading");
+    setLocationStatus("Getting GPS location...");
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         await applyLocation({ lat: position.coords.latitude, lng: position.coords.longitude }, "gps");
@@ -257,130 +194,157 @@ export default function Report() {
       () => {
         setLocating(false);
         setMapVisible(true);
-        setLocationStatus("Impossible de détecter votre position");
-        setLocationStatusType("error");
+        setLocationStatus("GPS permission denied or unavailable. Select the point on the map.");
       }
     );
   }
 
+  function selectInfrastructure(key) {
+    setForm((current) => ({ ...current, category: key, infrastructureType: key }));
+    setErrors((current) => ({ ...current, category: "" }));
+  }
+
   function addImages(fileList) {
     const files = Array.from(fileList || []);
-    const nextErrors = {};
     const validFiles = files.filter((file) => {
       if (!file.type.startsWith("image/")) {
-        nextErrors.images = "Ajoutez uniquement des images.";
+        setErrors((current) => ({ ...current, images: "Only image files are accepted." }));
         return false;
       }
       if (file.size > maxImageSize) {
-        nextErrors.images = "Chaque image doit faire 5 Mo maximum.";
+        setErrors((current) => ({ ...current, images: "Each image must be 5 MB or less." }));
         return false;
       }
       return true;
     });
 
     setImages((current) => [...current, ...validFiles].slice(0, maxImages));
-    setErrors((current) => ({
-      ...current,
-      images: files.length + images.length > maxImages ? "Maximum 3 images." : nextErrors.images || ""
-    }));
-  }
-
-  function handleImageInput(event) {
-    addImages(event.target.files);
-    event.target.value = "";
+    if (files.length + images.length > maxImages) {
+      setErrors((current) => ({ ...current, images: "Maximum 3 images." }));
+    }
   }
 
   function removeImage(index) {
     setImages((current) => current.filter((_, itemIndex) => itemIndex !== index));
   }
 
-  function startNewReport() {
-    setSuccess(null);
-    setMessage("");
-    setStep(1);
-    window.setTimeout(() => useGps({ revealMapOnSuccess: false }), 50);
+  function validate() {
+    const nextErrors = {};
+    if (!form.category) nextErrors.category = "Select the affected infrastructure.";
+    if (!form.crisisType) nextErrors.crisisType = "Select the crisis type.";
+    if (!form.damageLevel) nextErrors.damageLevel = "Select the damage level.";
+    if (form.title.trim().length < 3) nextErrors.title = "Add a short report title.";
+    if (form.description.trim().length < 10) nextErrors.description = "Add at least 10 characters of field context.";
+    if (!location) nextErrors.location = "Choose a GPS position or select the location on the map.";
+    return nextErrors;
   }
 
   async function submit(event) {
     event.preventDefault();
-    if (step < steps.length) {
-      goNext();
-      return;
-    }
     if (submitting) return;
 
-    const nextErrors = validate(5);
+    const nextErrors = validate();
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
-      focusFirstError(nextErrors);
+      setMessage(copy.required);
       return;
     }
 
     setSubmitting(true);
     setMessage("");
-    setSuccess(null);
-
-    const body = new FormData();
-    body.append("title", form.title.trim());
-    body.append("description", form.description.trim());
-    body.append("category", form.category);
-    body.append("reporterRole", form.reporterRole);
-    body.append("province", form.province);
-    body.append("commune", form.commune);
-    body.append("address", `${form.commune}, ${form.province}`);
-    body.append("lat", location.lat);
-    body.append("lng", location.lng);
-    images.forEach((image) => body.append("images", image));
+    const payload = {
+      fields: {
+        title: form.title.trim(),
+        description: form.description.trim(),
+        category: form.category,
+        infrastructureType: form.infrastructureType || form.category,
+        infrastructureName: form.infrastructureName.trim(),
+        assetId: form.assetId.trim(),
+        language: form.language,
+        crisisType: form.crisisType,
+        damageLevel: form.damageLevel,
+        debris: form.debris,
+        locationDescription: form.locationDescription.trim(),
+        accessBlocked: String(form.accessBlocked),
+        servicesDisrupted: String(form.servicesDisrupted),
+        livelihoodsAffected: String(form.livelihoodsAffected),
+        peopleAtRisk: String(form.peopleAtRisk),
+        reporterRole: form.reporterRole,
+        province: form.province,
+        commune: form.commune,
+        address: `${form.commune}, ${form.province}`,
+        lat: String(location.lat),
+        lng: String(location.lng)
+      },
+      images
+    };
+    const body = buildReportFormData(payload);
 
     try {
       await api(isAuthenticated ? "/reports" : "/reports/guest", { method: "POST", body });
-      setSuccess({
-        subtitle: isAuthenticated ? "Votre alerte est visible dans le fil citoyen." : "Votre signalement est en attente de validation."
-      });
+      setSuccess(true);
       setForm(initialForm);
       setImages([]);
       setLocation(null);
-      setLocationStatus("");
-      setLocationStatusType("idle");
       setMapVisible(false);
-      setStep(1);
-      autoLocateStarted.current = false;
       setErrors({});
+      autoLocateStarted.current = false;
     } catch (err) {
-      setMessage(err.message || "Impossible d’envoyer l’alerte.");
+      if ("indexedDB" in window) {
+        await saveOfflineReport(payload);
+        await refreshOfflineCount();
+        setSuccess("offline");
+        setForm(initialForm);
+        setImages([]);
+        setLocation(null);
+        setMapVisible(false);
+        setErrors({});
+      } else {
+        setMessage(err.message || "Unable to submit the crisis report.");
+      }
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function syncSavedReports() {
+    setSyncingOffline(true);
+    setMessage("");
+    try {
+      const result = await syncOfflineReports({ authenticated: isAuthenticated });
+      await refreshOfflineCount();
+      setMessage(`${result.synced.length} offline report(s) synced. ${result.failed.length} still pending.`);
+    } catch (error) {
+      setMessage(error.message || "Unable to sync offline reports.");
+    } finally {
+      setSyncingOffline(false);
     }
   }
 
   if (success) {
     return (
       <div className="flex min-h-[60vh] w-full items-center justify-center px-0 py-8 sm:px-4">
-        <Card className="w-full max-w-md p-6 text-center transition-all duration-300 ease-out scale-100 animate-[fadeIn_0.25s_ease-out]">
-          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-2xl font-semibold text-green-600">
+        <Card className="w-full max-w-md p-6 text-center">
+          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
             <CheckCircle2 size={34} />
           </div>
-
-          <h1 className="mt-2 text-xl font-semibold text-text">Alerte envoyée !</h1>
+          <h1 className="mt-2 text-xl font-semibold text-text">{success === "offline" ? copy.savedOfflineTitle : copy.submittedTitle}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            {success.subtitle || "Votre signalement est en attente de validation."}
+            {success === "offline"
+              ? copy.savedOfflineText
+              : copy.submittedText}
           </p>
-          <p className="mt-2 text-xs font-medium text-gray-400">Redirection automatique...</p>
-
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Link
-              to={isAuthenticated ? "/my-reports" : "/"}
-              className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700 active:scale-95 sm:w-auto"
-            >
-              {isAuthenticated ? "Voir mes alertes" : "Voir les alertes"}
+            <Link to="/app/map" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white">
+              {copy.viewMap}
             </Link>
             <button
               type="button"
-              onClick={startNewReport}
-              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-gray-100 active:scale-95 sm:w-auto"
+              onClick={() => setSuccess(null)}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800"
             >
               <PlusCircle size={18} />
-              Nouvelle alerte
+              {copy.newReport}
             </button>
           </div>
         </Card>
@@ -388,322 +352,275 @@ export default function Report() {
     );
   }
 
+  if (!form.category) {
+    return (
+      <div className="mx-auto w-full max-w-[1080px] space-y-4">
+        <div className="space-y-2">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">{copy.pageKicker}</p>
+          <h1 className="font-heading text-2xl font-black text-text md:text-3xl">Choose the damaged infrastructure category</h1>
+          <p className="max-w-3xl text-sm font-medium text-slate-500 md:text-base">
+            Start with the affected asset. The next screen will collect crisis type, damage level, photo evidence, description, and location.
+          </p>
+        </div>
+        <Card className="space-y-4 p-4 md:p-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {infrastructureFlow.map((key) => {
+              const item = categories[key];
+              const Icon = infrastructureIcons[key] || CircleHelp;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => selectInfrastructure(key)}
+                  className="min-h-[132px] rounded-xl border border-slate-200 bg-white p-4 text-left text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-green-200 hover:bg-green-50 active:scale-[0.98]"
+                >
+                  <Icon size={24} style={{ color: item?.color || "#16a34a" }} />
+                  <span className="mt-4 block text-sm font-black">{item?.label || key}</span>
+                  <span className="mt-1 block text-xs font-semibold text-slate-500">Open report form</span>
+                </button>
+              );
+            })}
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <form onSubmit={submit} className="mx-auto w-full max-w-[980px] animate-[fadeIn_0.2s_ease-out] space-y-4">
+    <form onSubmit={submit} className="mx-auto w-full max-w-[1080px] space-y-4">
       <div className="space-y-2">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">Nouveau signalement</p>
-        <h1 className="font-heading text-2xl font-black text-text md:text-3xl">
-          {steps[step - 1].description}
-        </h1>
-        <p className="text-sm font-medium text-slate-500 md:text-base">
-          {isAuthenticated ? "Votre alerte sera publiée immédiatement" : "Votre alerte sera vérifiée avant publication"}
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">{copy.pageKicker}</p>
+        <h1 className="font-heading text-2xl font-black text-text md:text-3xl">{copy.pageTitle}</h1>
+        <p className="max-w-3xl text-sm font-medium text-slate-500 md:text-base">
+          {copy.pageIntro}
         </p>
       </div>
 
-      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}>
-        {steps.map((item) => (
-          <div
-            key={item.id}
-            className={`h-2 rounded-full transition ${
-              item.id <= step ? "bg-primary" : "bg-slate-200"
-            }`}
-            aria-label={item.title}
-          />
-        ))}
-      </div>
-
       {message && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{message}</p>}
-
-      {step === 1 && (
-        <Card className="space-y-4 p-4 md:p-5">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="font-heading text-lg font-black text-text">Que voulez-vous signaler ?</h2>
-              <p className="text-sm font-semibold text-slate-500">Choisissez une catégorie pour commencer.</p>
-            </div>
-            {errors.category && <p className="text-xs font-bold text-red-600">{errors.category}</p>}
-          </div>
-
-          <div ref={fieldRefs.category} className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {categoryFlow.map((key) => {
-              const item = categories[key];
-              const Icon = categoryIcons[key] || CircleHelp;
-              const selected = form.category === key;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => selectCategory(key)}
-                  className={`min-h-[118px] rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 active:scale-[0.98] ${
-                    selected
-                      ? "border-green-300 bg-green-50 text-primary shadow-sm"
-                      : "border-slate-200 bg-white text-slate-800 shadow-sm hover:border-green-200 hover:bg-green-50"
-                  }`}
-                >
-                  <span
-                    className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50"
-                    style={{ color: item?.color || "#16a34a" }}
-                  >
-                    <Icon size={22} />
-                  </span>
-                  <span className="block text-sm font-black">{item?.label || key}</span>
-                </button>
-              );
-            })}
-          </div>
-        </Card>
-      )}
-
-      {step === 2 && (
-        <Card className="space-y-3 p-4 md:p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="font-heading text-lg font-black text-text">Votre rôle</h2>
-              <p className="text-sm font-semibold text-slate-500">Dites si vous êtes concerné, témoin ou anonyme.</p>
-            </div>
-            {selectedCategory && (
-              <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-black text-primary">{selectedCategory.label}</span>
-            )}
-          </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            {Object.entries(reporterRoles).map(([key, item]) => {
-              const selected = form.reporterRole === key;
-              const RoleIcon = key === "concerned" ? UserRound : key === "witness" ? UsersRound : ShieldAlert;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => selectRole(key)}
-                  className={`rounded-xl border p-3 text-left transition active:scale-[0.98] ${
-                    selected
-                      ? "border-green-300 bg-green-50 text-primary shadow-sm"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-green-200 hover:bg-green-50"
-                  }`}
-                >
-                  <RoleIcon size={20} />
-                  <span className="mt-2 block text-sm font-black">{item.label}</span>
-                  <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">{item.description}</span>
-                </button>
-              );
-            })}
-          </div>
-        </Card>
-      )}
-
-      {step === 4 && (
-        <Card className="space-y-3 p-4 md:p-5">
-          <h2 className="font-heading text-lg font-black text-text">Détails du problème</h2>
+      {offlineCount > 0 && (
+        <Card className="flex flex-col gap-3 border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <label className="mb-1 block text-sm font-semibold text-slate-700">Titre</label>
-            <input
-              ref={fieldRefs.title}
-              value={form.title}
-              onChange={(event) => update("title", event.target.value)}
-              placeholder="Ex. : route cassée devant l’école"
-              className={`form-field ${errors.title ? "border-red-300 focus:border-red-500 focus:ring-red-100" : ""}`}
-            />
-            {errors.title && <p className="mt-1 text-xs font-bold text-red-600">{errors.title}</p>}
+            <p className="text-sm font-black text-amber-900">{offlineCount} {offlineCount > 1 ? copy.offlineWaitingPlural : copy.offlineWaiting}</p>
+            <p className="text-xs font-semibold text-amber-800">{copy.syncIntro}</p>
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-semibold text-slate-700">Description</label>
-            <textarea
-              ref={fieldRefs.description}
-              value={form.description}
-              onChange={(event) => update("description", event.target.value)}
-              placeholder="Expliquez ce qui se passe, depuis quand et pourquoi c’est important."
-              rows={4}
-              className={`form-field ${errors.description ? "border-red-300 focus:border-red-500 focus:ring-red-100" : ""}`}
-            />
-            {errors.description && <p className="mt-1 text-xs font-bold text-red-600">{errors.description}</p>}
-          </div>
+          <Button type="button" variant="ghost" onClick={syncSavedReports} disabled={syncingOffline}>
+            {syncingOffline ? copy.syncing : copy.syncNow}
+          </Button>
         </Card>
       )}
 
-      {step === 3 && (
-        <Card className="space-y-3 p-4 md:p-5">
-          <div className="flex items-start gap-3">
-            <Camera className="mt-1 text-primary" size={22} />
-            <div>
-              <h2 className="font-heading text-lg font-black text-text">Ajouter une image</h2>
-              <p className="text-sm font-semibold text-slate-500">Une photo aide les autres à comprendre rapidement.</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Button type="button" variant="success" size="lg" onClick={() => cameraInputRef.current?.click()} className="w-full">
-              <Camera size={19} />
-              Prendre une photo
-            </Button>
-            <Button type="button" variant="ghost" size="lg" onClick={() => galleryInputRef.current?.click()} className="w-full">
-              <ImagePlus size={19} />
-              Choisir une image
-            </Button>
-          </div>
+      <Card className="space-y-4 p-4 md:p-5">
+        <div>
+          <h2 className="font-heading text-lg font-black text-text">{copy.infrastructureTitle}</h2>
+          <p className="text-sm font-semibold text-slate-500">Selected category: {categories[form.category]?.label}</p>
+        </div>
+        <button type="button" onClick={() => update("category", "")} className="w-fit rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">
+          Change category
+        </button>
+        {errors.category && <p className="text-xs font-bold text-red-600">{errors.category}</p>}
+        <input
+          value={form.infrastructureName}
+          onChange={(event) => update("infrastructureName", event.target.value)}
+          placeholder={copy.infrastructureName}
+          className="form-field"
+        />
+        <div>
           <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="sr-only"
-            onChange={handleImageInput}
+            value={form.assetId}
+            onChange={(event) => update("assetId", event.target.value)}
+            placeholder={copy.assetId}
+            className="form-field"
           />
-          <input
-            ref={galleryInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="sr-only"
-            onChange={handleImageInput}
-          />
-          <div
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => {
-              event.preventDefault();
-              addImages(event.dataTransfer.files);
-            }}
-            className="hidden min-h-[150px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center transition hover:border-primary hover:bg-green-50 md:flex"
-          >
-            <ImagePlus className="text-primary" size={32} />
-            <span className="mt-2 text-sm font-black text-text">Glisser-déposer des images</span>
-            <span className="text-xs font-semibold text-slate-500">Jusqu’à 3 images. 5 Mo maximum par image.</span>
-          </div>
-          {errors.images && <p className="text-xs font-bold text-red-600">{errors.images}</p>}
-          {previews.length > 0 && (
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-              {previews.map((preview, index) => (
-                <div key={`${preview.file.name}-${index}`} className="relative overflow-hidden rounded-xl border border-slate-100">
-                  <img src={preview.url} alt="" className="h-32 w-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(index)}
-                    className="absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded-lg bg-white/95 text-danger shadow-sm"
-                    aria-label="Supprimer l'image"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
+          <p className="mt-1 text-xs font-semibold text-slate-500">{copy.assetNote}</p>
+        </div>
+        <label>
+          <span className="mb-1 block text-sm font-semibold text-slate-700">{copy.languageLabel}</span>
+          <select value={form.language} onChange={(event) => update("language", event.target.value)} className="form-field">
+            {Object.entries(languageOptions).map(([key, label]) => (
+              <option key={key} value={key}>{label}</option>
+            ))}
+          </select>
+        </label>
+      </Card>
+
+      <Card className="space-y-4 p-4 md:p-5">
+        <div>
+          <h2 className="font-heading text-lg font-black text-text">{copy.classificationTitle}</h2>
+          <p className="text-sm font-semibold text-slate-500">{copy.classificationIntro}</p>
+        </div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <label>
+            <span className="mb-1 block text-sm font-semibold text-slate-700">{copy.crisisType}</span>
+            <select value={form.crisisType} onChange={(event) => update("crisisType", event.target.value)} className="form-field">
+              {Object.entries(crisisTypes).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
               ))}
-            </div>
-          )}
-          <button type="button" onClick={goNext} className="text-sm font-bold text-slate-500 hover:text-primary">
-            Continuer sans image
-          </button>
-        </Card>
-      )}
+            </select>
+          </label>
+          <label>
+            <span className="mb-1 block text-sm font-semibold text-slate-700">{copy.damageLevel}</span>
+            <select value={form.damageLevel} onChange={(event) => update("damageLevel", event.target.value)} className="form-field">
+              {Object.entries(damageLevels).map(([key, item]) => (
+                <option key={key} value={key}>{item.label}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className="mb-1 block text-sm font-semibold text-slate-700">{copy.debris}</span>
+            <select value={form.debris} onChange={(event) => update("debris", event.target.value)} className="form-field">
+              {Object.entries(debrisOptions).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-semibold text-slate-700">
+          <AlertTriangle className="mr-2 inline text-primary" size={17} />
+          {damageLevels[form.damageLevel]?.description}
+        </div>
+      </Card>
 
-      {step === 5 && (
-        <div ref={fieldRefs.location}>
-          <Card className="space-y-3 p-4 md:p-5">
-            <div className="flex items-start gap-3">
-              <MapPinned className="mt-1 text-primary" size={22} />
-              <div>
-                <h2 className="font-heading text-lg font-black text-text">Localisation</h2>
-                <p className="text-sm font-semibold text-slate-500">Confirmez ou corrigez la position du signalement.</p>
+      <Card className="space-y-4 p-4 md:p-5">
+        <div>
+          <h2 className="font-heading text-lg font-black text-text">{copy.photoTitle}</h2>
+          <p className="text-sm font-semibold text-slate-500">{copy.photoIntro}</p>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Button type="button" variant="success" size="lg" onClick={() => cameraInputRef.current?.click()} className="w-full">
+            <Camera size={19} />
+            {copy.takePhoto}
+          </Button>
+          <Button type="button" variant="ghost" size="lg" onClick={() => galleryInputRef.current?.click()} className="w-full">
+            <ImagePlus size={19} />
+            {copy.uploadImage}
+          </Button>
+        </div>
+        <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="sr-only" onChange={(event) => addImages(event.target.files)} />
+        <input ref={galleryInputRef} type="file" accept="image/*" multiple className="sr-only" onChange={(event) => addImages(event.target.files)} />
+        {errors.images && <p className="text-xs font-bold text-red-600">{errors.images}</p>}
+        {previews.length > 0 && (
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+            {previews.map((preview, index) => (
+              <div key={`${preview.file.name}-${index}`} className="relative overflow-hidden rounded-xl border border-slate-100">
+                <img src={preview.url} alt="" className="h-32 w-full object-cover" />
+                <button type="button" onClick={() => removeImage(index)} className="absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded-lg bg-white/95 text-danger shadow-sm">
+                  <Trash2 size={15} />
+                </button>
               </div>
-            </div>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <label className="block">
-                <span className="mb-1 block text-sm font-semibold text-slate-700">Province</span>
-                <select value={form.province} onChange={(event) => update("province", event.target.value)} className="form-field">
-                  {provinces.map((province) => (
-                    <option value={province} key={province}>
-                      {province}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-sm font-semibold text-slate-700">Commune</span>
-                <select value={form.commune} onChange={(event) => update("commune", event.target.value)} className="form-field">
-                  {(drcLocations[form.province] || []).map((commune) => (
-                    <option value={commune} key={commune}>
-                      {commune}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <Button type="button" onClick={() => useGps({ revealMapOnSuccess: false })} variant="ghost" className="w-full" disabled={locating}>
-                <LocateFixed size={18} />
-                {locating ? "Localisation..." : "Utiliser ma position"}
-              </Button>
-              <Button type="button" onClick={() => setMapVisible(true)} variant="ghost" className="w-full">
-                <Pencil size={18} />
-                Modifier l’emplacement
-              </Button>
-            </div>
-            <div className="rounded-xl bg-slate-50 p-3 text-sm font-bold text-slate-600">
-              {location ? (
-                <span className="flex items-center gap-2 text-text">
-                  <MapPin size={17} className="text-primary" />
-                  Position détectée : {form.province} + {form.commune}
-                </span>
-              ) : (
-                locationStatus || "Aucune position sélectionnée"
-              )}
-            </div>
-            {locationStatus && location && (
-              <p
-                className={`rounded-xl p-3 text-xs font-bold ${
-                  locationStatusType === "error"
-                    ? "bg-red-50 text-red-700"
-                    : locationStatusType === "loading"
-                      ? "bg-green-50 text-primary"
-                      : "bg-emerald-50 text-emerald-700"
-                }`}
-              >
-                {locationStatus}
-              </p>
-            )}
-            {manualSyncing && <p className="text-xs font-bold text-slate-500">Synchronisation avec la carte...</p>}
-            {errors.location && <p className="text-xs font-bold text-red-600">{errors.location}</p>}
-            {mapVisible && (
-              <>
-                <p className="text-sm font-bold text-slate-600">Cliquez sur la carte pour choisir l’emplacement. Vous pouvez déplacer le marqueur.</p>
-                <Suspense
-                  fallback={
-                    <div className="flex h-[300px] w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold text-slate-500 md:h-[400px]">
-                      Chargement de la carte...
-                    </div>
-                  }
-                >
-                  <ReportMap height="min(500px, 55vh)" onPick={(nextLocation) => applyLocation(nextLocation, "map")} pickedLocation={location} />
-                </Suspense>
-              </>
-            )}
-            {location && (
-              <p className="text-xs font-bold text-slate-500">
-                Coordonnées : {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
-              </p>
-            )}
-          </Card>
-        </div>
-      )}
-
-      {step > 1 && (
-      <Card className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
-        <Button type="button" variant="ghost" onClick={goBack} disabled={step === 1} className="w-full sm:w-auto">
-          <ChevronLeft size={18} />
-          Précédent
-        </Button>
-        <div className="text-center text-xs font-bold text-slate-500">
-          Étape {step} sur {steps.length}
-        </div>
-        {step === 2 ? (
-          <p className="text-center text-xs font-bold text-slate-500 sm:text-left">La suite s’ouvre automatiquement après votre choix.</p>
-        ) : step < steps.length ? (
-          <Button type="button" variant="success" onClick={goNext} className="w-full sm:w-auto">
-            Suivant
-            <ChevronRight size={18} />
-          </Button>
-        ) : (
-          <Button type="submit" variant="success" size="lg" className="w-full sm:w-auto" disabled={submitting}>
-            {submitting ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
-            {submitting ? "Envoi en cours..." : "Envoyer le signalement"}
-          </Button>
+            ))}
+          </div>
         )}
       </Card>
-      )}
+
+      <Card className="space-y-4 p-4 md:p-5">
+        <div>
+          <h2 className="font-heading text-lg font-black text-text">{copy.detailsTitle}</h2>
+          <p className="text-sm font-semibold text-slate-500">{copy.detailsIntro}</p>
+        </div>
+        <input
+          value={form.title}
+          onChange={(event) => update("title", event.target.value)}
+          placeholder={copy.titlePlaceholder}
+          className={`form-field ${errors.title ? "border-red-300" : ""}`}
+        />
+        {errors.title && <p className="text-xs font-bold text-red-600">{errors.title}</p>}
+        <textarea
+          value={form.description}
+          onChange={(event) => update("description", event.target.value)}
+          placeholder={copy.descriptionPlaceholder}
+          rows={4}
+          className={`form-field ${errors.description ? "border-red-300" : ""}`}
+        />
+        {errors.description && <p className="text-xs font-bold text-red-600">{errors.description}</p>}
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="text-sm font-black text-text">{copy.modularTitle}</p>
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
+            {[
+              ["accessBlocked", copy.accessBlocked],
+              ["servicesDisrupted", copy.servicesDisrupted],
+              ["livelihoodsAffected", copy.livelihoodsAffected],
+              ["peopleAtRisk", copy.peopleAtRisk]
+            ].map(([key, label]) => (
+              <label key={key} className="flex items-center gap-2 rounded-lg bg-white p-3 text-sm font-semibold text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={form[key]}
+                  onChange={(event) => updateBoolean(key, event.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      <Card className="space-y-4 p-4 md:p-5">
+        <div>
+          <h2 className="font-heading text-lg font-black text-text">{copy.locationTitle}</h2>
+          <p className="text-sm font-semibold text-slate-500">{copy.locationIntro}</p>
+        </div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <label>
+            <span className="mb-1 block text-sm font-semibold text-slate-700">{copy.region}</span>
+            <select value={form.province} onChange={(event) => update("province", event.target.value)} className="form-field">
+              {provinces.map((province) => (
+                <option value={province} key={province}>{province}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className="mb-1 block text-sm font-semibold text-slate-700">{copy.localArea}</span>
+            <select value={form.commune} onChange={(event) => update("commune", event.target.value)} className="form-field">
+              {(drcLocations[form.province] || []).map((commune) => (
+                <option value={commune} key={commune}>{commune}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <Button type="button" onClick={() => useGps({ revealMapOnSuccess: false })} variant="ghost" className="w-full" disabled={locating}>
+            <LocateFixed size={18} />
+            {locating ? copy.locating : copy.useGps}
+          </Button>
+          <Button type="button" onClick={() => setMapVisible(true)} variant="ghost" className="w-full">
+            <Pencil size={18} />
+            {copy.selectOnMap}
+          </Button>
+        </div>
+        <div className="rounded-xl bg-slate-50 p-3 text-sm font-bold text-slate-600">
+          {location ? (
+            <span className="flex items-center gap-2 text-text">
+              <MapPin size={17} className="text-primary" />
+              {form.province} / {form.commune} - {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+            </span>
+          ) : (
+            locationStatus || copy.noLocation
+          )}
+        </div>
+        <input
+          value={form.locationDescription}
+          onChange={(event) => update("locationDescription", event.target.value)}
+          placeholder={copy.locationFallback}
+          className="form-field"
+        />
+        {errors.location && <p className="text-xs font-bold text-red-600">{errors.location}</p>}
+        {mapVisible && (
+          <Suspense fallback={<div className="flex h-[300px] items-center justify-center rounded-xl border bg-slate-50 text-sm font-bold text-slate-500">Loading map...</div>}>
+            <ReportMap height="min(500px, 55vh)" onPick={(nextLocation) => applyLocation(nextLocation, "map")} pickedLocation={location} />
+          </Suspense>
+        )}
+      </Card>
+
+      <Card className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs font-bold text-slate-500">
+          {copy.footer}
+        </p>
+        <Button type="submit" variant="success" size="lg" className="w-full sm:w-auto" disabled={submitting}>
+          {submitting ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
+          {submitting ? copy.submitting : copy.submit}
+        </Button>
+      </Card>
     </form>
   );
 }

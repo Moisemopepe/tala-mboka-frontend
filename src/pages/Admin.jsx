@@ -1,971 +1,364 @@
-import {
-  BarChart3,
-  CheckCircle2,
-  Download,
-  Edit3,
-  FileText,
-  MapPinned,
-  Search,
-  ShieldCheck,
-  SlidersHorizontal,
-  Trash2,
-  Users,
-  Wrench,
-  X,
-  XCircle
-} from "lucide-react";
+import { BarChart3, CheckCircle2, Download, MapPinned, RefreshCw, Search, ShieldCheck, Trash2, XCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Circle, MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../api/client.js";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
-import StatusBadge from "../components/StatusBadge.jsx";
-import { currentReleaseNotes } from "../config/releaseNotes.js";
-import { VERSION } from "../config/version.js";
-import { categories, statuses } from "../utils/categories.js";
-import { drcLocations, provinces } from "../utils/drcLocations.js";
-import { reporterRoles, reporterRoleLabel } from "../utils/reporterRoles.js";
+import { categories } from "../utils/categories.js";
+import { crisisTypes, damageLevels, infrastructureTypes } from "../utils/crisisOptions.js";
+import { sampleReports } from "../utils/sampleReports.js";
 
-const tabs = [
-  { key: "dashboard", label: "Tableau de bord", icon: BarChart3 },
-  { key: "reports", label: "Alertes", icon: FileText },
-  { key: "users", label: "Utilisateurs", icon: Users, adminOnly: true },
-  { key: "map", label: "Carte", icon: MapPinned },
-  { key: "tools", label: "Outils", icon: Wrench }
-];
-
-const statusOptions = ["danger", "critique"];
-const moderationOptions = {
-  pending: "En attente",
-  approved: "Publié",
-  rejected: "Rejeté"
+const statusLabels = {
+  pending: "Pending",
+  verified: "Verified",
+  rejected: "Rejected"
 };
-const moderationStyles = {
-  pending: "bg-yellow-50 text-yellow-700 ring-yellow-200",
-  approved: "bg-green-50 text-green-700 ring-green-200",
+
+const statusStyles = {
+  pending: "bg-amber-50 text-amber-800 ring-amber-200",
+  verified: "bg-green-50 text-green-700 ring-green-200",
   rejected: "bg-red-50 text-red-700 ring-red-200"
 };
-const categoryOptions = Object.keys(categories);
-const reporterRoleOptions = Object.keys(reporterRoles);
-const versionNotesMaxLength = 2000;
 
-export default function Admin() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const storedUser = JSON.parse(localStorage.getItem("tala_user") || "null");
-  const currentUser = user || storedUser;
-  const isAdmin = currentUser?.role === "admin";
-  const visibleTabs = tabs.filter((tab) => !tab.adminOnly || isAdmin);
-  const [activeTab, setActiveTab] = useState("dashboard");
-  const [stats, setStats] = useState(null);
-  const [reports, setReports] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [error, setError] = useState("");
-  const [reportQuery, setReportQuery] = useState("");
-  const [reportStatus, setReportStatus] = useState("");
-  const [reportModeration, setReportModeration] = useState("");
-  const [reportCategory, setReportCategory] = useState("");
-  const [reportProvince, setReportProvince] = useState("");
-  const [reportDateSort, setReportDateSort] = useState("newest");
-  const [userQuery, setUserQuery] = useState("");
-  const [editingReport, setEditingReport] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [lastRefresh, setLastRefresh] = useState(null);
-
-  useEffect(() => {
-    refreshAdmin();
-    const timer = window.setInterval(() => {
-      refreshAdmin({ silent: true });
-    }, 30000);
-
-    return () => window.clearInterval(timer);
-  }, [isAdmin]);
-
-  async function refreshAdmin(options = {}) {
-    if (!options.silent) setLoading(true);
-    try {
-      const [statsData, reportsData, usersData] = await Promise.all([
-        api("/admin/stats"),
-        api("/admin/reports"),
-        isAdmin ? api("/admin/users") : Promise.resolve([])
-      ]);
-      setStats(statsData);
-      setReports(reportsData);
-      setUsers(usersData);
-      setLastRefresh(new Date());
-      setError("");
-    } catch (err) {
-      if (err.status === 401) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("tala_token");
-        navigate("/admin/login", { replace: true });
-        return;
-      }
-      setError(err.message);
-    } finally {
-      if (!options.silent) setLoading(false);
-    }
-  }
-
-  async function updateStatus(id, status) {
-    const updated = await api(`/admin/reports/${id}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({ status })
-    });
-    setReports((items) => items.map((item) => (item._id === id ? { ...item, status: updated.status } : item)));
-    refreshAdmin();
-  }
-
-  async function approveReport(id) {
-    const updated = await api(`/admin/reports/${id}/approve`, { method: "PATCH" });
-    setReports((items) => items.map((item) => (item._id === id ? updated : item)));
-    refreshAdmin();
-  }
-
-  async function rejectReport(id) {
-    const reason = window.prompt("Raison du rejet (optionnel)") || "";
-    const updated = await api(`/admin/reports/${id}/reject`, {
-      method: "PATCH",
-      body: JSON.stringify({ reason })
-    });
-    setReports((items) => items.map((item) => (item._id === id ? updated : item)));
-    refreshAdmin();
-  }
-
-  async function saveReport(id, payload) {
-    const updated = await api(`/admin/reports/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify(payload)
-    });
-    setReports((items) => items.map((item) => (item._id === id ? updated : item)));
-    setEditingReport(null);
-    refreshAdmin();
-  }
-
-  async function deleteReport(id) {
-    await api(`/admin/reports/${id}`, { method: "DELETE" });
-    setReports((items) => items.filter((item) => item._id !== id));
-    refreshAdmin();
-  }
-
-  async function toggleBan(user) {
-    const updated = await api(`/admin/users/${user._id}/ban`, {
-      method: "PATCH",
-      body: JSON.stringify({ banned: !user.banned })
-    });
-    setUsers((items) => items.map((item) => (item._id === user._id ? { ...item, banned: updated.banned } : item)));
-  }
-
-  async function updateRole(user, role) {
-    const updated = await api(`/admin/users/${user._id}/role`, {
-      method: "PATCH",
-      body: JSON.stringify({ role })
-    });
-    setUsers((items) => items.map((item) => (item._id === user._id ? { ...item, role: updated.role } : item)));
-  }
-
-  const filteredReports = useMemo(() => {
-    const query = reportQuery.trim().toLowerCase();
-    return reports.filter((report) => {
-      const matchesQuery =
-        !query ||
-        report.title?.toLowerCase().includes(query) ||
-        report.description?.toLowerCase().includes(query) ||
-        report.userId?.name?.toLowerCase().includes(query);
-      const matchesStatus = !reportStatus || report.status === reportStatus;
-      const currentModeration = report.moderationStatus || "approved";
-      const matchesModeration = !reportModeration || currentModeration === reportModeration;
-      const matchesCategory = !reportCategory || report.category === reportCategory;
-      const matchesProvince = !reportProvince || report.province === reportProvince;
-      return matchesQuery && matchesStatus && matchesModeration && matchesCategory && matchesProvince;
-    }).sort((a, b) => {
-      const left = new Date(a.createdAt).getTime();
-      const right = new Date(b.createdAt).getTime();
-      return reportDateSort === "oldest" ? left - right : right - left;
-    });
-  }, [reports, reportQuery, reportStatus, reportModeration, reportCategory, reportProvince, reportDateSort]);
-
-  const filteredUsers = useMemo(() => {
-    const query = userQuery.trim().toLowerCase();
-    return users.filter((user) => !query || user.name?.toLowerCase().includes(query) || user.phone?.includes(query));
-  }, [users, userQuery]);
-
-  const heatPoints = useMemo(() => {
-    return reports.map((report) => ({
-      center: [report.location.lat, report.location.lng],
-      radius: 260 + Math.min((report.likesCount || 0) * 60, 500),
-      color: categories[report.category]?.color || "#0B5ED7"
-    }));
-  }, [reports]);
-
+function statusBadge(status = "pending") {
   return (
-    <div className="space-y-4 lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-5 lg:space-y-0">
-      <aside className="rounded-xl border border-slate-200/70 bg-white p-3 shadow-sm lg:sticky lg:top-24 lg:h-fit">
-        <div className="mb-3 hidden items-center gap-2 px-2 py-1 lg:flex">
-          <ShieldCheck className="text-primary" size={20} />
-          <p className="font-heading font-black text-text">Admin</p>
-        </div>
-        <div className="flex gap-2 overflow-x-auto lg:block lg:space-y-2">
-          {visibleTabs.map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setActiveTab(key)}
-              className={`flex min-h-12 shrink-0 items-center gap-3 rounded-lg border px-4 text-sm font-semibold transition lg:w-full ${
-                activeTab === key
-                  ? "border-green-200 bg-green-50 text-primary shadow-sm"
-                  : "border-transparent bg-white text-[#1E293B] hover:border-green-200 hover:bg-green-50 hover:text-primary"
-              }`}
-            >
-              <Icon size={19} strokeWidth={2.4} />
-              {label}
-            </button>
-          ))}
-        </div>
-      </aside>
-
-      <section className="space-y-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-          <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">{isAdmin ? "Tableau de bord admin" : "Tableau de bord modérateur"}</h1>
-            <p className="text-sm font-medium text-slate-600 md:text-base">
-                Modifiez les alertes, gérez les utilisateurs, suivez les statistiques et la carte.
-            </p>
-            {lastRefresh && (
-              <p className="mt-1 text-xs font-bold text-slate-400">
-                Actualisation automatique toutes les 30 s. Dernière mise à jour : {lastRefresh.toLocaleTimeString()}
-              </p>
-            )}
-          </div>
-          <Button type="button" variant="ghost" onClick={refreshAdmin}>
-            <SlidersHorizontal size={18} />
-            Actualiser
-          </Button>
-        </div>
-
-        {loading && (
-          <Card className="p-5">
-            <p className="text-sm font-bold text-slate-600">Chargement des donnees admin...</p>
-          </Card>
-        )}
-
-        {error && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p>}
-
-        {!loading && activeTab === "dashboard" && (
-          <Dashboard stats={stats} reports={reports} users={users} onOpenTab={setActiveTab} isAdmin={isAdmin} />
-        )}
-        {!loading && activeTab === "reports" && (
-          <ReportsPanel
-            reports={filteredReports}
-            query={reportQuery}
-            status={reportStatus}
-            moderation={reportModeration}
-            category={reportCategory}
-            province={reportProvince}
-            onQuery={setReportQuery}
-            onStatusFilter={setReportStatus}
-            onModerationFilter={setReportModeration}
-            onCategoryFilter={setReportCategory}
-            onProvinceFilter={setReportProvince}
-            dateSort={reportDateSort}
-            onDateSort={setReportDateSort}
-            onStatus={updateStatus}
-            onApprove={approveReport}
-            onReject={rejectReport}
-            onEdit={setEditingReport}
-            onDelete={deleteReport}
-          />
-        )}
-        {!loading && isAdmin && activeTab === "users" && (
-          <UsersPanel users={filteredUsers} query={userQuery} onQuery={setUserQuery} onToggleBan={toggleBan} onRole={updateRole} />
-        )}
-        {!loading && activeTab === "map" && <AdminMap reports={reports} heatPoints={heatPoints} />}
-        {!loading && activeTab === "tools" && (
-          <AdminTools reports={reports} users={users} onOpenTab={setActiveTab} isAdmin={isAdmin} />
-        )}
-      </section>
-
-      {editingReport && <EditReportModal report={editingReport} onClose={() => setEditingReport(null)} onSave={saveReport} />}
-    </div>
-  );
-}
-
-function Dashboard({ stats, reports, users, onOpenTab, isAdmin }) {
-  const cards = [
-    { label: "Total alertes", value: stats?.reports ?? stats?.totalReports ?? 0, color: "text-primary", tab: "reports" },
-    { label: "Danger", value: stats?.dangerReports ?? 0, color: "text-red-600", tab: "reports" },
-    { label: "Critique", value: stats?.critiqueReports ?? 0, color: "text-orange-600", tab: "reports" },
-    { label: "À modérer", value: stats?.pendingModerationReports ?? 0, color: "text-yellow-600", tab: "reports" },
-    { label: "Utilisateurs", value: stats?.users ?? stats?.totalUsers ?? 0, color: "text-danger", tab: "users", adminOnly: true }
-  ];
-  const bannedUsers = users.filter((user) => user.banned).length;
-  const dangerReports = reports.filter((report) => report.status === "danger").slice(0, 4);
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {cards.filter((card) => !card.adminOnly || isAdmin).map((card) => (
-          <button key={card.label} type="button" onClick={() => onOpenTab(card.tab)} className="text-left">
-            <Card className="p-4 transition hover:border-green-200 hover:bg-green-50">
-              <p className="text-xs font-black uppercase text-slate-600">{card.label}</p>
-              <p className={`mt-2 font-heading text-3xl font-black ${card.color}`}>{card.value}</p>
-            </Card>
-          </button>
-        ))}
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-        <Card className="p-4">
-          <h2 className="font-heading text-lg font-black text-text">Répartition par catégorie</h2>
-          <div className="mt-4 space-y-3">
-            {(stats?.categoryBreakdown || []).map((item) => (
-              <div key={item.category}>
-                <div className="mb-1 flex justify-between text-sm font-bold">
-                  <span>{categories[item.category]?.label || item.category}</span>
-                  <span>{item.count}</span>
-                </div>
-                <div className="h-2 rounded-full bg-slate-100">
-                  <div
-                    className="h-2 rounded-full bg-primary"
-                    style={{ width: `${Math.min((item.count / Math.max(stats.reports ?? stats.totalReports, 1)) * 100, 100)}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-            {(stats?.categoryBreakdown || []).length === 0 && <p className="text-sm font-semibold text-slate-500">Aucune donnée.</p>}
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <h2 className="font-heading text-lg font-black text-text">Actions rapides</h2>
-          <div className="mt-4 space-y-2">
-            <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("reports")}>
-              Alertes danger
-            </Button>
-            {isAdmin && (
-              <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("users")}>
-                Gérer les utilisateurs
-              </Button>
-            )}
-            <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("map")}>
-              Voir la heatmap
-            </Button>
-          </div>
-          <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm font-bold text-slate-700">
-            Utilisateurs bannis : {bannedUsers}
-          </p>
-        </Card>
-      </div>
-
-      <Card className="p-4">
-        <h2 className="font-heading text-lg font-black text-text">Alertes danger</h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          {dangerReports.map((report) => (
-            <div key={report._id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-              <p className="text-xs font-black uppercase text-primary">{categories[report.category]?.label}</p>
-              <p className="font-bold text-text">{report.title}</p>
-              <p className="mt-1 line-clamp-2 text-sm text-slate-600">{report.description}</p>
-            </div>
-          ))}
-          {dangerReports.length === 0 && <p className="text-sm font-semibold text-slate-500">Aucune alerte danger.</p>}
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function ReportsPanel({
-  reports,
-  query,
-  status,
-  moderation,
-  category,
-  province,
-  onQuery,
-  onStatusFilter,
-  onModerationFilter,
-  onCategoryFilter,
-  onProvinceFilter,
-  dateSort,
-  onDateSort,
-  onStatus,
-  onApprove,
-  onReject,
-  onEdit,
-  onDelete
-}) {
-  return (
-    <Card className="overflow-hidden">
-      <div className="space-y-3 border-b border-slate-100 p-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h2 className="font-heading text-lg font-black text-text">Gestion des alertes</h2>
-            <p className="text-sm font-semibold text-slate-600">
-              {reports.length} alerte{reports.length > 1 ? "s" : ""} affichée{reports.length > 1 ? "s" : ""}. Modifier,
-              filtrer, resoudre ou supprimer les signalements.
-            </p>
-          </div>
-          <Button type="button" variant="ghost" onClick={() => exportCsv("reports.csv", reports)}>
-            <Download size={17} />
-            Export CSV
-          </Button>
-        </div>
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_repeat(5,minmax(140px,170px))]">
-          <label className="relative">
-            <Search className="absolute left-3 top-3 text-slate-400" size={18} />
-            <input
-              value={query}
-              onChange={(event) => onQuery(event.target.value)}
-              placeholder="Rechercher un titre, une description ou un utilisateur..."
-              className="form-field pl-10"
-            />
-          </label>
-          <select value={status} onChange={(event) => onStatusFilter(event.target.value)} className="form-field">
-            <option value="">Toutes gravites</option>
-            {statusOptions.map((item) => (
-              <option key={item} value={item}>
-                {statuses[item]}
-              </option>
-            ))}
-          </select>
-          <select value={moderation} onChange={(event) => onModerationFilter(event.target.value)} className="form-field">
-            <option value="">Toute moderation</option>
-            {Object.entries(moderationOptions).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <select value={category} onChange={(event) => onCategoryFilter(event.target.value)} className="form-field">
-            <option value="">Toutes les catégories</option>
-            {categoryOptions.map((item) => (
-              <option key={item} value={item}>
-                {categories[item].label}
-              </option>
-            ))}
-          </select>
-          <select value={province} onChange={(event) => onProvinceFilter(event.target.value)} className="form-field">
-            <option value="">Toutes provinces</option>
-            {provinces.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-          <select value={dateSort} onChange={(event) => onDateSort(event.target.value)} className="form-field">
-            <option value="newest">Plus récentes</option>
-            <option value="oldest">Plus anciennes</option>
-          </select>
-        </div>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-600">
-            <tr>
-              <th className="px-4 py-3">Alerte</th>
-              <th className="px-4 py-3">Catégorie</th>
-              <th className="px-4 py-3">Utilisateur</th>
-              <th className="px-4 py-3">Statuts</th>
-              <th className="px-4 py-3">Province / Commune</th>
-              <th className="px-4 py-3">GPS</th>
-              <th className="px-4 py-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {reports.map((report) => (
-              <tr key={report._id} className="align-top">
-                <td className="px-4 py-3">
-                  <p className="font-bold text-text">{report.title}</p>
-                  <p className="truncate text-slate-600">{report.description}</p>
-                  <p className="mt-1 text-xs font-bold text-slate-500">{report.likesCount || 0} soutiens</p>
-                </td>
-                <td className="px-4 py-3 font-semibold">{categories[report.category]?.label}</td>
-                <td className="px-4 py-3 text-slate-700">
-                  <p className="font-semibold">{report.userId?.name || (report.source === "guest" ? "Invité" : "Inconnu")}</p>
-                  <p className="mt-1 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
-                    {reporterRoleLabel(report.reporterRole)}
-                  </p>
-                </td>
-                <td className="px-4 py-3">
-                  <p className="mb-2 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">
-                    {report.source === "guest" ? "invité" : "utilisateur"}
-                  </p>
-                  <div className="mb-2">
-                    <ModerationBadge status={report.moderationStatus || "approved"} />
-                  </div>
-                  <div className="mb-2">
-                    <StatusBadge status={report.status} />
-                  </div>
-                  <select
-                    value={["danger", "critique"].includes(report.status) ? report.status : "suivi"}
-                    onChange={(event) => onStatus(report._id, event.target.value)}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 font-bold text-text"
-                  >
-                    <option value="suivi">Normal</option>
-                    {statusOptions.map((item) => (
-                      <option key={item} value={item}>
-                        {statuses[item]}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="px-4 py-3 font-bold text-slate-700">
-                  {report.province || "-"} / {report.commune || "-"}
-                  {report.location.address && <p className="text-xs font-semibold text-slate-500">{report.location.address}</p>}
-                </td>
-                <td className="px-4 py-3 text-xs font-bold text-slate-600">
-                  {report.location.lat.toFixed(4)}, {report.location.lng.toFixed(4)}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-2">
-                    {(report.moderationStatus || "approved") === "pending" && (
-                      <>
-                        <Button type="button" variant="success" size="sm" onClick={() => onApprove(report._id)}>
-                          <CheckCircle2 size={16} />
-                          Approuver
-                        </Button>
-                        <Button type="button" variant="danger" size="sm" onClick={() => onReject(report._id)}>
-                          <XCircle size={16} />
-                          Rejeter
-                        </Button>
-                      </>
-                    )}
-                    <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(report)}>
-                      <Edit3 size={16} />
-                      Modifier
-                    </Button>
-                    <Button type="button" variant="danger" size="sm" onClick={() => onDelete(report._id)}>
-                      <Trash2 size={16} />
-                          Supprimer
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {reports.length === 0 && (
-              <tr>
-                <td className="px-4 py-8 text-center font-bold text-slate-500" colSpan={7}>
-                  Aucune alerte disponible
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  );
-}
-
-function ModerationBadge({ status }) {
-  return (
-    <span
-      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${
-        moderationStyles[status] || moderationStyles.approved
-      }`}
-    >
-      {moderationOptions[status] || moderationOptions.approved}
+    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-black ring-1 ${statusStyles[status] || statusStyles.pending}`}>
+      {statusLabels[status] || status}
     </span>
   );
 }
 
-function UsersPanel({ users, query, onQuery, onToggleBan, onRole }) {
-  return (
-    <Card className="overflow-hidden">
-      <div className="space-y-3 border-b border-slate-100 p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="font-heading text-lg font-black text-text">Utilisateurs</h2>
-            <p className="text-sm font-semibold text-slate-600">Bannir, réactiver et gérer les rôles.</p>
-          </div>
-          <Button type="button" variant="ghost" onClick={() => exportCsv("users.csv", users)}>
-            <Download size={17} />
-            Exporter CSV
-          </Button>
-        </div>
-        <label className="relative block w-full">
-          <Search className="absolute left-3 top-3 text-slate-400" size={18} />
-          <input value={query} onChange={(event) => onQuery(event.target.value)} placeholder="Rechercher un nom ou un téléphone..." className="form-field pl-10" />
-        </label>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-600">
-            <tr>
-              <th className="px-4 py-3">Nom</th>
-              <th className="px-4 py-3">Téléphone</th>
-              <th className="px-4 py-3">Rôle</th>
-              <th className="px-4 py-3">Alertes</th>
-              <th className="px-4 py-3">Statut</th>
-              <th className="px-4 py-3">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {users.map((user) => (
-              <tr key={user._id}>
-                <td className="px-4 py-3 font-bold text-text">{user.name}</td>
-                <td className="px-4 py-3 text-slate-700">{user.phone}</td>
-                <td className="px-4 py-3">
-                  <select
-                    value={user.role}
-                    onChange={(event) => onRole(user, event.target.value)}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 font-bold text-text"
-                  >
-                    <option value="user">utilisateur</option>
-                    <option value="moderator">modérateur</option>
-                    <option value="admin">admin</option>
-                  </select>
-                </td>
-                <td className="px-4 py-3 font-bold">{user.reportCount}</td>
-                <td className="px-4 py-3">
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${user.banned ? "bg-red-50 text-danger" : "bg-emerald-50 text-success"}`}>
-                    {user.banned ? "Banni" : "Actif"}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <Button type="button" variant={user.banned ? "ghost" : "danger"} size="sm" onClick={() => onToggleBan(user)}>
-                    {user.banned ? "Réactiver" : "Bannir"}
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  );
+function countBy(items, key) {
+  return items.reduce((acc, item) => {
+    const value = item[key] || "other";
+    acc[value] = (acc[value] || 0) + 1;
+    return acc;
+  }, {});
 }
 
-function AdminMap({ reports, heatPoints }) {
-  return (
-    <Card className="overflow-hidden">
-      <div className="border-b border-slate-100 p-4">
-        <h2 className="font-heading text-lg font-black text-text">Carte analytique</h2>
-        <p className="text-sm font-semibold text-slate-600">Carte des signalements et heatmap par zone.</p>
-      </div>
-      <div className="h-[300px] md:h-[400px] lg:h-[500px]">
-        <MapContainer center={[-4.325, 15.3222]} zoom={12} scrollWheelZoom>
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          {heatPoints.map((point, index) => (
-            <Circle
-              key={`${point.center[0]}-${point.center[1]}-${index}`}
-              center={point.center}
-              radius={point.radius}
-              pathOptions={{ color: point.color, fillColor: point.color, fillOpacity: 0.18, weight: 1 }}
-            />
-          ))}
-          {reports.map((report) => (
-            <Marker key={report._id} position={[report.location.lat, report.location.lng]}>
-              <Popup>
-                <p className="font-bold">{report.title}</p>
-                <p>{categories[report.category]?.label}</p>
-                <p>{report.province} / {report.commune}</p>
-                <p>{statuses[report.status]}</p>
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
-      </div>
-    </Card>
-  );
-}
-
-function AdminTools({ reports, users, onOpenTab, isAdmin }) {
-  const tools = [
-    "Modifier le titre, la description, la catégorie, le statut et les coordonnées des alertes",
-    "Approuver ou rejeter les alertes invitées",
-    "Supprimer une alerte incorrecte ou abusive",
-    "Rechercher et filtrer les alertes par catégorie, statut ou utilisateur",
-    "Exporter les rapports et utilisateurs en CSV",
-    "Visualiser toutes les alertes sur la carte d’analyse avec heatmap"
-  ].concat(
-    isAdmin
-      ? ["Bannir ou réactiver un utilisateur", "Promouvoir un utilisateur en modérateur ou admin"]
-      : ["Gérer les alertes sans modifier les rôles utilisateurs"]
-  );
-
-  return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
-      <div className="space-y-4">
-        <Card className="p-4">
-          <h2 className="font-heading text-xl font-black text-text">Ce que tu peux faire comme admin</h2>
-          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {tools.map((tool) => (
-              <div key={tool} className="rounded-lg border border-green-100 bg-green-50 p-3 text-sm font-bold text-text">
-                {tool}
-              </div>
-            ))}
-          </div>
-        </Card>
-        {isAdmin && <VersionNotificationForm />}
-      </div>
-      <Card className="p-4">
-        <h2 className="font-heading text-lg font-black text-text">Raccourcis</h2>
-        <div className="mt-4 space-y-2">
-          <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("reports")}>
-            Alertes : {reports.length}
-          </Button>
-          {isAdmin && (
-            <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("users")}>
-              Utilisateurs : {users.length}
-            </Button>
-          )}
-          <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => onOpenTab("map")}>
-            Carte analytique
-          </Button>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function VersionNotificationForm() {
-  const defaultReleaseForm = {
-    version: VERSION,
-    adminNotes: currentReleaseNotes.adminNotes,
-    userNotes: currentReleaseNotes.userNotes
-  };
-  const [form, setForm] = useState({
-    ...defaultReleaseForm
-  });
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  function update(field, value) {
-    setForm((current) => ({ ...current, [field]: value }));
-  }
-
-  async function submit(event) {
-    event.preventDefault();
-    const adminNotesLength = form.adminNotes.trim().length;
-    const userNotesLength = form.userNotes.trim().length;
-
-    if (adminNotesLength > versionNotesMaxLength || userNotesLength > versionNotesMaxLength) {
-      setMessage(`Les notes ne peuvent pas dépasser ${versionNotesMaxLength} caractères.`);
-      return;
-    }
-
-    setLoading(true);
-    setMessage("");
-
-    try {
-      const data = await api("/admin/version-notifications", {
-        method: "POST",
-        body: JSON.stringify(form)
-      });
-      setMessage(data.message);
-      setForm({
-        version: VERSION,
-        adminNotes: "",
-        userNotes: ""
-      });
-    } catch (err) {
-      setMessage(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <Card className="p-4">
-      <h2 className="font-heading text-lg font-black text-text">Notification de version</h2>
-      <p className="text-sm font-semibold text-slate-600">
-          L’admin ou le modérateur reçoit les notes complètes. L’utilisateur reçoit seulement les détails utiles côté public.
-      </p>
-      <form onSubmit={submit} className="mt-4 space-y-3">
-        <input
-          value={form.version}
-          onChange={(event) => update("version", event.target.value)}
-          className="form-field"
-          placeholder="Version, ex. : 0.0.9"
-        />
-        <textarea
-          value={form.adminNotes}
-          onChange={(event) => update("adminNotes", event.target.value)}
-          className="form-field"
-          rows={3}
-          maxLength={versionNotesMaxLength}
-          placeholder="Notes admin: toutes les modifications techniques et moderation"
-        />
-        <p className="text-right text-xs font-bold text-slate-500">
-          {form.adminNotes.trim().length}/{versionNotesMaxLength} caractères admin
-        </p>
-        <textarea
-          value={form.userNotes}
-          onChange={(event) => update("userNotes", event.target.value)}
-          className="form-field"
-          rows={3}
-          maxLength={versionNotesMaxLength}
-          placeholder="Notes utilisateur : changements visibles par les utilisateurs"
-        />
-        <p className="text-right text-xs font-bold text-slate-500">
-          {form.userNotes.trim().length}/{versionNotesMaxLength} caractères utilisateur
-        </p>
-        {message && <p className="rounded-xl bg-green-50 p-3 text-sm font-bold text-primary">{message}</p>}
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button type="submit" variant="success" disabled={loading}>
-            {loading ? "Envoi..." : "Notifier la version"}
-          </Button>
-          <Button type="button" variant="ghost" onClick={() => setForm(defaultReleaseForm)}>
-            Remettre les notes
-          </Button>
-        </div>
-      </form>
-    </Card>
-  );
-}
-
-function EditReportModal({ report, onClose, onSave }) {
-  const [form, setForm] = useState({
-    title: report.title || "",
-    description: report.description || "",
-    category: report.category || "road",
-    status: ["danger", "critique"].includes(report.status) ? report.status : "",
-    reporterRole: report.reporterRole || "concerned",
-    province: report.province || "Kinshasa",
-    commune: report.commune || "Gombe",
-    lat: report.location?.lat || "",
-    lng: report.location?.lng || ""
-  });
-  const [error, setError] = useState("");
-
-  function update(field, value) {
-    setForm((current) => ({ ...current, [field]: value }));
-  }
-
-  async function submit(event) {
-    event.preventDefault();
-    try {
-      await onSave(report._id, { ...form, status: form.status || "suivi" });
-    } catch (err) {
-      setError(err.message);
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-[80] flex items-end bg-slate-950/40 p-3 sm:items-center sm:justify-center">
-      <form onSubmit={submit} className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-4 shadow-lg">
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <h2 className="font-heading text-xl font-black text-text">Modifier l'alerte</h2>
-            <p className="text-sm font-semibold text-slate-600">Vous pouvez corriger les informations publiées par l’utilisateur.</p>
-          </div>
-          <button type="button" onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-text">
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          <input value={form.title} onChange={(event) => update("title", event.target.value)} className="form-field" placeholder="Titre" />
-          <textarea value={form.description} onChange={(event) => update("description", event.target.value)} className="form-field" rows={4} placeholder="Description" />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <select value={form.category} onChange={(event) => update("category", event.target.value)} className="form-field">
-              {categoryOptions.map((item) => (
-                <option key={item} value={item}>
-                  {categories[item].label}
-                </option>
-              ))}
-            </select>
-            <select value={form.status} onChange={(event) => update("status", event.target.value)} className="form-field">
-              <option value="">Normal</option>
-              {statusOptions.map((item) => (
-                <option key={item} value={item}>
-                  {statuses[item]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <select value={form.reporterRole} onChange={(event) => update("reporterRole", event.target.value)} className="form-field">
-            {reporterRoleOptions.map((item) => (
-              <option key={item} value={item}>
-                {reporterRoles[item].label}
-              </option>
-            ))}
-          </select>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <select
-              value={form.province}
-              onChange={(event) => {
-                const nextProvince = event.target.value;
-                setForm((current) => ({
-                  ...current,
-                  province: nextProvince,
-                  commune: drcLocations[nextProvince]?.[0] || ""
-                }));
-              }}
-              className="form-field"
-            >
-              {provinces.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-            <select value={form.commune} onChange={(event) => update("commune", event.target.value)} className="form-field">
-              {(drcLocations[form.province] || []).map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input type="number" step="any" value={form.lat} onChange={(event) => update("lat", event.target.value)} className="form-field" placeholder="Latitude" />
-            <input type="number" step="any" value={form.lng} onChange={(event) => update("lng", event.target.value)} className="form-field" placeholder="Longitude" />
-          </div>
-          {error && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p>}
-        </div>
-
-        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Annuler
-          </Button>
-          <Button type="submit" variant="success">
-            Enregistrer
-          </Button>
-        </div>
-      </form>
-    </div>
-  );
-}
-
-function exportCsv(filename, rows) {
-  const flatRows = rows.map((row) => ({
-    id: row._id,
-    title: row.title,
-    name: row.name || row.userId?.name,
-    phone: row.phone || row.userId?.phone,
-    category: row.category,
-    province: row.province,
-    commune: row.commune,
-    status: row.status,
-    reporterRole: row.reporterRole,
-    reportCount: row.reportCount,
-    likesCount: row.likesCount,
-    lat: row.location?.lat,
-    lng: row.location?.lng,
-    banned: row.banned,
-    role: row.role,
-    createdAt: row.createdAt
-  }));
-  const headers = Array.from(new Set(flatRows.flatMap((row) => Object.keys(row))));
-  const csv = [
-    headers.join(","),
-    ...flatRows.map((row) =>
-      headers
-        .map((header) => `"${String(row[header] ?? "").replaceAll('"', '""')}"`)
-        .join(",")
-    )
-  ].join("\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+function downloadBlob(filename, content, type) {
+  const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+function toCsv(rows) {
+  const headers = ["id", "crisisType", "infrastructureType", "damageLevel", "description", "imageUrl", "longitude", "latitude", "addressText", "status", "duplicateOf", "createdAt", "updatedAt", "version"];
+  const body = rows.map((report) => [
+    report._id,
+    report.crisisType,
+    report.infrastructureType || report.category,
+    report.damageLevel,
+    report.description,
+    report.imageUrl || report.imageUrls?.[0] || "",
+    report.location?.lng ?? "",
+    report.location?.lat ?? "",
+    report.addressText || report.locationDescription || report.location?.address || "",
+    report.status,
+    report.duplicateOf || "",
+    report.createdAt,
+    report.updatedAt || "",
+    report.version || 1
+  ]);
+  return [headers, ...body].map((row) => row.map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`).join(",")).join("\n");
+}
+
+function toGeoJson(rows) {
+  return {
+    type: "FeatureCollection",
+    features: rows
+      .filter((report) => Number.isFinite(Number(report.location?.lat)) && Number.isFinite(Number(report.location?.lng)))
+      .map((report) => ({
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: [Number(report.location.lng), Number(report.location.lat)]
+        },
+        properties: {
+          id: report._id,
+          title: report.title,
+          description: report.description,
+          crisisType: report.crisisType,
+          infrastructureType: report.infrastructureType || report.category,
+          damageLevel: report.damageLevel,
+          imageUrl: report.imageUrl || report.imageUrls?.[0] || "",
+          addressText: report.addressText || report.locationDescription || report.location?.address || "",
+          status: report.status,
+          duplicateOf: report.duplicateOf || null,
+          createdAt: report.createdAt,
+          version: report.version || 1
+        }
+      }))
+  };
+}
+
+export default function Admin() {
+  const [reports, setReports] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("");
+  const [crisisType, setCrisisType] = useState("");
+  const [damageLevel, setDamageLevel] = useState("");
+  const [infrastructureType, setInfrastructureType] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    refresh();
+  }, []);
+
+  async function refresh() {
+    setLoading(true);
+    try {
+      const [nextStats, nextReports] = await Promise.all([api("/admin/stats"), api("/admin/reports")]);
+      setStats(nextStats);
+      setReports(nextReports);
+      setError("");
+    } catch (err) {
+      setReports(sampleReports);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function updateStatus(reportId, nextStatus) {
+    const updated = await api(`/reports/${reportId}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: nextStatus })
+    });
+    setReports((items) => items.map((item) => (item._id === reportId ? { ...item, status: updated.status } : item)));
+    refresh();
+  }
+
+  async function deleteReport(reportId) {
+    if (!window.confirm("Delete this report permanently?")) return;
+    await api(`/reports/${reportId}`, { method: "DELETE" });
+    setReports((items) => items.filter((item) => item._id !== reportId));
+    refresh();
+  }
+
+  const filteredReports = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    return reports
+      .filter((report) => !term || report.title?.toLowerCase().includes(term) || report.description?.toLowerCase().includes(term) || report.province?.toLowerCase().includes(term))
+      .filter((report) => !status || report.status === status)
+      .filter((report) => !crisisType || report.crisisType === crisisType)
+      .filter((report) => !damageLevel || report.damageLevel === damageLevel)
+      .filter((report) => !infrastructureType || report.infrastructureType === infrastructureType || report.category === infrastructureType)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }, [reports, query, status, crisisType, damageLevel, infrastructureType]);
+
+  const localStats = useMemo(() => {
+    const all = reports.length;
+    const byStatus = countBy(reports, "status");
+    const byDamage = countBy(reports, "damageLevel");
+    const byCrisis = countBy(reports, "crisisType");
+    return { all, byStatus, byDamage, byCrisis };
+  }, [reports]);
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1 text-xs font-black uppercase text-primary ring-1 ring-green-100">
+            <ShieldCheck size={14} />
+            Operations console
+          </p>
+          <h1 className="mt-3 font-heading text-2xl font-black text-text md:text-3xl">Crisis mapping dashboard</h1>
+          <p className="mt-1 max-w-3xl text-sm font-semibold leading-6 text-slate-600">
+            Verify citizen reports, reject unusable records, monitor damage patterns, and export structured data for response teams.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="ghost" onClick={refresh}>
+            <RefreshCw size={17} />
+            Refresh
+          </Button>
+          <Button type="button" variant="ghost" onClick={() => downloadBlob("tala-mboka-crisis-reports.csv", toCsv(filteredReports), "text/csv;charset=utf-8")}>
+            <Download size={17} />
+            CSV
+          </Button>
+          <Button type="button" variant="ghost" onClick={() => downloadBlob("tala-mboka-crisis-reports.geojson", JSON.stringify(toGeoJson(filteredReports), null, 2), "application/geo+json;charset=utf-8")}>
+            <Download size={17} />
+            GeoJSON
+          </Button>
+        </div>
+      </div>
+
+      {loading && <Card className="p-5 text-sm font-bold text-slate-600">Loading operational data...</Card>}
+      {error && <p className="rounded-xl bg-amber-50 p-3 text-sm font-bold text-amber-800">Using local sample reports until the API is reachable: {error}</p>}
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        {[
+          ["Total reports", stats?.totalReports ?? localStats.all, "text-primary"],
+          ["Pending", stats?.pendingReports ?? localStats.byStatus.pending ?? 0, "text-amber-600"],
+          ["Verified", stats?.verifiedReports ?? localStats.byStatus.verified ?? 0, "text-green-700"],
+          ["Rejected", stats?.rejected ?? localStats.byStatus.rejected ?? 0, "text-red-600"],
+          ["Complete damage", localStats.byDamage.complete ?? 0, "text-red-700"]
+        ].map(([label, value, color]) => (
+          <Card key={label} className="p-4">
+            <p className="text-xs font-black uppercase text-slate-500">{label}</p>
+            <p className={`mt-2 font-heading text-3xl font-black ${color}`}>{value}</p>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
+        <Card className="p-4">
+          <div className="mb-4 flex items-center gap-2">
+            <BarChart3 className="text-primary" size={22} />
+            <h2 className="font-heading text-lg font-black text-text">Damage and crisis statistics</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Breakdown title="Reports by damage level" rows={Object.entries(localStats.byDamage)} labels={damageLevels} />
+            <Breakdown title="Reports by crisis type" rows={Object.entries(localStats.byCrisis)} labels={crisisTypes} />
+          </div>
+        </Card>
+
+        <Card className="overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-slate-100 p-4">
+            <MapPinned className="text-primary" size={21} />
+            <h2 className="font-heading text-lg font-black text-text">Impact heatmap</h2>
+          </div>
+          <div className="h-[360px]">
+            <MapContainer center={[-4.325, 15.3222]} zoom={5} scrollWheelZoom>
+              <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              {filteredReports.map((report) => {
+                const damage = damageLevels[report.damageLevel] || damageLevels.partial;
+                const lat = Number(report.location?.lat);
+                const lng = Number(report.location?.lng);
+                if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+                return (
+                  <Circle key={`heat-${report._id}`} center={[lat, lng]} radius={damage.shortLabel === "Complete" ? 16000 : 9000} pathOptions={{ color: damage.color, fillColor: damage.color, fillOpacity: 0.18, weight: 1 }}>
+                    <Popup>{report.title}</Popup>
+                  </Circle>
+                );
+              })}
+            </MapContainer>
+          </div>
+        </Card>
+      </div>
+
+      <Card className="overflow-hidden">
+        <div className="space-y-3 border-b border-slate-100 p-4">
+          <div>
+            <h2 className="font-heading text-lg font-black text-text">Report verification queue</h2>
+            <p className="text-sm font-semibold text-slate-600">{filteredReports.length} reports shown after filters.</p>
+          </div>
+          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[1fr_repeat(4,180px)]">
+            <label className="relative">
+              <Search className="absolute left-3 top-3 text-slate-400" size={18} />
+              <input className="form-field pl-10" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search title, description, or region" />
+            </label>
+            <select className="form-field" value={status} onChange={(event) => setStatus(event.target.value)}>
+              <option value="">All statuses</option>
+              {Object.entries(statusLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+            </select>
+            <select className="form-field" value={crisisType} onChange={(event) => setCrisisType(event.target.value)}>
+              <option value="">All crisis types</option>
+              {Object.entries(crisisTypes).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+            </select>
+            <select className="form-field" value={damageLevel} onChange={(event) => setDamageLevel(event.target.value)}>
+              <option value="">All damage levels</option>
+              {Object.entries(damageLevels).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
+            </select>
+            <select className="form-field" value={infrastructureType} onChange={(event) => setInfrastructureType(event.target.value)}>
+              <option value="">All infrastructure</option>
+              {Object.entries(infrastructureTypes).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead className="bg-slate-50 text-xs font-black uppercase text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Report</th>
+                <th className="px-4 py-3">Classification</th>
+                <th className="px-4 py-3">Location</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredReports.map((report) => {
+                const category = categories[report.infrastructureType || report.category] || categories.other;
+                const damage = damageLevels[report.damageLevel] || damageLevels.partial;
+                return (
+                  <tr key={report._id} className="align-top">
+                    <td className="max-w-[360px] px-4 py-3">
+                      <p className="font-heading font-black text-text">{report.title}</p>
+                      <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-slate-600">{report.description}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-xs font-black uppercase" style={{ color: category.color }}>{category.label}</p>
+                      <p className="mt-1 text-sm font-bold text-slate-700">{crisisTypes[report.crisisType] || "Other crisis"}</p>
+                      <span className="mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-black text-white" style={{ background: damage.color }}>{damage.label}</span>
+                    </td>
+                    <td className="px-4 py-3 text-sm font-semibold text-slate-600">
+                      <p>{report.province || "Unknown"} / {report.commune || "Unknown"}</p>
+                      <p className="mt-1 text-xs text-slate-500">{report.location?.lat?.toFixed?.(4) || "-"}, {report.location?.lng?.toFixed?.(4) || "-"}</p>
+                    </td>
+                    <td className="px-4 py-3">{statusBadge(report.status)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-2">
+                        <Button type="button" size="sm" variant="ghost" onClick={() => updateStatus(report._id, "verified")}>
+                          <CheckCircle2 size={16} />
+                          Verify
+                        </Button>
+                        <Button type="button" size="sm" variant="ghost" onClick={() => updateStatus(report._id, "rejected")}>
+                          <XCircle size={16} />
+                          Reject
+                        </Button>
+                        <Button type="button" size="sm" variant="danger" onClick={() => deleteReport(report._id)}>
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filteredReports.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-10 text-center font-bold text-slate-500">No reports match these filters.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function Breakdown({ title, rows, labels }) {
+  const total = Math.max(rows.reduce((sum, [, count]) => sum + count, 0), 1);
+  return (
+    <div>
+      <h3 className="text-sm font-black uppercase text-slate-500">{title}</h3>
+      <div className="mt-3 space-y-3">
+        {rows.map(([key, count]) => {
+          const label = labels[key]?.label || labels[key] || key;
+          const color = labels[key]?.color || "#0f766e";
+          return (
+            <div key={key}>
+              <div className="mb-1 flex justify-between gap-3 text-sm font-bold text-slate-700">
+                <span>{label}</span>
+                <span>{count}</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full rounded-full" style={{ width: `${(count / total) * 100}%`, background: color }} />
+              </div>
+            </div>
+          );
+        })}
+        {rows.length === 0 && <p className="text-sm font-bold text-slate-500">No data yet.</p>}
+      </div>
+    </div>
+  );
 }

@@ -6,7 +6,8 @@ import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { categories } from "../utils/categories.js";
-import { distanceKm, formatDistance, getRiskLevel, riskLevels } from "../utils/risk.js";
+import { crisisTypes, damageLevels } from "../utils/crisisOptions.js";
+import { distanceKm, formatDistance } from "../utils/risk.js";
 import Button from "./Button.jsx";
 
 const kinshasa = [-4.325, 15.3222];
@@ -21,8 +22,8 @@ function escapeHtml(value = "") {
 }
 
 function markerIcon(reportOrCategory, options = {}) {
-  const risk = typeof reportOrCategory === "object" ? getRiskLevel(reportOrCategory) : null;
-  const color = risk ? riskLevels[risk].color : categories[reportOrCategory]?.color || "#16a34a";
+  const damage = typeof reportOrCategory === "object" ? damageLevels[reportOrCategory.damageLevel] : null;
+  const color = damage?.color || categories[reportOrCategory]?.color || "#16a34a";
   const size = options.large ? 30 : 24;
   return L.divIcon({
     className: "",
@@ -74,9 +75,8 @@ function ClusterLayer({ reports, userLocation }) {
     });
 
     reports.slice(0, 500).forEach((report) => {
-      const risk = getRiskLevel(report);
-      const riskMeta = riskLevels[risk];
-      const category = categories[report.category];
+      const category = categories[report.infrastructureType || report.category] || categories[report.category];
+      const damage = damageLevels[report.damageLevel] || damageLevels.partial;
       const distance = userLocation
         ? formatDistance(distanceKm(userLocation, { lat: report.location.lat, lng: report.location.lng }))
         : "";
@@ -87,13 +87,14 @@ function ClusterLayer({ reports, userLocation }) {
         `<article class="map-popup-card">
           <div class="map-popup-top">
             <span style="color:${category?.color || "#16a34a"}">${escapeHtml(category?.label || report.category)}</span>
-            ${risk === "danger" || risk === "critique" ? `<strong style="background:${riskMeta.color}">${escapeHtml(riskMeta.label)}</strong>` : ""}
+            <strong style="background:${damage.color}">${escapeHtml(damage.shortLabel)}</strong>
           </div>
           <h3>${escapeHtml(report.title)}</h3>
           <p>${escapeHtml(report.description || "").slice(0, 120)}</p>
+          <div class="map-popup-location">Crisis: ${escapeHtml(crisisTypes[report.crisisType] || "Other crisis")}</div>
           <div class="map-popup-location">Position: ${escapeHtml(report.province || "-")} / ${escapeHtml(report.commune || "-")}</div>
-          ${distance ? `<div class="map-popup-distance">A ${distance} de vous</div>` : ""}
-          <a href="/?report=${escapeHtml(report._id)}">Voir detail</a>
+        ${distance ? `<div class="map-popup-distance">${distance} away</div>` : ""}
+        <a href="/app/map?report=${escapeHtml(report._id)}">View details</a>
         </article>`,
         { maxWidth: 280, className: "modern-popup" }
       );
@@ -113,8 +114,8 @@ function HeatLayer({ reports }) {
   useEffect(() => {
     if (!reports.length || !L.heatLayer) return undefined;
     const points = reports.slice(0, 500).map((report) => {
-      const risk = riskLevels[getRiskLevel(report)];
-      return [report.location.lat, report.location.lng, risk.weight];
+      const weights = { minimal: 0.35, partial: 0.72, complete: 0.95 };
+      return [report.location.lat, report.location.lng, weights[report.damageLevel] || 0.5];
     });
     const layer = L.heatLayer(points, {
       radius: 34,
@@ -134,13 +135,13 @@ function HeatLayer({ reports }) {
   return null;
 }
 
-function RiskLegend() {
+function DamageLegend() {
   return (
     <div className="absolute bottom-4 right-4 z-[450] rounded-xl bg-white/90 p-3 text-xs font-semibold text-slate-700 shadow-lg backdrop-blur">
-      {Object.entries(riskLevels).filter(([key]) => key === "danger" || key === "critique").map(([key, item]) => (
+      {Object.entries(damageLevels).map(([key, item]) => (
         <p key={key} className="flex items-center gap-2 py-0.5">
           <span className="h-3 w-3 rounded-full" style={{ background: item.color }} />
-          {item.label}
+          {item.shortLabel}
         </p>
       ))}
     </div>
@@ -164,7 +165,7 @@ export default function ReportMap({
 
   function useLocation() {
     if (!navigator.geolocation) {
-      onLocationError?.("GPS indisponible sur cet appareil.");
+      onLocationError?.("GPS is not available on this device.");
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -174,7 +175,7 @@ export default function ReportMap({
         onUserLocation?.(nextLocation);
         onPick?.(nextLocation);
       },
-      () => onLocationError?.("Permission refusée ou GPS indisponible.")
+      () => onLocationError?.("Location permission denied or GPS unavailable.")
     );
   }
 
@@ -182,7 +183,7 @@ export default function ReportMap({
     <div className="relative h-[300px] w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:h-[400px] lg:h-[500px]" style={{ height }}>
       <div className="absolute left-3 right-3 top-3 z-[450] flex items-center justify-between gap-2">
         <div className="rounded-lg bg-white/95 px-3 py-2 text-xs font-semibold text-text shadow-sm backdrop-blur">
-          {visibleReports.length} alertes
+          {visibleReports.length} reports
         </div>
         <div className="flex gap-2">
           <button
@@ -191,12 +192,12 @@ export default function ReportMap({
             className="flex min-h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm font-semibold text-primary shadow-sm transition hover:bg-green-50"
           >
             <LocateFixed size={18} />
-            {analytics ? "Me localiser" : ""}
+            {analytics ? "My location" : ""}
           </button>
           {!onPick && (
-            <Button as={Link} to="/report" variant="success" size="sm">
+            <Button as={Link} to="/app/report" variant="success" size="sm">
               <Plus size={17} />
-              Signaler
+              Report
             </Button>
           )}
         </div>
@@ -212,7 +213,7 @@ export default function ReportMap({
         {analytics && <ClusterLayer reports={visibleReports} userLocation={activeUserLocation} />}
         {activeUserLocation && !onPick && (
           <Marker position={[activeUserLocation.lat, activeUserLocation.lng]} icon={userMarkerIcon()}>
-            <Popup>Votre position</Popup>
+            <Popup>Your position</Popup>
           </Marker>
         )}
         {activeLocation && onPick && (
@@ -227,7 +228,7 @@ export default function ReportMap({
               }
             }}
           >
-            <Popup>Position sélectionnée</Popup>
+            <Popup>Selected position</Popup>
           </Marker>
         )}
         {!analytics &&
@@ -244,7 +245,7 @@ export default function ReportMap({
             </Marker>
           ))}
       </MapContainer>
-      {analytics && <RiskLegend />}
+      {analytics && <DamageLegend />}
     </div>
   );
 }

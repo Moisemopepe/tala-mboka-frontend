@@ -7,6 +7,7 @@ import Card from "../components/Card.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { categories } from "../utils/categories.js";
+import { damageLevels } from "../utils/crisisOptions.js";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -102,11 +103,11 @@ export default function Profile() {
       if (mode === "login") {
         await login(form.phone, form.password);
         setSuccessMessage("Connexion réussie.");
-        navigate("/", { replace: true });
+        navigate("/app", { replace: true });
       } else {
         await register(form.name, form.phone, form.password);
         setSuccessMessage("Compte créé avec succès.");
-        navigate("/", { replace: true });
+        navigate("/app", { replace: true });
       }
     } catch (err) {
       setError(err.message);
@@ -117,8 +118,8 @@ export default function Profile() {
 
   if (isAuthenticated) {
     const initial = (user?.name || user?.phone || "U").trim().charAt(0).toUpperCase();
-    const dangerCount = reports.filter((report) => report.status === "danger").length;
-    const critiqueCount = reports.filter((report) => report.status === "critique").length;
+    const completeCount = reports.filter((report) => report.damageLevel === "complete").length;
+    const pendingCount = reports.filter((report) => report.status === "pending").length;
     const latestReports = reports.slice(0, 3);
 
     return (
@@ -147,12 +148,12 @@ export default function Profile() {
             <p className="font-heading text-2xl font-black text-text">{reports.length}</p>
           </Card>
           <Card className="p-3 text-center">
-            <p className="text-xs font-black uppercase text-slate-500">Danger</p>
-            <p className="font-heading text-2xl font-black text-red-600">{dangerCount}</p>
+            <p className="text-xs font-black uppercase text-slate-500">Complete</p>
+            <p className="font-heading text-2xl font-black text-red-600">{completeCount}</p>
           </Card>
           <Card className="p-3 text-center">
-            <p className="text-xs font-black uppercase text-slate-500">Critique</p>
-            <p className="font-heading text-2xl font-black text-orange-600">{critiqueCount}</p>
+            <p className="text-xs font-black uppercase text-slate-500">Pending</p>
+            <p className="font-heading text-2xl font-black text-orange-600">{pendingCount}</p>
           </Card>
         </div>
 
@@ -162,7 +163,7 @@ export default function Profile() {
               <h2 className="font-heading text-lg font-black text-text">Mes alertes</h2>
               <p className="text-sm font-semibold text-slate-500">Les 3 derniers signalements.</p>
             </div>
-            <Link to="/my-reports" className="text-sm font-black text-primary">
+            <Link to="/app/my-reports" className="text-sm font-black text-primary">
               Voir tout
             </Link>
           </div>
@@ -188,6 +189,9 @@ export default function Profile() {
                   </div>
                   <StatusBadge status={report.status} />
                 </div>
+                <p className="mt-2 text-xs font-black" style={{ color: damageLevels[report.damageLevel]?.color }}>
+                  {damageLevels[report.damageLevel]?.label || "Damage level not set"}
+                </p>
                 <p className="mt-2 flex items-center gap-1 text-xs font-bold text-slate-500">
                   <CalendarDays size={14} />
                   {new Date(report.createdAt).toLocaleDateString()}
@@ -198,19 +202,19 @@ export default function Profile() {
         </Card>
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <Link to="/report">
+          <Link to="/app/report">
             <Button type="button" variant="success" className="w-full">
               <PlusCircle size={18} />
               Signaler
             </Button>
           </Link>
-          <Link to="/my-reports">
+          <Link to="/app/my-reports">
             <Button type="button" variant="ghost" className="w-full">
               <FileText size={18} />
               Mes alertes
             </Button>
           </Link>
-          <Link to="/about">
+          <Link to="/app/about">
             <Button type="button" variant="ghost" className="w-full">
               <Info size={18} />
               À propos

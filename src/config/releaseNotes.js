@@ -1,6 +1,67 @@
 import { VERSION } from "./version.js";
 
 export const releaseNotes = {
+  "0.5.9": {
+    adminNotes: `Version 0.5.9
+
+Fonctionnel :
+- Séparation propre entre modération et niveau de risque.
+- Les alertes invitées restent en attente jusqu'à validation admin.
+- Les filtres danger/critique fonctionnent avec les vraies données.
+- Les catégories Autre et Enlèvement sont acceptées par le backend.
+- L'upload d'image fonctionne aussi en local sans Cloudinary.`,
+    userNotes: `Version 0.5.9
+
+Amélioration :
+- Les alertes et filtres sont plus fiables.
+- Les signalements invités sont mieux modérés avant publication.`
+  },
+  "0.5.8": {
+    adminNotes: `Version 0.5.8
+
+Site web :
+- Retrait du lien public Autorités et du bloc admin sur la vitrine.
+- Retrait du texte "Version web en amélioration continue" dans le footer.
+
+Qualité :
+- Correction de plusieurs libellés français dans le site, l'application et l'admin.`,
+    userNotes: `Version 0.5.8
+
+Amélioration :
+- La page d'accueil est plus simple.
+- Plusieurs textes sont mieux corrigés en français.`
+  },
+  "0.5.7": {
+    adminNotes: `Version 0.5.7
+
+Site web :
+- Hero public plus court et plus lisible.
+- Apercu visuel de l'application avec carte et alertes.
+- Exemples d'alertes visibles meme si l'API ne retourne encore aucun signalement.
+- Textes et CTA clarifies pour une presentation plus professionnelle.`,
+    userNotes: `Version 0.5.7
+
+Nouveauté :
+- La page d'accueil est plus claire.
+- Les exemples d'alertes rendent la plateforme plus facile a comprendre.`
+  },
+  "0.5.6": {
+    adminNotes: `Version 0.5.6
+
+Architecture :
+- Separation claire entre site web public et application citoyenne.
+- La page / devient un vrai site de presentation.
+- L'application citoyenne passe sous /app.
+
+Navigation :
+- Anciens liens rediriges vers les nouveaux chemins.
+- Admin conserve son accès dédié.`,
+    userNotes: `Version 0.5.6
+
+Nouveauté :
+- Tala Mboka a maintenant un vrai site public.
+- L'application citoyenne reste disponible dans /app.`
+  },
   "0.5.5": {
     adminNotes: `Version 0.5.5
 

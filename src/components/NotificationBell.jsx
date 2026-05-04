@@ -32,7 +32,7 @@ export default function NotificationBell() {
 
   return (
     <Link
-      to="/notifications"
+      to="/app/notifications"
       className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-green-200 hover:bg-green-50 hover:text-primary"
       aria-label="Notifications"
     >

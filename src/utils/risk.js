@@ -6,7 +6,7 @@ export const riskLevels = {
 };
 
 export function getRiskLevel(report) {
-  return normalizeStatus(report.status);
+  return normalizeStatus(report.status || report.risk);
 }
 
 export function normalizeStatus(status) {

@@ -1,13 +1,13 @@
 import { FileText, Home, Info, LayoutDashboard, List, PlusCircle, User } from "lucide-react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import Header from "./Header.jsx";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import Header from "./Header.jsx";
 
 const items = [
-  { to: "/", label: "Fil", icon: List },
-  { to: "/report", label: "Signaler", icon: PlusCircle },
-  { to: "/feed", label: "Carte", icon: Home }
+  { to: "/app", label: "Reports", icon: List },
+  { to: "/app/report", label: "Report", icon: PlusCircle },
+  { to: "/app/map", label: "Map", icon: Home }
 ];
 
 export default function Layout() {
@@ -18,16 +18,16 @@ export default function Layout() {
   const storedUser = JSON.parse(localStorage.getItem("tala_user") || "null");
   const currentUser = user || storedUser;
   const canManage = ["admin", "moderator"].includes(currentUser?.role);
-  const accountItem = { to: "/profile", label: currentUser ? "Profil" : "Compte", icon: User };
+  const accountItem = { to: "/app/profile", label: currentUser ? "Profile" : "Account", icon: User };
   const userItems = currentUser
-    ? [...items, accountItem, { to: "/my-reports", label: "Alertes", icon: FileText }]
-    : [...items, accountItem, { to: "/about", label: "À propos", icon: Info }];
+    ? [...items, accountItem, { to: "/app/my-reports", label: "Mine", icon: FileText }]
+    : [...items, accountItem, { to: "/app/about", label: "About", icon: Info }];
   const navItems = canManage ? [...userItems, { to: "/admin", label: "Admin", icon: LayoutDashboard }] : userItems;
 
   useEffect(() => {
     function handleSessionExpired() {
-      localStorage.setItem("tala_session_message", "Votre session a expiré. Reconnectez-vous.");
-      const loginPath = location.pathname.startsWith("/admin") ? "/admin/login" : "/profile";
+      localStorage.setItem("tala_session_message", "Votre session a expire. Reconnectez-vous.");
+      const loginPath = location.pathname.startsWith("/admin") ? "/admin/login" : "/app/profile";
       navigate(loginPath, { replace: true });
     }
 
@@ -75,7 +75,7 @@ export default function Layout() {
             <NavLink
               key={to}
               to={to}
-              end={to === "/"}
+              end={to === "/app"}
               className={({ isActive }) =>
                 `flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl border text-[11px] font-semibold transition ${
                   isActive
