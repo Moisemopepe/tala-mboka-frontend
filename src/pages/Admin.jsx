@@ -1,7 +1,7 @@
-import { BarChart3, CheckCircle2, Download, MapPinned, RefreshCw, Search, ShieldCheck, Trash2, XCircle } from "lucide-react";
+import { BarChart3, CheckCircle2, Download, Edit3, MapPinned, RefreshCw, Save, Search, ShieldCheck, Trash2, UserPlus, Users, X, XCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Circle, MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-import { api } from "../api/client.js";
+import { api, assetUrl } from "../api/client.js";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
 import { categories } from "../utils/categories.js";
@@ -98,6 +98,7 @@ function toGeoJson(rows) {
 
 export default function Admin() {
   const [reports, setReports] = useState([]);
+  const [users, setUsers] = useState([]);
   const [stats, setStats] = useState(null);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
@@ -106,6 +107,12 @@ export default function Admin() {
   const [infrastructureType, setInfrastructureType] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [editingReport, setEditingReport] = useState(null);
+  const [editForm, setEditForm] = useState(null);
+  const [editImage, setEditImage] = useState(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [userForm, setUserForm] = useState({ name: "", phone: "", password: "", role: "moderator" });
+  const [userMessage, setUserMessage] = useState("");
 
   useEffect(() => {
     refresh();
@@ -114,9 +121,10 @@ export default function Admin() {
   async function refresh() {
     setLoading(true);
     try {
-      const [nextStats, nextReports] = await Promise.all([api("/admin/stats"), api("/admin/reports")]);
+      const [nextStats, nextReports, nextUsers] = await Promise.all([api("/admin/stats"), api("/admin/reports"), api("/admin/users").catch(() => [])]);
       setStats(nextStats);
       setReports(nextReports);
+      setUsers(nextUsers);
       setError("");
     } catch (err) {
       setReports(sampleReports);
@@ -140,6 +148,62 @@ export default function Admin() {
     await api(`/reports/${reportId}`, { method: "DELETE" });
     setReports((items) => items.filter((item) => item._id !== reportId));
     refresh();
+  }
+
+  function openEdit(report) {
+    setEditingReport(report);
+    setEditImage(null);
+    setEditForm({
+      title: report.title || "",
+      description: report.description || "",
+      crisisType: report.crisisType || "other",
+      infrastructureType: report.infrastructureType || report.category || "other",
+      damageLevel: report.damageLevel || "partial",
+      status: report.status || "pending",
+      province: report.province || "",
+      commune: report.commune || "",
+      addressText: report.addressText || report.locationDescription || report.location?.address || "",
+      lat: report.location?.lat ?? "",
+      lng: report.location?.lng ?? ""
+    });
+  }
+
+  async function saveReportEdit(event) {
+    event.preventDefault();
+    if (!editingReport || savingEdit) return;
+    setSavingEdit(true);
+    try {
+      const body = new FormData();
+      Object.entries(editForm).forEach(([key, value]) => body.append(key, value ?? ""));
+      body.append("category", editForm.infrastructureType || "other");
+      if (editImage) body.append("images", editImage);
+      const updated = await api(`/admin/reports/${editingReport._id}`, { method: "PATCH", body });
+      setReports((items) => items.map((item) => (item._id === updated._id ? updated : item)));
+      setEditingReport(null);
+      setEditForm(null);
+      setEditImage(null);
+      refresh();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  async function createStaffUser(event) {
+    event.preventDefault();
+    setUserMessage("");
+    try {
+      const created = await api("/admin/users", {
+        method: "POST",
+        body: JSON.stringify(userForm)
+      });
+      setUsers((items) => [created, ...items]);
+      setUserForm({ name: "", phone: "", password: "", role: "moderator" });
+      setUserMessage(`${created.name} created as ${created.role}.`);
+    } catch (err) {
+      setUserMessage(err.message);
+    }
   }
 
   const filteredReports = useMemo(() => {
@@ -244,6 +308,36 @@ export default function Admin() {
         </Card>
       </div>
 
+      <Card className="p-4">
+        <div className="mb-4 flex items-center gap-2">
+          <Users className="text-primary" size={22} />
+          <h2 className="font-heading text-lg font-black text-text">Admin and moderator accounts</h2>
+        </div>
+        <form onSubmit={createStaffUser} className="grid gap-2 lg:grid-cols-[1fr_180px_180px_150px_auto]">
+          <input className="form-field" required value={userForm.name} onChange={(event) => setUserForm((current) => ({ ...current, name: event.target.value }))} placeholder="Full name" />
+          <input className="form-field" required value={userForm.phone} onChange={(event) => setUserForm((current) => ({ ...current, phone: event.target.value }))} placeholder="Phone" />
+          <input className="form-field" required type="password" value={userForm.password} onChange={(event) => setUserForm((current) => ({ ...current, password: event.target.value }))} placeholder="Password" />
+          <select className="form-field" value={userForm.role} onChange={(event) => setUserForm((current) => ({ ...current, role: event.target.value }))}>
+            <option value="moderator">Moderator</option>
+            <option value="admin">Admin</option>
+          </select>
+          <Button type="submit" variant="success">
+            <UserPlus size={17} />
+            Create
+          </Button>
+        </form>
+        {userMessage && <p className="mt-3 rounded-xl bg-green-50 p-3 text-sm font-bold text-primary">{userMessage}</p>}
+        <div className="mt-4 grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+          {users.map((staffUser) => (
+            <div key={staffUser._id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="font-heading font-black text-text">{staffUser.name}</p>
+              <p className="text-sm font-semibold text-slate-600">{staffUser.phone}</p>
+              <p className="mt-2 inline-flex rounded-full bg-white px-2.5 py-1 text-xs font-black uppercase text-primary ring-1 ring-green-100">{staffUser.role}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
       <Card className="overflow-hidden">
         <div className="space-y-3 border-b border-slate-100 p-4">
           <div>
@@ -307,6 +401,10 @@ export default function Admin() {
                     <td className="px-4 py-3">{statusBadge(report.status)}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
+                        <Button type="button" size="sm" variant="ghost" onClick={() => openEdit(report)}>
+                          <Edit3 size={16} />
+                          Edit
+                        </Button>
                         <Button type="button" size="sm" variant="ghost" onClick={() => updateStatus(report._id, "verified")}>
                           <CheckCircle2 size={16} />
                           Verify
@@ -332,6 +430,93 @@ export default function Admin() {
           </table>
         </div>
       </Card>
+
+      {editingReport && editForm && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/45 p-3 py-8">
+          <form onSubmit={saveReportEdit} className="w-full max-w-4xl rounded-2xl bg-white p-4 shadow-2xl md:p-5">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="font-heading text-xl font-black text-text">Edit report</h2>
+                <p className="text-sm font-semibold text-slate-600">Update classification, location, status, description, and photo.</p>
+              </div>
+              <button type="button" onClick={() => setEditingReport(null)} className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="md:col-span-2">
+                <span className="mb-1 block text-sm font-black text-slate-700">Title</span>
+                <input className="form-field" required value={editForm.title} onChange={(event) => setEditForm((current) => ({ ...current, title: event.target.value }))} />
+              </label>
+              <label className="md:col-span-2">
+                <span className="mb-1 block text-sm font-black text-slate-700">Description</span>
+                <textarea className="form-field min-h-28" required value={editForm.description} onChange={(event) => setEditForm((current) => ({ ...current, description: event.target.value }))} />
+              </label>
+              <label>
+                <span className="mb-1 block text-sm font-black text-slate-700">Crisis type</span>
+                <select className="form-field" value={editForm.crisisType} onChange={(event) => setEditForm((current) => ({ ...current, crisisType: event.target.value }))}>
+                  {Object.entries(crisisTypes).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                </select>
+              </label>
+              <label>
+                <span className="mb-1 block text-sm font-black text-slate-700">Infrastructure</span>
+                <select className="form-field" value={editForm.infrastructureType} onChange={(event) => setEditForm((current) => ({ ...current, infrastructureType: event.target.value }))}>
+                  {Object.entries(infrastructureTypes).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                </select>
+              </label>
+              <label>
+                <span className="mb-1 block text-sm font-black text-slate-700">Damage level</span>
+                <select className="form-field" value={editForm.damageLevel} onChange={(event) => setEditForm((current) => ({ ...current, damageLevel: event.target.value }))}>
+                  {Object.entries(damageLevels).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
+                </select>
+              </label>
+              <label>
+                <span className="mb-1 block text-sm font-black text-slate-700">Status</span>
+                <select className="form-field" value={editForm.status} onChange={(event) => setEditForm((current) => ({ ...current, status: event.target.value }))}>
+                  {Object.entries(statusLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                </select>
+              </label>
+              <label>
+                <span className="mb-1 block text-sm font-black text-slate-700">Province</span>
+                <input className="form-field" value={editForm.province} onChange={(event) => setEditForm((current) => ({ ...current, province: event.target.value }))} />
+              </label>
+              <label>
+                <span className="mb-1 block text-sm font-black text-slate-700">Commune</span>
+                <input className="form-field" value={editForm.commune} onChange={(event) => setEditForm((current) => ({ ...current, commune: event.target.value }))} />
+              </label>
+              <label className="md:col-span-2">
+                <span className="mb-1 block text-sm font-black text-slate-700">Address text</span>
+                <input className="form-field" value={editForm.addressText} onChange={(event) => setEditForm((current) => ({ ...current, addressText: event.target.value }))} />
+              </label>
+              <label>
+                <span className="mb-1 block text-sm font-black text-slate-700">Latitude</span>
+                <input className="form-field" required value={editForm.lat} onChange={(event) => setEditForm((current) => ({ ...current, lat: event.target.value }))} />
+              </label>
+              <label>
+                <span className="mb-1 block text-sm font-black text-slate-700">Longitude</span>
+                <input className="form-field" required value={editForm.lng} onChange={(event) => setEditForm((current) => ({ ...current, lng: event.target.value }))} />
+              </label>
+              <label className="md:col-span-2">
+                <span className="mb-1 block text-sm font-black text-slate-700">Replace photo</span>
+                <input className="form-field" type="file" accept="image/*" onChange={(event) => setEditImage(event.target.files?.[0] || null)} />
+              </label>
+            </div>
+
+            {(editImage || editingReport.imageUrl || editingReport.imageUrls?.[0]) && (
+              <img className="mt-4 h-52 w-full rounded-xl object-cover" src={editImage ? URL.createObjectURL(editImage) : assetUrl(editingReport.imageUrl || editingReport.imageUrls?.[0])} alt="" />
+            )}
+
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setEditingReport(null)}>Cancel</Button>
+              <Button type="submit" variant="success" disabled={savingEdit}>
+                <Save size={17} />
+                {savingEdit ? "Saving..." : "Save changes"}
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

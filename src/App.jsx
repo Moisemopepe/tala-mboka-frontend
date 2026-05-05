@@ -10,7 +10,6 @@ const loadFeed = () => import("./pages/Feed.jsx");
 const loadHome = () => import("./pages/Home.jsx");
 const loadMyReports = () => import("./pages/MyReports.jsx");
 const loadNotifications = () => import("./pages/Notifications.jsx");
-const loadProfile = () => import("./pages/Profile.jsx");
 const loadPublicSite = () => import("./pages/PublicSite.jsx");
 const loadReport = () => import("./pages/Report.jsx");
 
@@ -21,7 +20,6 @@ const Feed = lazy(loadFeed);
 const Home = lazy(loadHome);
 const MyReports = lazy(loadMyReports);
 const Notifications = lazy(loadNotifications);
-const Profile = lazy(loadProfile);
 const PublicSite = lazy(loadPublicSite);
 const Report = lazy(loadReport);
 
@@ -36,7 +34,6 @@ function PageLoader() {
 export default function App() {
   useEffect(() => {
     const warmNavigation = () => {
-      loadProfile();
       loadAbout();
     };
     const schedule = window.requestIdleCallback || ((callback) => window.setTimeout(callback, 1800));
@@ -53,7 +50,7 @@ export default function App() {
           <Route path="/" element={<PublicSite />} />
           <Route path="/report" element={<Navigate to="/app/report" replace />} />
           <Route path="/feed" element={<Navigate to="/app/map" replace />} />
-          <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
+          <Route path="/profile" element={<Navigate to="/app/report" replace />} />
           <Route path="/my-reports" element={<Navigate to="/app/my-reports" replace />} />
           <Route path="/notifications" element={<Navigate to="/app/notifications" replace />} />
           <Route path="/about" element={<Navigate to="/app/about" replace />} />
@@ -63,7 +60,7 @@ export default function App() {
             <Route path="/app/map" element={<Home />} />
             <Route path="/app/my-reports" element={<MyReports />} />
             <Route path="/app/notifications" element={<Notifications />} />
-            <Route path="/app/profile" element={<Profile />} />
+            <Route path="/app/profile" element={<Navigate to="/app/report" replace />} />
             <Route path="/app/about" element={<About />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route
