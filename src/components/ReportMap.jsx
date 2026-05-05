@@ -4,10 +4,11 @@ import "leaflet.markercluster";
 import { LocateFixed, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
-import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, Marker, Polygon, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { categories } from "../utils/categories.js";
 import { crisisTypes, damageLevels } from "../utils/crisisOptions.js";
 import { distanceKm, formatDistance } from "../utils/risk.js";
+import { createFootprintsAround } from "../utils/buildingFootprints.js";
 import Button from "./Button.jsx";
 
 const kinshasa = [-4.325, 15.3222];
@@ -156,12 +157,19 @@ export default function ReportMap({
   analytics = false,
   userLocation: controlledUserLocation,
   onUserLocation,
-  onLocationError
+  onLocationError,
+  onFootprintPick,
+  pickedFootprint,
+  footprintAreaLabel
 }) {
   const [userLocation, setUserLocation] = useState(null);
   const activeUserLocation = controlledUserLocation || userLocation;
   const activeLocation = pickedLocation || activeUserLocation;
   const visibleReports = useMemo(() => reports.slice(0, 500), [reports]);
+  const footprints = useMemo(
+    () => (onPick && activeLocation ? createFootprintsAround(activeLocation, footprintAreaLabel) : []),
+    [activeLocation, footprintAreaLabel, onPick]
+  );
 
   function useLocation() {
     if (!navigator.geolocation) {
@@ -231,6 +239,29 @@ export default function ReportMap({
             <Popup>Selected position</Popup>
           </Marker>
         )}
+        {footprints.map((footprint) => (
+          <Polygon
+            key={footprint.id}
+            positions={footprint.positions}
+            pathOptions={{
+              color: pickedFootprint?.id === footprint.id ? "#15803d" : "#0f766e",
+              fillColor: pickedFootprint?.id === footprint.id ? "#22c55e" : "#14b8a6",
+              fillOpacity: pickedFootprint?.id === footprint.id ? 0.38 : 0.18,
+              weight: pickedFootprint?.id === footprint.id ? 3 : 2
+            }}
+            eventHandlers={{
+              click() {
+                onFootprintPick?.(footprint);
+              }
+            }}
+          >
+            <Popup>
+              <strong>{footprint.name}</strong>
+              <p>{footprint.id}</p>
+              <button type="button" onClick={() => onFootprintPick?.(footprint)}>Use this building</button>
+            </Popup>
+          </Polygon>
+        ))}
         {!analytics &&
           !onPick &&
           visibleReports.map((report) => (

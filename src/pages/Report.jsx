@@ -58,6 +58,7 @@ const initialForm = {
   reporterOrganization: "",
   reporterRole: "community_member",
   reporterConsent: false,
+  crisisId: "kinshasa-flood-response",
   province: "Kinshasa",
   commune: "Gombe"
 };
@@ -118,6 +119,8 @@ export default function Report() {
   const [locating, setLocating] = useState(false);
   const [mapVisible, setMapVisible] = useState(false);
   const [locationStatus, setLocationStatus] = useState("");
+  const [crises, setCrises] = useState([]);
+  const [selectedFootprint, setSelectedFootprint] = useState(null);
   const autoLocateStarted = useRef(false);
   const cameraInputRef = useRef(null);
   const galleryInputRef = useRef(null);
@@ -137,6 +140,10 @@ export default function Report() {
     autoLocateStarted.current = true;
     useGps({ revealMapOnSuccess: false });
     refreshOfflineCount();
+    api("/crises").then((items) => {
+      setCrises(items);
+      if (items?.[0]?.slug) setForm((current) => ({ ...current, crisisId: items[0].slug }));
+    }).catch(() => {});
   }, []);
 
   async function refreshOfflineCount() {
@@ -187,6 +194,7 @@ export default function Report() {
 
   async function applyLocation(nextLocation, source = "map") {
     setLocation(nextLocation);
+    setSelectedFootprint(null);
     setErrors((current) => ({ ...current, location: "" }));
     setLocationStatus(source === "gps" ? "Resolving GPS location..." : "Resolving selected point...");
 
@@ -312,9 +320,11 @@ export default function Report() {
         channel: "web",
         collectionTime: new Date().toISOString(),
         appVersion: "web-mvp",
-        buildingFootprintId: form.assetId.trim() || `${form.province}-${form.commune}-${location.lat.toFixed(5)}-${location.lng.toFixed(5)}`,
-        buildingFootprintName: form.infrastructureName.trim(),
-        buildingFootprintSource: form.assetId.trim() ? "user-provided" : "gps-derived-prototype",
+        crisisId: form.crisisId,
+        buildingFootprintId: selectedFootprint?.id || form.assetId.trim() || `${form.province}-${form.commune}-${location.lat.toFixed(5)}-${location.lng.toFixed(5)}`,
+        buildingFootprintName: selectedFootprint?.name || form.infrastructureName.trim(),
+        buildingFootprintSource: selectedFootprint?.source || (form.assetId.trim() ? "user-provided" : "gps-derived-prototype"),
+        buildingFootprintGeometry: selectedFootprint?.geometry ? JSON.stringify(selectedFootprint.geometry) : "",
         province: form.province,
         commune: form.commune,
         address: `${form.commune}, ${form.province}`,
@@ -331,6 +341,7 @@ export default function Report() {
       setForm(initialForm);
       setImages([]);
       setLocation(null);
+      setSelectedFootprint(null);
       setMapVisible(false);
       setErrors({});
       autoLocateStarted.current = false;
@@ -342,6 +353,7 @@ export default function Report() {
         setForm(initialForm);
         setImages([]);
         setLocation(null);
+        setSelectedFootprint(null);
         setMapVisible(false);
         setErrors({});
       } else {
@@ -459,7 +471,16 @@ export default function Report() {
           <h2 className="font-heading text-lg font-black text-text">{copy.classificationTitle}</h2>
           <p className="text-sm font-semibold text-slate-500">Category: {categories[form.category]?.label}. <button type="button" onClick={() => update("category", "")} className="font-black text-primary underline">Change</button></p>
         </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+          <label>
+            <span className="mb-1 block text-sm font-semibold text-slate-700">{copy.crisisWorkspace}</span>
+            <select value={form.crisisId} onChange={(event) => update("crisisId", event.target.value)} className="form-field">
+              {crises.length === 0 ? <option value="kinshasa-flood-response">Kinshasa Flood Response</option> : null}
+              {crises.map((crisis) => (
+                <option key={crisis.slug} value={crisis.slug}>{crisis.name}</option>
+              ))}
+            </select>
+          </label>
           <label>
             <span className="mb-1 block text-sm font-semibold text-slate-700">{copy.crisisType}</span>
             <select value={form.crisisType} onChange={(event) => update("crisisType", event.target.value)} className="form-field">
@@ -679,9 +700,21 @@ export default function Report() {
           className="form-field"
         />
         {errors.location && <p className="text-xs font-bold text-red-600">{errors.location}</p>}
+        {selectedFootprint && (
+          <div className="rounded-xl border border-green-200 bg-green-50 p-3 text-sm font-bold text-green-800">
+            {copy.selectedBuilding}: {selectedFootprint.name} - {selectedFootprint.id}
+          </div>
+        )}
         {mapVisible && (
           <Suspense fallback={<div className="flex h-[300px] items-center justify-center rounded-xl border bg-slate-50 text-sm font-bold text-slate-500">Loading map...</div>}>
-            <ReportMap height="min(500px, 55vh)" onPick={(nextLocation) => applyLocation(nextLocation, "map")} pickedLocation={location} />
+            <ReportMap
+              height="min(500px, 55vh)"
+              onPick={(nextLocation) => applyLocation(nextLocation, "map")}
+              pickedLocation={location}
+              onFootprintPick={setSelectedFootprint}
+              pickedFootprint={selectedFootprint}
+              footprintAreaLabel={`${form.province}-${form.commune}`}
+            />
           </Suspense>
         )}
       </Card>

@@ -127,9 +127,11 @@ export default function Admin() {
   const [reports, setReports] = useState([]);
   const [users, setUsers] = useState([]);
   const [audit, setAudit] = useState([]);
+  const [crises, setCrises] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [crisisFilter, setCrisisFilter] = useState("all");
   const [userForm, setUserForm] = useState(emptyUserForm);
   const [message, setMessage] = useState("");
   const [editingReport, setEditingReport] = useState(null);
@@ -151,9 +153,11 @@ export default function Admin() {
         api("/admin/users").catch(() => []),
         api("/admin/audit").catch(() => [])
       ]);
+      const nextCrises = await api("/crises/admin").catch(() => []);
       setReports(nextReports.length ? nextReports : sampleReports);
       setUsers(nextUsers);
       setAudit(nextAudit);
+      setCrises(nextCrises);
     } catch (error) {
       setReports(sampleReports);
       setMessage(error.message || "Live API unavailable, showing demo data.");
@@ -236,9 +240,10 @@ export default function Admin() {
     return reports.filter((report) => {
       const matchesTerm = !term || `${report.title} ${report.description} ${report.province} ${report.commune} ${report.crisisType}`.toLowerCase().includes(term);
       const matchesStatus = statusFilter === "all" || report.status === statusFilter;
-      return matchesTerm && matchesStatus;
+      const matchesCrisis = crisisFilter === "all" || report.crisisId === crisisFilter;
+      return matchesTerm && matchesStatus && matchesCrisis;
     });
-  }, [reports, query, statusFilter]);
+  }, [reports, query, statusFilter, crisisFilter]);
 
   const mapReports = filteredReports.filter((report) => Number.isFinite(Number(report.location?.lat)) && Number.isFinite(Number(report.location?.lng))).slice(0, 200);
   const pendingReports = reports.filter((report) => report.status === "pending");
@@ -319,6 +324,9 @@ export default function Admin() {
               setQuery={setQuery}
               statusFilter={statusFilter}
               setStatusFilter={setStatusFilter}
+              crises={crises}
+              crisisFilter={crisisFilter}
+              setCrisisFilter={setCrisisFilter}
               setReportStatus={setReportStatus}
               deleteReport={deleteReport}
               openDetail={setSelectedReport}
@@ -333,6 +341,9 @@ export default function Admin() {
               setQuery={setQuery}
               statusFilter="pending"
               setStatusFilter={setStatusFilter}
+              crises={crises}
+              crisisFilter={crisisFilter}
+              setCrisisFilter={setCrisisFilter}
               setReportStatus={setReportStatus}
               deleteReport={deleteReport}
               openDetail={setSelectedReport}
@@ -452,10 +463,10 @@ function MapPanel({ reports, large = false }) {
   );
 }
 
-function ReportsView({ title = "Reports", reports, query, setQuery, statusFilter, setStatusFilter, setReportStatus, deleteReport, openDetail, openEdit }) {
+function ReportsView({ title = "Reports", reports, query, setQuery, statusFilter, setStatusFilter, crises = [], crisisFilter = "all", setCrisisFilter, setReportStatus, deleteReport, openDetail, openEdit }) {
   return (
     <div className="space-y-5">
-      <Toolbar query={query} setQuery={setQuery} statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
+      <Toolbar query={query} setQuery={setQuery} statusFilter={statusFilter} setStatusFilter={setStatusFilter} crises={crises} crisisFilter={crisisFilter} setCrisisFilter={setCrisisFilter} />
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-200 p-4">
           <h2 className="font-heading text-lg font-black">{title}</h2>
@@ -501,7 +512,7 @@ function ReportsView({ title = "Reports", reports, query, setQuery, statusFilter
   );
 }
 
-function Toolbar({ query, setQuery, statusFilter, setStatusFilter, placeholder = "Search reports..." }) {
+function Toolbar({ query, setQuery, statusFilter, setStatusFilter, crises = [], crisisFilter = "all", setCrisisFilter, placeholder = "Search reports..." }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:flex-row md:items-center">
       <label className="relative flex-1">
@@ -514,6 +525,14 @@ function Toolbar({ query, setQuery, statusFilter, setStatusFilter, placeholder =
           <option value="pending">Pending</option>
           <option value="verified">Verified</option>
           <option value="rejected">Rejected</option>
+        </select>
+      )}
+      {setCrisisFilter && (
+        <select value={crisisFilter} onChange={(event) => setCrisisFilter(event.target.value)} className="form-field md:w-64">
+          <option value="all">All crises</option>
+          {crises.map((crisis) => (
+            <option key={crisis.slug} value={crisis.slug}>{crisis.name}</option>
+          ))}
         </select>
       )}
     </div>
