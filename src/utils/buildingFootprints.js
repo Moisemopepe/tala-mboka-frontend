@@ -85,19 +85,27 @@ export async function fetchOsmBuildings(location, radiusMeters = 220) {
       way["building"](around:${radiusMeters},${location.lat},${location.lng});
       relation["building"](around:${radiusMeters},${location.lat},${location.lng});
     );
-    out tags geom 30;
+    out body geom;
   `;
-  const response = await fetch("https://overpass-api.de/api/interpreter", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-    body: new URLSearchParams({ data: query })
-  });
+  const endpoints = [
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass-api.de/api/interpreter"
+  ];
+  let data = null;
 
-  if (!response.ok) {
-    throw new Error("OSM building footprints unavailable");
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(`${endpoint}?data=${encodeURIComponent(query)}`);
+      if (!response.ok) continue;
+      data = await response.json();
+      break;
+    } catch {
+      data = null;
+    }
   }
 
-  const data = await response.json();
+  if (!data) throw new Error("OSM building footprints unavailable");
+
   return (data.elements || [])
     .map(normalizeOsmGeometry)
     .filter(Boolean)
