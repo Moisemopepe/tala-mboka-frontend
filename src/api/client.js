@@ -46,3 +46,23 @@ export async function api(path, options = {}) {
 
   return data;
 }
+
+export async function downloadApiFile(path, filename) {
+  const token = localStorage.getItem("token") || localStorage.getItem("tala_token");
+  const endpoint = path.startsWith("/") ? path : `/${path}`;
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  });
+
+  if (!response.ok) {
+    throw new Error("Export unavailable");
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}

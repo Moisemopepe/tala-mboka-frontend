@@ -23,7 +23,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { Circle, MapContainer, Popup, TileLayer } from "react-leaflet";
 import { Link, useNavigate } from "react-router-dom";
-import { api, assetUrl } from "../api/client.js";
+import { api, assetUrl, downloadApiFile } from "../api/client.js";
 import Button from "../components/Button.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { crisisTypes, damageLevels, infrastructureTypes } from "../utils/crisisOptions.js";
@@ -133,6 +133,7 @@ export default function Admin() {
   const [userForm, setUserForm] = useState(emptyUserForm);
   const [message, setMessage] = useState("");
   const [editingReport, setEditingReport] = useState(null);
+  const [selectedReport, setSelectedReport] = useState(null);
   const [editForm, setEditForm] = useState({});
 
   const isAdmin = user?.role === "admin";
@@ -167,13 +168,13 @@ export default function Admin() {
   }
 
   async function setReportStatus(report, status) {
-    await api(`/reports/${report._id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
+    await api(`/admin/reports/${report._id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
     setReports((items) => items.map((item) => (item._id === report._id ? { ...item, status } : item)));
   }
 
   async function deleteReport(report) {
     if (!window.confirm(`Delete "${report.title}"?`)) return;
-    await api(`/reports/${report._id}`, { method: "DELETE" });
+    await api(`/admin/reports/${report._id}`, { method: "DELETE" });
     setReports((items) => items.filter((item) => item._id !== report._id));
   }
 
@@ -320,6 +321,7 @@ export default function Admin() {
               setStatusFilter={setStatusFilter}
               setReportStatus={setReportStatus}
               deleteReport={deleteReport}
+              openDetail={setSelectedReport}
               openEdit={openEdit}
             />
           )}
@@ -333,6 +335,7 @@ export default function Admin() {
               setStatusFilter={setStatusFilter}
               setReportStatus={setReportStatus}
               deleteReport={deleteReport}
+              openDetail={setSelectedReport}
               openEdit={openEdit}
             />
           )}
@@ -352,6 +355,7 @@ export default function Admin() {
           onSubmit={submitReportEdit}
         />
       )}
+      {selectedReport && <ReportDetailModal report={selectedReport} onClose={() => setSelectedReport(null)} onEdit={openEdit} setReportStatus={setReportStatus} />}
     </div>
   );
 }
@@ -448,7 +452,7 @@ function MapPanel({ reports, large = false }) {
   );
 }
 
-function ReportsView({ title = "Reports", reports, query, setQuery, statusFilter, setStatusFilter, setReportStatus, deleteReport, openEdit }) {
+function ReportsView({ title = "Reports", reports, query, setQuery, statusFilter, setStatusFilter, setReportStatus, deleteReport, openDetail, openEdit }) {
   return (
     <div className="space-y-5">
       <Toolbar query={query} setQuery={setQuery} statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
@@ -460,7 +464,7 @@ function ReportsView({ title = "Reports", reports, query, setQuery, statusFilter
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs font-black uppercase text-slate-500">
-              <tr><th className="px-4 py-3">Evidence</th><th className="px-4 py-3">Incident</th><th className="px-4 py-3">Type</th><th className="px-4 py-3">Damage</th><th className="px-4 py-3">Location</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Actions</th></tr>
+              <tr><th className="px-4 py-3">Evidence</th><th className="px-4 py-3">Incident</th><th className="px-4 py-3">Reporter</th><th className="px-4 py-3">Type</th><th className="px-4 py-3">Damage</th><th className="px-4 py-3">Location</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Actions</th></tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {reports.map((report) => (
@@ -470,13 +474,17 @@ function ReportsView({ title = "Reports", reports, query, setQuery, statusFilter
                     <p className="font-black">{report.title}</p>
                     <p className="line-clamp-2 text-xs font-semibold text-slate-500">{report.description}</p>
                   </td>
+                  <td className="px-4 py-3">
+                    <p className="font-black">{report.reporterSummary?.submittedBy || report.userId?.name || "Anonymous"}</p>
+                    <p className="text-xs font-semibold capitalize text-slate-500">{report.reporterSummary?.channel || report.submissionMeta?.channel || report.source || "web"}</p>
+                  </td>
                   <td className="px-4 py-3 font-semibold">{crisisTypes[report.crisisType] || "Other"}</td>
                   <td className="px-4 py-3">{severityBadge(report.damageLevel)}</td>
                   <td className="px-4 py-3 font-semibold text-slate-600">{report.commune || "Area"}, {report.province || "Region"}</td>
                   <td className="px-4 py-3">{statusBadge(report.status)}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
-                      <button className="rounded-lg p-2 hover:bg-slate-100" title="View"><Eye size={16} /></button>
+                      <button onClick={() => openDetail(report)} className="rounded-lg p-2 hover:bg-slate-100" title="View"><Eye size={16} /></button>
                       <button onClick={() => openEdit(report)} className="rounded-lg p-2 hover:bg-slate-100" title="Edit"><Edit3 size={16} /></button>
                       <button onClick={() => setReportStatus(report, "verified")} className="rounded-lg p-2 text-green-600 hover:bg-green-50" title="Verify"><Check size={16} /></button>
                       <button onClick={() => setReportStatus(report, "rejected")} className="rounded-lg p-2 text-red-600 hover:bg-red-50" title="Reject"><X size={16} /></button>
@@ -515,8 +523,8 @@ function Toolbar({ query, setQuery, statusFilter, setStatusFilter, placeholder =
 function ExportsView({ reports }) {
   return (
     <div className="grid gap-5 md:grid-cols-2">
-      <ExportCard title="CSV export" text="Spreadsheet-ready report list for coordination teams." onClick={() => exportBlob("tala-mboka-crisis-reports.csv", toCsv(reports), "text/csv")} />
-      <ExportCard title="GeoJSON export" text="Open geospatial data for GIS tools and humanitarian maps." onClick={() => exportBlob("tala-mboka-crisis-reports.geojson", toGeoJson(reports), "application/geo+json")} />
+      <ExportCard title="CSV export" text="Spreadsheet-ready report list with reporter metadata, versioning, duplicates, and offline sync fields." onClick={() => downloadApiFile("/reports/export/csv", "tala-mboka-crisis-reports.csv").catch(() => exportBlob("tala-mboka-crisis-reports.csv", toCsv(reports), "text/csv"))} />
+      <ExportCard title="GeoJSON export" text="Interoperable GIS export with geolocation, building footprint references, and response metadata." onClick={() => downloadApiFile("/reports/export/geojson", "tala-mboka-crisis-reports.geojson").catch(() => exportBlob("tala-mboka-crisis-reports.geojson", toGeoJson(reports), "application/geo+json"))} />
     </div>
   );
 }
@@ -530,6 +538,119 @@ function ExportCard({ title, text, onClick }) {
       <Button type="button" onClick={onClick} className="mt-6"><Download size={18} /> Download</Button>
     </div>
   );
+}
+
+function ReportDetailModal({ report, onClose, onEdit, setReportStatus }) {
+  const reporter = report.reporterSummary || {};
+  const trace = report.responseTrace || {};
+  const duplicateCount = trace.possibleDuplicateIds?.length || report.possibleDuplicateIds?.length || 0;
+  const coordinates = Number.isFinite(Number(report.location?.lat)) && Number.isFinite(Number(report.location?.lng))
+    ? `${Number(report.location.lat).toFixed(5)}, ${Number(report.location.lng).toFixed(5)}`
+    : "No GPS";
+
+  function closeAndEdit() {
+    onClose();
+    onEdit(report);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6">
+      <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-200 bg-white p-5">
+          <div>
+            <p className="text-xs font-black uppercase tracking-wide text-green-700">Admin full report view</p>
+            <h2 className="mt-1 font-heading text-2xl font-black">{report.title}</h2>
+            <p className="mt-1 text-sm font-semibold text-slate-500">{report._id} - v{trace.version || report.version || 1}</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><X size={20} /></button>
+        </div>
+
+        <div className="grid gap-5 p-5 lg:grid-cols-[1.1fr_0.9fr]">
+          <section className="space-y-4">
+            <img src={reportImage(report)} alt="" className="h-72 w-full rounded-xl object-cover" />
+            <InfoCard title="Damage assessment">
+              <InfoLine label="Crisis" value={crisisTypes[report.crisisType] || report.crisisType || "Other"} />
+              <InfoLine label="Infrastructure" value={infrastructureTypes[report.infrastructureType] || report.infrastructureType || report.category || "Other"} />
+              <InfoLine label="Infrastructure name" value={report.infrastructureName || "Not specified"} />
+              <InfoLine label="Damage level" value={damageLevels[report.damageLevel]?.label || report.damageLevel || "Partial"} />
+              <InfoLine label="Debris clearing" value={report.debris || "unknown"} />
+              <InfoLine label="Status" value={report.status} />
+            </InfoCard>
+            <InfoCard title="Description">
+              <p className="text-sm font-semibold leading-6 text-slate-600">{report.description}</p>
+            </InfoCard>
+            <InfoCard title="Modular survey answers">
+              <InfoLine label="Access blocked" value={report.modularAnswers?.accessBlocked ? "Yes" : "No"} />
+              <InfoLine label="Services disrupted" value={report.modularAnswers?.servicesDisrupted ? "Yes" : "No"} />
+              <InfoLine label="Livelihoods affected" value={report.modularAnswers?.livelihoodsAffected ? "Yes" : "No"} />
+              <InfoLine label="People at risk" value={report.modularAnswers?.peopleAtRisk ? "Yes" : "No"} />
+            </InfoCard>
+          </section>
+
+          <aside className="space-y-4">
+            <InfoCard title="Reporter access">
+              <InfoLine label="Submitted by" value={reporter.submittedBy || report.userId?.name || "Anonymous community reporter"} />
+              <InfoLine label="Contact" value={reporter.contact || "Not provided"} />
+              <InfoLine label="Organization" value={reporter.organization || "Not provided"} />
+              <InfoLine label="Role" value={reporter.role || "community_member"} />
+              <InfoLine label="Consent to contact" value={reporter.consentToContact ? "Yes" : "No"} />
+              <InfoLine label="Source" value={reporter.source || report.source || "guest"} />
+              <InfoLine label="Channel" value={reporter.channel || report.submissionMeta?.channel || "web"} />
+            </InfoCard>
+            <InfoCard title="Collection metadata">
+              <InfoLine label="Collection time" value={formatDate(trace.collectionTime || report.collectionTime || report.createdAt)} />
+              <InfoLine label="Submitted at" value={formatDate(report.createdAt)} />
+              <InfoLine label="Offline created" value={formatDate(reporter.offlineCreatedAt || report.submissionMeta?.offlineCreatedAt)} />
+              <InfoLine label="Offline synced" value={formatDate(reporter.offlineSyncedAt || report.submissionMeta?.offlineSyncedAt)} />
+              <InfoLine label="Language" value={(report.language || "en").toUpperCase()} />
+              <InfoLine label="App version" value={reporter.appVersion || "Not provided"} />
+              <InfoLine label="Device ID" value={reporter.deviceId || "Not provided"} />
+            </InfoCard>
+            <InfoCard title="Location and building">
+              <InfoLine label="Coordinates" value={coordinates} />
+              <InfoLine label="Province" value={report.province || "Not provided"} />
+              <InfoLine label="Commune" value={report.commune || "Not provided"} />
+              <InfoLine label="Landmark/address" value={report.addressText || report.locationDescription || report.location?.address || "Not provided"} />
+              <InfoLine label="Asset ID" value={report.assetId || "Not provided"} />
+              <InfoLine label="Building footprint" value={trace.buildingFootprint?.id || report.buildingFootprint?.id || "Not selected"} />
+              <InfoLine label="Duplicate score" value={`${Math.round((trace.duplicateScore || report.duplicateScore || 0) * 100)}%`} />
+              <InfoLine label="Possible duplicates" value={String(duplicateCount)} />
+            </InfoCard>
+            <div className="grid grid-cols-2 gap-3">
+              <Button type="button" onClick={() => setReportStatus(report, "verified")}><Check size={18} /> Verify</Button>
+              <Button type="button" variant="danger" onClick={() => setReportStatus(report, "rejected")}><X size={18} /> Reject</Button>
+              <Button type="button" variant="ghost" onClick={closeAndEdit}><Edit3 size={18} /> Edit</Button>
+              <Button type="button" variant="ghost" onClick={onClose}>Close</Button>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InfoCard({ title, children }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <h3 className="mb-3 font-heading text-base font-black">{title}</h3>
+      <div className="grid gap-2">{children}</div>
+    </div>
+  );
+}
+
+function InfoLine({ label, value }) {
+  return (
+    <div className="flex justify-between gap-4 border-b border-slate-100 pb-2 text-sm last:border-b-0 last:pb-0">
+      <span className="font-semibold text-slate-500">{label}</span>
+      <span className="max-w-[60%] text-right font-black text-[#061849]">{value || "Not provided"}</span>
+    </div>
+  );
+}
+
+function formatDate(value) {
+  if (!value) return "Not provided";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Not provided" : date.toLocaleString();
 }
 
 function UsersView({ users, userForm, setUserForm, createUser, toggleUserSuspension, deleteUser }) {

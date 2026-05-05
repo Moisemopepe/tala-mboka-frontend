@@ -53,7 +53,11 @@ const initialForm = {
   servicesDisrupted: false,
   livelihoodsAffected: false,
   peopleAtRisk: false,
-  reporterRole: "witness",
+  reporterName: "",
+  reporterContact: "",
+  reporterOrganization: "",
+  reporterRole: "community_member",
+  reporterConsent: false,
   province: "Kinshasa",
   commune: "Gombe"
 };
@@ -300,7 +304,17 @@ export default function Report() {
         servicesDisrupted: String(form.servicesDisrupted),
         livelihoodsAffected: String(form.livelihoodsAffected),
         peopleAtRisk: String(form.peopleAtRisk),
+        reporterName: form.reporterName.trim(),
+        reporterContact: form.reporterContact.trim(),
+        reporterOrganization: form.reporterOrganization.trim(),
         reporterRole: form.reporterRole,
+        reporterConsent: String(form.reporterConsent),
+        channel: "web",
+        collectionTime: new Date().toISOString(),
+        appVersion: "web-mvp",
+        buildingFootprintId: form.assetId.trim() || `${form.province}-${form.commune}-${location.lat.toFixed(5)}-${location.lng.toFixed(5)}`,
+        buildingFootprintName: form.infrastructureName.trim(),
+        buildingFootprintSource: form.assetId.trim() ? "user-provided" : "gps-derived-prototype",
         province: form.province,
         commune: form.commune,
         address: `${form.commune}, ${form.province}`,
@@ -571,6 +585,47 @@ export default function Report() {
               </label>
             ))}
           </div>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="text-sm font-black text-text">Reporter details for admin follow-up</p>
+          <p className="mt-1 text-xs font-semibold text-slate-500">Optional and never shown on the public map.</p>
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+            <input
+              value={form.reporterName}
+              onChange={(event) => update("reporterName", event.target.value)}
+              placeholder="Name optional"
+              className="form-field"
+            />
+            <input
+              value={form.reporterContact}
+              onChange={(event) => update("reporterContact", event.target.value)}
+              placeholder="Phone or email optional"
+              className="form-field"
+            />
+            <input
+              value={form.reporterOrganization}
+              onChange={(event) => update("reporterOrganization", event.target.value)}
+              placeholder="Organization optional"
+              className="form-field"
+            />
+            <select value={form.reporterRole} onChange={(event) => update("reporterRole", event.target.value)} className="form-field">
+              <option value="community_member">Community member</option>
+              <option value="local_leader">Local leader</option>
+              <option value="ngo">NGO</option>
+              <option value="government">Government</option>
+              <option value="responder">Responder</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <label className="mt-3 flex items-center gap-2 rounded-lg bg-white p-3 text-sm font-semibold text-slate-700">
+            <input
+              type="checkbox"
+              checked={form.reporterConsent}
+              onChange={(event) => updateBoolean("reporterConsent", event.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+            />
+            I can be contacted by response teams if they need to verify this report.
+          </label>
         </div>
       </Card>
 
