@@ -18,6 +18,10 @@ export const crisisTypes = {
   fire: "Fire",
   explosion: "Explosion",
   chemical_incident: "Chemical incident",
+  tsunami: "Tsunami",
+  hurricane: "Hurricane / cyclone",
+  wildfire: "Wildfire",
+  civil_unrest: "Civil unrest",
   other: "Other crisis"
 };
 

@@ -54,6 +54,23 @@ export default function App() {
           <Route path="/my-reports" element={<Navigate to="/app/my-reports" replace />} />
           <Route path="/notifications" element={<Navigate to="/app/notifications" replace />} />
           <Route path="/about" element={<Navigate to="/app/about" replace />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedAdminRoute>
+                <Admin />
+              </ProtectedAdminRoute>
+            }
+          />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedAdminRoute>
+                <Admin />
+              </ProtectedAdminRoute>
+            }
+          />
           <Route element={<Layout />}>
             <Route path="/app" element={<Feed />} />
             <Route path="/app/report" element={<Report />} />
@@ -62,23 +79,6 @@ export default function App() {
             <Route path="/app/notifications" element={<Notifications />} />
             <Route path="/app/profile" element={<Navigate to="/app/report" replace />} />
             <Route path="/app/about" element={<About />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedAdminRoute>
-                  <Admin />
-                </ProtectedAdminRoute>
-              }
-            />
-            <Route
-              path="/admin/dashboard"
-              element={
-                <ProtectedAdminRoute>
-                  <Admin />
-                </ProtectedAdminRoute>
-              }
-            />
           </Route>
         </Routes>
       </Suspense>
