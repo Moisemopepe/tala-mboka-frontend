@@ -41,3 +41,65 @@ export function createFootprintsAround(location, areaLabel = "selected-area") {
     };
   });
 }
+
+function boundsFromCoordinates(coordinates) {
+  const lats = coordinates.map(([lng, lat]) => lat);
+  const lngs = coordinates.map(([lng]) => lng);
+  return [
+    [Math.min(...lats), Math.min(...lngs)],
+    [Math.max(...lats), Math.max(...lngs)]
+  ];
+}
+
+function normalizeOsmGeometry(element) {
+  const geometry = element.geometry || [];
+  if (geometry.length < 3) return null;
+  const coordinates = geometry.map((point) => [Number(point.lon), Number(point.lat)]);
+  const first = coordinates[0];
+  const last = coordinates[coordinates.length - 1];
+  if (first[0] !== last[0] || first[1] !== last[1]) {
+    coordinates.push(first);
+  }
+
+  return {
+    id: `osm-${element.type}-${element.id}`,
+    name: element.tags?.name || element.tags?.amenity || element.tags?.building || `OSM building ${element.id}`,
+    source: "openstreetmap-overpass",
+    osmType: element.type,
+    osmId: element.id,
+    tags: element.tags || {},
+    bounds: boundsFromCoordinates(coordinates),
+    positions: coordinates.map(([lng, lat]) => [lat, lng]),
+    geometry: {
+      type: "Polygon",
+      coordinates: [coordinates]
+    }
+  };
+}
+
+export async function fetchOsmBuildings(location, radiusMeters = 220) {
+  if (!location?.lat || !location?.lng) return [];
+  const query = `
+    [out:json][timeout:18];
+    (
+      way["building"](around:${radiusMeters},${location.lat},${location.lng});
+      relation["building"](around:${radiusMeters},${location.lat},${location.lng});
+    );
+    out tags geom 30;
+  `;
+  const response = await fetch("https://overpass-api.de/api/interpreter", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+    body: new URLSearchParams({ data: query })
+  });
+
+  if (!response.ok) {
+    throw new Error("OSM building footprints unavailable");
+  }
+
+  const data = await response.json();
+  return (data.elements || [])
+    .map(normalizeOsmGeometry)
+    .filter(Boolean)
+    .slice(0, 40);
+}

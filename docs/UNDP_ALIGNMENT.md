@@ -12,13 +12,13 @@ Tala Mboka Crisis is an open-source crisis mapping MVP for rapid community-gener
 - Admin-only reporter metadata before and after validation.
 - CSV and GeoJSON exports with coordinates, images, status, duplicates, version, source/channel, and building footprint references.
 - Multi-crisis workspaces through `crisisId`, with admin/public filtering and crisis-specific duplicate detection.
-- Selectable prototype building footprints on the report map. These generate stable building IDs and GeoJSON polygon references for export and duplicate/version logic.
+- Selectable building footprints on the report map. The app loads real OpenStreetMap/Overpass building polygons around the selected GPS point and falls back to generated prototype footprints when OSM data is unavailable. The selected footprint generates stable building IDs and GeoJSON polygon references for export and duplicate/version logic.
 - MongoDB indexes for crisis scale: `crisisId`, `createdAt`, `collectionTime`, `location`, `assetId`, `buildingFootprint.id`, `duplicateOf`, `crisisType`, and `damageLevel`.
 - 6 UN languages supported in the data model and report UI: Arabic, Chinese, English, French, Russian, and Spanish.
 
 ## Recommended production additions
 
-- Replace prototype footprints with live OSM/Overpass or official shapefiles per deployment area.
+- Add official shapefile/GeoJSON import per deployment area where OSM coverage is incomplete.
 - AI-assisted photo classification and automatic translation.
 - WhatsApp intake channel.
 - Shapefile export worker for heavy GIS export.

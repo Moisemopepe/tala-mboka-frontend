@@ -8,7 +8,7 @@ import { MapContainer, Marker, Polygon, Popup, TileLayer, useMap, useMapEvents }
 import { categories } from "../utils/categories.js";
 import { crisisTypes, damageLevels } from "../utils/crisisOptions.js";
 import { distanceKm, formatDistance } from "../utils/risk.js";
-import { createFootprintsAround } from "../utils/buildingFootprints.js";
+import { createFootprintsAround, fetchOsmBuildings } from "../utils/buildingFootprints.js";
 import Button from "./Button.jsx";
 
 const kinshasa = [-4.325, 15.3222];
@@ -163,13 +163,40 @@ export default function ReportMap({
   footprintAreaLabel
 }) {
   const [userLocation, setUserLocation] = useState(null);
+  const [osmFootprints, setOsmFootprints] = useState([]);
+  const [footprintStatus, setFootprintStatus] = useState("");
   const activeUserLocation = controlledUserLocation || userLocation;
   const activeLocation = pickedLocation || activeUserLocation;
   const visibleReports = useMemo(() => reports.slice(0, 500), [reports]);
-  const footprints = useMemo(
+  const fallbackFootprints = useMemo(
     () => (onPick && activeLocation ? createFootprintsAround(activeLocation, footprintAreaLabel) : []),
     [activeLocation, footprintAreaLabel, onPick]
   );
+  const footprints = osmFootprints.length ? osmFootprints : fallbackFootprints;
+
+  useEffect(() => {
+    if (!onPick || !activeLocation) {
+      setOsmFootprints([]);
+      setFootprintStatus("");
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    setFootprintStatus("Loading OSM building footprints...");
+    fetchOsmBuildings(activeLocation)
+      .then((items) => {
+        if (controller.signal.aborted) return;
+        setOsmFootprints(items);
+        setFootprintStatus(items.length ? `${items.length} OSM buildings found` : "No OSM buildings found; using fallback footprints.");
+      })
+      .catch(() => {
+        if (controller.signal.aborted) return;
+        setOsmFootprints([]);
+        setFootprintStatus("OSM unavailable; using fallback footprints.");
+      });
+
+    return () => controller.abort();
+  }, [activeLocation?.lat, activeLocation?.lng, onPick]);
 
   function useLocation() {
     if (!navigator.geolocation) {
@@ -191,7 +218,7 @@ export default function ReportMap({
     <div className="relative h-[300px] w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:h-[400px] lg:h-[500px]" style={{ height }}>
       <div className="absolute left-3 right-3 top-3 z-[450] flex items-center justify-between gap-2">
         <div className="rounded-lg bg-white/95 px-3 py-2 text-xs font-semibold text-text shadow-sm backdrop-blur">
-          {visibleReports.length} reports
+          {onPick ? footprintStatus || "Select a point, then choose a building" : `${visibleReports.length} reports`}
         </div>
         <div className="flex gap-2">
           <button
@@ -245,7 +272,7 @@ export default function ReportMap({
             positions={footprint.positions}
             pathOptions={{
               color: pickedFootprint?.id === footprint.id ? "#15803d" : "#0f766e",
-              fillColor: pickedFootprint?.id === footprint.id ? "#22c55e" : "#14b8a6",
+              fillColor: pickedFootprint?.id === footprint.id ? "#22c55e" : footprint.source === "openstreetmap-overpass" ? "#0ea5e9" : "#14b8a6",
               fillOpacity: pickedFootprint?.id === footprint.id ? 0.38 : 0.18,
               weight: pickedFootprint?.id === footprint.id ? 3 : 2
             }}
@@ -258,6 +285,7 @@ export default function ReportMap({
             <Popup>
               <strong>{footprint.name}</strong>
               <p>{footprint.id}</p>
+              <p>{footprint.source === "openstreetmap-overpass" ? "OpenStreetMap footprint" : "Fallback footprint"}</p>
               <button type="button" onClick={() => onFootprintPick?.(footprint)}>Use this building</button>
             </Popup>
           </Polygon>
