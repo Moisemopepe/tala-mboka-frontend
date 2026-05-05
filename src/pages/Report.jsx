@@ -75,6 +75,30 @@ const infrastructureIcons = {
   other: CircleHelp
 };
 
+async function compressImage(file) {
+  if (!file.type.startsWith("image/")) return file;
+  const imageUrl = URL.createObjectURL(file);
+  const image = new Image();
+  image.src = imageUrl;
+  await new Promise((resolve, reject) => {
+    image.onload = resolve;
+    image.onerror = reject;
+  });
+
+  const maxDimension = 1600;
+  const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(image.width * scale);
+  canvas.height = Math.round(image.height * scale);
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+  URL.revokeObjectURL(imageUrl);
+
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.72));
+  if (!blob) return file;
+  return new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg", lastModified: Date.now() });
+}
+
 export default function Report() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -204,21 +228,27 @@ export default function Report() {
     setErrors((current) => ({ ...current, category: "" }));
   }
 
-  function addImages(fileList) {
+  async function addImages(fileList) {
     const files = Array.from(fileList || []);
     const validFiles = files.filter((file) => {
       if (!file.type.startsWith("image/")) {
         setErrors((current) => ({ ...current, images: "Only image files are accepted." }));
         return false;
       }
-      if (file.size > maxImageSize) {
-        setErrors((current) => ({ ...current, images: "Each image must be 5 MB or less." }));
-        return false;
-      }
       return true;
     });
+    const compressedFiles = [];
 
-    setImages((current) => [...current, ...validFiles].slice(0, maxImages));
+    for (const file of validFiles) {
+      const compressed = await compressImage(file).catch(() => file);
+      if (compressed.size > maxImageSize) {
+        setErrors((current) => ({ ...current, images: "Each image must be 5 MB or less after compression." }));
+      } else {
+        compressedFiles.push(compressed);
+      }
+    }
+
+    setImages((current) => [...current, ...compressedFiles].slice(0, maxImages));
     if (files.length + images.length > maxImages) {
       setErrors((current) => ({ ...current, images: "Maximum 3 images." }));
     }
@@ -411,44 +441,10 @@ export default function Report() {
 
       <Card className="space-y-4 p-4 md:p-5">
         <div>
-          <h2 className="font-heading text-lg font-black text-text">{copy.infrastructureTitle}</h2>
-          <p className="text-sm font-semibold text-slate-500">Selected category: {categories[form.category]?.label}</p>
-        </div>
-        <button type="button" onClick={() => update("category", "")} className="w-fit rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">
-          Change category
-        </button>
-        {errors.category && <p className="text-xs font-bold text-red-600">{errors.category}</p>}
-        <input
-          value={form.infrastructureName}
-          onChange={(event) => update("infrastructureName", event.target.value)}
-          placeholder={copy.infrastructureName}
-          className="form-field"
-        />
-        <div>
-          <input
-            value={form.assetId}
-            onChange={(event) => update("assetId", event.target.value)}
-            placeholder={copy.assetId}
-            className="form-field"
-          />
-          <p className="mt-1 text-xs font-semibold text-slate-500">{copy.assetNote}</p>
-        </div>
-        <label>
-          <span className="mb-1 block text-sm font-semibold text-slate-700">{copy.languageLabel}</span>
-          <select value={form.language} onChange={(event) => update("language", event.target.value)} className="form-field">
-            {Object.entries(languageOptions).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
-            ))}
-          </select>
-        </label>
-      </Card>
-
-      <Card className="space-y-4 p-4 md:p-5">
-        <div>
           <h2 className="font-heading text-lg font-black text-text">{copy.classificationTitle}</h2>
-          <p className="text-sm font-semibold text-slate-500">{copy.classificationIntro}</p>
+          <p className="text-sm font-semibold text-slate-500">Category: {categories[form.category]?.label}. <button type="button" onClick={() => update("category", "")} className="font-black text-primary underline">Change</button></p>
         </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <label>
             <span className="mb-1 block text-sm font-semibold text-slate-700">{copy.crisisType}</span>
             <select value={form.crisisType} onChange={(event) => update("crisisType", event.target.value)} className="form-field">
@@ -465,19 +461,19 @@ export default function Report() {
               ))}
             </select>
           </label>
-          <label>
-            <span className="mb-1 block text-sm font-semibold text-slate-700">{copy.debris}</span>
-            <select value={form.debris} onChange={(event) => update("debris", event.target.value)} className="form-field">
-              {Object.entries(debrisOptions).map(([key, label]) => (
-                <option key={key} value={key}>{label}</option>
-              ))}
-            </select>
-          </label>
         </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-semibold text-slate-700">
           <AlertTriangle className="mr-2 inline text-primary" size={17} />
           {damageLevels[form.damageLevel]?.description}
         </div>
+        <label>
+          <span className="mb-1 block text-sm font-semibold text-slate-700">{copy.debris}</span>
+          <select value={form.debris} onChange={(event) => update("debris", event.target.value)} className="form-field">
+            {Object.entries(debrisOptions).map(([key, label]) => (
+              <option key={key} value={key}>{label}</option>
+            ))}
+          </select>
+        </label>
       </Card>
 
       <Card className="space-y-4 p-4 md:p-5">

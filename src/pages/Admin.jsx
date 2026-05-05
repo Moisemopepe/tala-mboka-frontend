@@ -99,6 +99,7 @@ function toGeoJson(rows) {
 export default function Admin() {
   const [reports, setReports] = useState([]);
   const [users, setUsers] = useState([]);
+  const [audit, setAudit] = useState([]);
   const [stats, setStats] = useState(null);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
@@ -121,10 +122,16 @@ export default function Admin() {
   async function refresh() {
     setLoading(true);
     try {
-      const [nextStats, nextReports, nextUsers] = await Promise.all([api("/admin/stats"), api("/admin/reports"), api("/admin/users").catch(() => [])]);
+      const [nextStats, nextReports, nextUsers, nextAudit] = await Promise.all([
+        api("/admin/stats"),
+        api("/admin/reports"),
+        api("/admin/users").catch(() => []),
+        api("/admin/audit").catch(() => [])
+      ]);
       setStats(nextStats);
       setReports(nextReports);
       setUsers(nextUsers);
+      setAudit(nextAudit);
       setError("");
     } catch (err) {
       setReports(sampleReports);
@@ -204,6 +211,22 @@ export default function Admin() {
     } catch (err) {
       setUserMessage(err.message);
     }
+  }
+
+  async function toggleUserSuspension(staffUser) {
+    const updated = await api(`/admin/users/${staffUser._id}/ban`, {
+      method: "PATCH",
+      body: JSON.stringify({ banned: !staffUser.banned })
+    });
+    setUsers((items) => items.map((item) => (item._id === updated._id ? updated : item)));
+    refresh();
+  }
+
+  async function deleteUser(staffUser) {
+    if (!window.confirm(`Delete ${staffUser.name}?`)) return;
+    await api(`/admin/users/${staffUser._id}`, { method: "DELETE" });
+    setUsers((items) => items.filter((item) => item._id !== staffUser._id));
+    refresh();
   }
 
   const filteredReports = useMemo(() => {
@@ -332,9 +355,39 @@ export default function Admin() {
             <div key={staffUser._id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <p className="font-heading font-black text-text">{staffUser.name}</p>
               <p className="text-sm font-semibold text-slate-600">{staffUser.phone}</p>
-              <p className="mt-2 inline-flex rounded-full bg-white px-2.5 py-1 text-xs font-black uppercase text-primary ring-1 ring-green-100">{staffUser.role}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <p className="inline-flex rounded-full bg-white px-2.5 py-1 text-xs font-black uppercase text-primary ring-1 ring-green-100">{staffUser.role}</p>
+                {staffUser.banned && <p className="inline-flex rounded-full bg-red-50 px-2.5 py-1 text-xs font-black uppercase text-red-700 ring-1 ring-red-100">Suspended</p>}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button type="button" size="sm" variant="ghost" onClick={() => toggleUserSuspension(staffUser)}>
+                  {staffUser.banned ? "Reactivate" : "Suspend"}
+                </Button>
+                <Button type="button" size="sm" variant="danger" onClick={() => deleteUser(staffUser)}>
+                  Delete
+                </Button>
+              </div>
             </div>
           ))}
+        </div>
+      </Card>
+
+      <Card className="p-4">
+        <div className="mb-4 flex items-center gap-2">
+          <ShieldCheck className="text-primary" size={22} />
+          <h2 className="font-heading text-lg font-black text-text">Admin audit trail</h2>
+        </div>
+        <div className="grid gap-2">
+          {audit.slice(0, 8).map((entry) => (
+            <div key={entry._id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-sm font-black text-text">{entry.action}</p>
+              <p className="text-sm font-semibold text-slate-600">{entry.summary || entry.targetType}</p>
+              <p className="mt-1 text-xs font-bold text-slate-500">
+                {entry.actor?.name || "Admin"} - {new Date(entry.createdAt).toLocaleString()}
+              </p>
+            </div>
+          ))}
+          {audit.length === 0 && <p className="text-sm font-bold text-slate-500">No admin actions recorded yet.</p>}
         </div>
       </Card>
 

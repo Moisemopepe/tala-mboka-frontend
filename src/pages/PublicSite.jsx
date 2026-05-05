@@ -1,4 +1,4 @@
-import { ArrowRight, CheckCircle2, Database, Globe2, MapPinned, ShieldCheck, Smartphone, WifiOff } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, Database, Globe2, MapPinned, ShieldCheck, Smartphone, WifiOff } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
@@ -15,6 +15,14 @@ const capabilities = [
   { icon: WifiOff, title: "Low-connectivity roadmap", text: "Designed around upload-now, send-later workflows for field conditions." },
   { icon: Globe2, title: "International by design", text: "Built to move beyond one country, with configurable geography and language." },
   { icon: ShieldCheck, title: "Moderated data", text: "Admin validation reduces noise before data feeds operational dashboards." }
+];
+
+const steps = [
+  "Photo evidence",
+  "Damage class",
+  "GPS location",
+  "Admin verification",
+  "CSV / GeoJSON export"
 ];
 
 function AppPreview() {
@@ -79,28 +87,32 @@ export default function PublicSite() {
           </nav>
           <div className="flex items-center gap-2">
             <Button as={Link} to="/app/map" variant="ghost" size="sm">Open map</Button>
-            <Button as={Link} to="/app/report" variant="success" size="sm" className="hidden sm:inline-flex">Submit report</Button>
+            <Button as={Link} to="/app/report" variant="success" size="sm" className="hidden sm:inline-flex">Send report</Button>
           </div>
         </div>
       </header>
 
       <main>
-        <section className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[0.95fr_0.9fr] lg:px-8 lg:py-12">
+        <section className="mx-auto grid min-h-[calc(100vh-76px)] max-w-7xl items-center gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[0.9fr_0.85fr] lg:px-8">
           <div className="flex flex-col justify-center">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-primary">Tala Mboka Crisis</p>
-            <h1 className="mt-4 max-w-3xl font-heading text-4xl font-black leading-tight text-[#062653] sm:text-5xl lg:text-6xl">
-              Community-powered crisis mapping for rapid response.
-            </h1>
-            <p className="mt-5 max-w-2xl text-lg font-semibold leading-8 text-slate-600">
-              Tala Mboka Crisis helps communities report damage after floods, earthquakes, conflict, fires, explosions, and chemical incidents with photo evidence, location, verification, and export-ready data.
+            <p className="inline-flex w-fit items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-sm font-black uppercase text-red-700 ring-1 ring-red-100">
+              <AlertTriangle size={16} />
+              Live crisis map
             </p>
+            <h1 className="mt-4 max-w-3xl font-heading text-4xl font-black leading-tight text-[#062653] sm:text-5xl lg:text-6xl">
+              Report damage in seconds
+            </h1>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <Button as={Link} to="/app/report" variant="success" size="lg">
-                Report Damage
+                Report damage
                 <ArrowRight size={18} />
               </Button>
-              <Button as={Link} to="/app/map" variant="ghost" size="lg">View Crisis Map</Button>
-              <Button as={Link} to="/admin" variant="ghost" size="lg">Admin Dashboard</Button>
+              <Button as={Link} to="/app/map" variant="ghost" size="lg">View map</Button>
+            </div>
+            <div className="mt-8 flex flex-wrap gap-2">
+              {steps.map((step) => (
+                <span key={step} className="rounded-full bg-slate-50 px-3 py-2 text-xs font-black text-slate-700 ring-1 ring-slate-200">{step}</span>
+              ))}
             </div>
           </div>
           <AppPreview />

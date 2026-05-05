@@ -1,4 +1,4 @@
-import { FileText, Home, Info, LayoutDashboard, List, PlusCircle, User } from "lucide-react";
+import { Home, Info, List, PlusCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -17,17 +17,15 @@ export default function Layout() {
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const storedUser = JSON.parse(localStorage.getItem("tala_user") || "null");
   const currentUser = user || storedUser;
-  const canManage = ["admin", "moderator"].includes(currentUser?.role);
-  const accountItem = { to: "/app/profile", label: currentUser ? "Profile" : "Account", icon: User };
   const userItems = currentUser
-    ? [...items, accountItem, { to: "/app/my-reports", label: "Mine", icon: FileText }]
-    : [...items, accountItem, { to: "/app/about", label: "About", icon: Info }];
-  const navItems = canManage ? [...userItems, { to: "/admin", label: "Admin", icon: LayoutDashboard }] : userItems;
+    ? [...items, { to: "/app/about", label: "About", icon: Info }]
+    : [...items, { to: "/app/about", label: "About", icon: Info }];
+  const navItems = userItems;
 
   useEffect(() => {
     function handleSessionExpired() {
       localStorage.setItem("tala_session_message", "Votre session a expire. Reconnectez-vous.");
-      const loginPath = location.pathname.startsWith("/admin") ? "/admin/login" : "/app/profile";
+      const loginPath = location.pathname.startsWith("/admin") ? "/admin/login" : "/app/report";
       navigate(loginPath, { replace: true });
     }
 
