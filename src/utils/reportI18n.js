@@ -117,28 +117,28 @@ const generatedCopy = {
     pageTitle: "Informe rapido de danos de infraestructura",
     pageIntro: "Capture evidencia fotografica, clasifique danos, geolocalice la infraestructura afectada y prepare datos estructurados.",
     languageLabel: "Idioma de interfaz e informe",
-    submit: "Enviar informe de crisis"
+    submit: "Send report"
   },
   ar: {
     pageKicker: "Tala Crisis Mapping",
     pageTitle: "Rapid infrastructure damage report",
     pageIntro: "Capture photo evidence, classify damage, geolocate affected infrastructure, and prepare structured data.",
     languageLabel: "Interface and report language",
-    submit: "Submit crisis report"
+    submit: "Send report"
   },
   zh: {
     pageKicker: "Tala Crisis Mapping",
     pageTitle: "Rapid infrastructure damage report",
     pageIntro: "Capture photo evidence, classify damage, geolocate affected infrastructure, and prepare structured data.",
     languageLabel: "Interface and report language",
-    submit: "Submit crisis report"
+    submit: "Send report"
   },
   ru: {
     pageKicker: "Tala Crisis Mapping",
     pageTitle: "Rapid infrastructure damage report",
     pageIntro: "Capture photo evidence, classify damage, geolocate affected infrastructure, and prepare structured data.",
     languageLabel: "Interface and report language",
-    submit: "Submit crisis report"
+    submit: "Send report"
   }
 };
 

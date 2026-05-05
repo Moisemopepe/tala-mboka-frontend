@@ -263,6 +263,7 @@ export default function Report() {
     if (!form.category) nextErrors.category = "Select the affected infrastructure.";
     if (!form.crisisType) nextErrors.crisisType = "Select the crisis type.";
     if (!form.damageLevel) nextErrors.damageLevel = "Select the damage level.";
+    if (images.length === 0) nextErrors.images = "Add at least one photo.";
     if (form.title.trim().length < 3) nextErrors.title = "Add a short report title.";
     if (form.description.trim().length < 10) nextErrors.description = "Add at least 10 characters of field context.";
     if (!location) nextErrors.location = "Choose a GPS position or select the location on the map.";
@@ -444,7 +445,7 @@ export default function Report() {
           <h2 className="font-heading text-lg font-black text-text">{copy.classificationTitle}</h2>
           <p className="text-sm font-semibold text-slate-500">Category: {categories[form.category]?.label}. <button type="button" onClick={() => update("category", "")} className="font-black text-primary underline">Change</button></p>
         </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <label>
             <span className="mb-1 block text-sm font-semibold text-slate-700">{copy.crisisType}</span>
             <select value={form.crisisType} onChange={(event) => update("crisisType", event.target.value)} className="form-field">
@@ -458,6 +459,14 @@ export default function Report() {
             <select value={form.damageLevel} onChange={(event) => update("damageLevel", event.target.value)} className="form-field">
               {Object.entries(damageLevels).map(([key, item]) => (
                 <option key={key} value={key}>{item.label}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className="mb-1 block text-sm font-semibold text-slate-700">{copy.languageLabel}</span>
+            <select value={form.language} onChange={(event) => update("language", event.target.value)} className="form-field">
+              {Object.entries(languageOptions).map(([code, label]) => (
+                <option key={code} value={code}>{label}</option>
               ))}
             </select>
           </label>
@@ -528,6 +537,20 @@ export default function Report() {
           className={`form-field ${errors.description ? "border-red-300" : ""}`}
         />
         {errors.description && <p className="text-xs font-bold text-red-600">{errors.description}</p>}
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <input
+            value={form.infrastructureName}
+            onChange={(event) => update("infrastructureName", event.target.value)}
+            placeholder={copy.infrastructureName}
+            className="form-field"
+          />
+          <input
+            value={form.assetId}
+            onChange={(event) => update("assetId", event.target.value)}
+            placeholder={copy.assetId}
+            className="form-field"
+          />
+        </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p className="text-sm font-black text-text">{copy.modularTitle}</p>
           <div className="mt-3 grid gap-2 md:grid-cols-2">

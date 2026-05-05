@@ -1,14 +1,12 @@
+import { Eye, EyeOff, LockKeyhole, Mail, ShieldCheck, UsersRound, Clock3, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { api } from "../api/client.js";
-import Button from "../components/Button.jsx";
-import Card from "../components/Card.jsx";
 import Logo from "../components/Logo.jsx";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ phone: "", password: "" });
+  const [form, setForm] = useState({ email: "moisemopepe3@gmail.com", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sessionMessage, setSessionMessage] = useState("");
@@ -34,7 +32,7 @@ export default function AdminLogin() {
     try {
       const data = await api("/admin/login", {
         method: "POST",
-        body: JSON.stringify(form)
+        body: JSON.stringify({ email: form.email, password: form.password })
       });
       localStorage.setItem("token", data.token);
       localStorage.setItem("tala_token", data.token);
@@ -48,51 +46,104 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="flex min-h-[70vh] w-full items-center justify-center px-0 sm:px-4">
-      <Card className="w-full space-y-5 p-5 md:max-w-lg">
-        <Logo />
-        <div>
-          <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">Connexion admin</h1>
-          <p className="text-sm font-semibold text-slate-600 md:text-base">Accédez au tableau de bord admin ou modérateur.</p>
+    <main className="grid min-h-screen bg-slate-50 text-[#061849] lg:grid-cols-[42vw_1fr]">
+      <section className="relative hidden overflow-hidden bg-[#031d3a] px-10 py-12 text-white lg:flex lg:flex-col lg:justify-center">
+        <div className="absolute inset-x-0 top-12 h-72 opacity-25 [background-image:radial-gradient(circle,#1f8cff_1px,transparent_1px)] [background-size:10px_10px]" />
+        <div className="relative mx-auto w-full max-w-md">
+          <div className="mb-14">
+            <Logo />
+          </div>
+          <h1 className="font-heading text-4xl font-black">Admin access</h1>
+          <p className="mt-4 max-w-sm text-lg font-semibold leading-8 text-slate-200">
+            Secure access to the crisis response management dashboard.
+          </p>
+          <div className="mt-16 grid gap-8">
+            {[
+              ["Secure", "Your data is encrypted and protected", ShieldCheck],
+              ["Real-time", "Access live reports and critical alerts", Clock3],
+              ["For responders", "Built for humanitarian and response teams", UsersRound]
+            ].map(([title, text, Icon]) => (
+              <div key={title} className="flex items-start gap-4">
+                <Icon className="mt-1 text-green-400" size={24} />
+                <div>
+                  <p className="font-black">{title}</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-300">{text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <form onSubmit={submit} className="space-y-3">
-          <label className="block">
-            <span className="mb-1 block text-sm font-semibold text-slate-700">Téléphone admin</span>
-            <input
-              required
-              value={form.phone}
-              onChange={(event) => update("phone", event.target.value)}
-              placeholder="0850000000"
-              className="form-field"
-            />
-          </label>
-          <label className="relative block">
-            <span className="mb-1 block text-sm font-semibold text-slate-700">Mot de passe</span>
-            <input
-              required
-              type={showPassword ? "text" : "password"}
-              value={form.password}
-              onChange={(event) => update("password", event.target.value)}
-              placeholder="Mot de passe"
-              className="form-field pr-12"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((value) => !value)}
-              className="absolute bottom-1 right-2 flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-primary"
-              aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </label>
-          {sessionMessage && <p className="rounded-xl bg-green-50 p-3 text-sm font-bold text-primary">{sessionMessage}</p>}
-          {error && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p>}
-          <Button type="submit" variant="success" size="lg" className="w-full" disabled={loading}>
-            {loading && <Loader2 className="animate-spin" size={18} />}
-            {loading ? "Connexion..." : "Se connecter"}
-          </Button>
+      </section>
+
+      <section className="flex min-h-screen items-center justify-center px-5 py-10">
+        <form onSubmit={submit} className="w-full max-w-xl rounded-[24px] border border-slate-200 bg-white p-6 shadow-2xl shadow-slate-200/70 md:p-12">
+          <div className="text-center">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 text-[#061849]">
+              <ShieldCheck size={38} />
+            </div>
+            <h2 className="mt-7 font-heading text-3xl font-black">Welcome back</h2>
+            <p className="mt-2 text-base font-semibold text-slate-500">Sign in to access the admin dashboard</p>
+          </div>
+
+          <div className="mt-10 grid gap-6">
+            <label>
+              <span className="mb-2 block text-sm font-black">Email address</span>
+              <span className="relative block">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={22} />
+                <input
+                  required
+                  type="email"
+                  value={form.email}
+                  onChange={(event) => update("email", event.target.value)}
+                  placeholder="Enter your email"
+                  className="h-16 w-full rounded-xl border border-slate-200 bg-white pl-14 pr-4 text-base font-semibold outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100"
+                />
+              </span>
+            </label>
+
+            <label>
+              <span className="mb-2 block text-sm font-black">Password</span>
+              <span className="relative block">
+                <LockKeyhole className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={22} />
+                <input
+                  required
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={(event) => update("password", event.target.value)}
+                  placeholder="Enter your password"
+                  className="h-16 w-full rounded-xl border border-slate-200 bg-white pl-14 pr-14 text-base font-semibold outline-none transition focus:border-green-500 focus:ring-4 focus:ring-green-100"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((value) => !value)}
+                  className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </span>
+            </label>
+          </div>
+
+          {sessionMessage && <p className="mt-5 rounded-xl bg-green-50 p-3 text-sm font-bold text-green-700">{sessionMessage}</p>}
+          {error && <p className="mt-5 rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-8 flex h-16 w-full items-center justify-center gap-3 rounded-xl bg-green-600 text-base font-black text-white shadow-xl shadow-green-100 transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {loading ? <Loader2 className="animate-spin" size={21} /> : <LockKeyhole size={21} />}
+            {loading ? "Signing in..." : "Sign in"}
+          </button>
+
+          <div className="mt-10 flex items-center gap-5 text-sm font-semibold text-slate-500">
+            <span className="h-px flex-1 bg-slate-200" />
+            <span className="inline-flex items-center gap-2"><ShieldCheck size={18} className="text-green-600" /> Secure access</span>
+            <span className="h-px flex-1 bg-slate-200" />
+          </div>
         </form>
-      </Card>
-    </div>
+      </section>
+    </main>
   );
 }

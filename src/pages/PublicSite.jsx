@@ -80,11 +80,9 @@ export default function PublicSite() {
             <Logo compact />
           </Link>
           <nav className="hidden items-center gap-10 text-sm font-black lg:flex">
-            {["Home", "Live Map", "Reports", "About", "How it works", "Partners"].map((item) => (
-              <a key={item} href={item === "Home" ? "#" : `#${item.toLowerCase().replaceAll(" ", "-")}`} className={item === "Home" ? "border-b-4 border-green-600 pb-5 text-green-700" : "pb-5 text-[#071a4f] hover:text-green-700"}>
-                {item}
-              </a>
-            ))}
+            <a href="#" className="border-b-4 border-green-600 pb-5 text-green-700">Home</a>
+            <Link to="/app/map" className="pb-5 text-[#071a4f] hover:text-green-700">Live Map</Link>
+            <Link to="/app" className="pb-5 text-[#071a4f] hover:text-green-700">Reports</Link>
           </nav>
           <div className="flex items-center gap-3">
             <button className="hidden min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-black text-[#071a4f] sm:flex">
@@ -210,25 +208,28 @@ export default function PublicSite() {
         </section>
       </main>
 
-      <footer className="mx-auto grid max-w-[1500px] gap-8 border-t border-slate-200 px-5 py-8 lg:grid-cols-[1.4fr_repeat(4,1fr)] lg:px-10">
+      <footer className="mx-auto grid max-w-[1500px] gap-8 border-t border-slate-200 px-5 py-8 lg:grid-cols-[1.4fr_repeat(2,1fr)] lg:px-10">
         <div>
           <Logo compact />
           <p className="mt-4 max-w-sm text-sm font-semibold leading-6 text-slate-600">An open platform for crisis reporting and humanitarian response.</p>
           <p className="mt-6 text-sm font-semibold text-slate-500">© 2024 Tala Mboka Crisis. All rights reserved.</p>
         </div>
-        {[
-          ["Platform", "Live Map", "Reports", "How it works", "About"],
-          ["Resources", "Safety tips", "Guidelines", "FAQ", "Blog"],
-          ["Community", "Partners", "For NGOs", "For Media", "Contact"],
-          ["Legal", "Privacy Policy", "Terms of Use", "Data Use Policy"]
-        ].map(([title, ...links]) => (
-          <div key={title}>
-            <h3 className="font-heading text-sm font-black">{title}</h3>
-            <div className="mt-3 grid gap-2 text-sm font-semibold text-slate-600">
-              {links.map((item) => <a key={item} href="#" className="hover:text-green-700">{item}</a>)}
-            </div>
+        <div>
+          <h3 className="font-heading text-sm font-black">Platform</h3>
+          <div className="mt-3 grid gap-2 text-sm font-semibold text-slate-600">
+            <Link to="/app/map" className="hover:text-green-700">Live Map</Link>
+            <Link to="/app" className="hover:text-green-700">Reports</Link>
+            <Link to="/app/report" className="hover:text-green-700">Report an incident</Link>
           </div>
-        ))}
+        </div>
+        <div>
+          <h3 className="font-heading text-sm font-black">Data</h3>
+          <div className="mt-3 grid gap-2 text-sm font-semibold text-slate-600">
+            <Link to="/app/map" className="hover:text-green-700">Verified reports</Link>
+            <Link to="/app/report" className="hover:text-green-700">Offline reporting</Link>
+            <Link to="/app/map" className="hover:text-green-700">Open crisis map</Link>
+          </div>
+        </div>
       </footer>
     </div>
   );
