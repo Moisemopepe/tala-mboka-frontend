@@ -132,6 +132,8 @@ export default function Admin() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [userForm, setUserForm] = useState(emptyUserForm);
   const [message, setMessage] = useState("");
+  const [editingReport, setEditingReport] = useState(null);
+  const [editForm, setEditForm] = useState({});
 
   const isAdmin = user?.role === "admin";
 
@@ -173,6 +175,35 @@ export default function Admin() {
     if (!window.confirm(`Delete "${report.title}"?`)) return;
     await api(`/reports/${report._id}`, { method: "DELETE" });
     setReports((items) => items.filter((item) => item._id !== report._id));
+  }
+
+  function openEdit(report) {
+    setEditingReport(report);
+    setEditForm({
+      title: report.title || "",
+      description: report.description || "",
+      crisisType: report.crisisType || "other",
+      infrastructureType: report.infrastructureType || report.category || "other",
+      damageLevel: report.damageLevel || "partial",
+      status: report.status || "pending",
+      province: report.province || "",
+      commune: report.commune || "",
+      addressText: report.addressText || report.locationDescription || report.location?.address || ""
+    });
+  }
+
+  async function submitReportEdit(event) {
+    event.preventDefault();
+    if (!editingReport) return;
+    const body = new FormData();
+    Object.entries(editForm).forEach(([key, value]) => body.append(key, value ?? ""));
+    const file = event.currentTarget.elements.images?.files?.[0];
+    if (file) body.append("images", file);
+    const updated = await api(`/admin/reports/${editingReport._id}`, { method: "PATCH", body });
+    setReports((items) => items.map((item) => (item._id === updated._id ? updated : item)));
+    setEditingReport(null);
+    setMessage("Report updated.");
+    await refresh();
   }
 
   async function createUser(event) {
@@ -289,6 +320,7 @@ export default function Admin() {
               setStatusFilter={setStatusFilter}
               setReportStatus={setReportStatus}
               deleteReport={deleteReport}
+              openEdit={openEdit}
             />
           )}
           {activeSection === "validation" && (
@@ -301,6 +333,7 @@ export default function Admin() {
               setStatusFilter={setStatusFilter}
               setReportStatus={setReportStatus}
               deleteReport={deleteReport}
+              openEdit={openEdit}
             />
           )}
           {activeSection === "exports" && <ExportsView reports={reports} />}
@@ -310,6 +343,15 @@ export default function Admin() {
           {activeSection === "audit" && isAdmin && <AuditView audit={audit} />}
         </main>
       </div>
+      {editingReport && (
+        <EditReportModal
+          report={editingReport}
+          form={editForm}
+          setForm={setEditForm}
+          onClose={() => setEditingReport(null)}
+          onSubmit={submitReportEdit}
+        />
+      )}
     </div>
   );
 }
@@ -406,7 +448,7 @@ function MapPanel({ reports, large = false }) {
   );
 }
 
-function ReportsView({ title = "Reports", reports, query, setQuery, statusFilter, setStatusFilter, setReportStatus, deleteReport }) {
+function ReportsView({ title = "Reports", reports, query, setQuery, statusFilter, setStatusFilter, setReportStatus, deleteReport, openEdit }) {
   return (
     <div className="space-y-5">
       <Toolbar query={query} setQuery={setQuery} statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
@@ -435,7 +477,7 @@ function ReportsView({ title = "Reports", reports, query, setQuery, statusFilter
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
                       <button className="rounded-lg p-2 hover:bg-slate-100" title="View"><Eye size={16} /></button>
-                      <button className="rounded-lg p-2 hover:bg-slate-100" title="Edit"><Edit3 size={16} /></button>
+                      <button onClick={() => openEdit(report)} className="rounded-lg p-2 hover:bg-slate-100" title="Edit"><Edit3 size={16} /></button>
                       <button onClick={() => setReportStatus(report, "verified")} className="rounded-lg p-2 text-green-600 hover:bg-green-50" title="Verify"><Check size={16} /></button>
                       <button onClick={() => setReportStatus(report, "rejected")} className="rounded-lg p-2 text-red-600 hover:bg-red-50" title="Reject"><X size={16} /></button>
                       <button onClick={() => deleteReport(report)} className="rounded-lg p-2 text-red-600 hover:bg-red-50" title="Delete"><Trash2 size={16} /></button>
@@ -544,6 +586,81 @@ function AuditView({ audit }) {
         ))}
         {audit.length === 0 && <p className="text-sm font-bold text-slate-500">No audit activity yet.</p>}
       </div>
+    </div>
+  );
+}
+
+function EditReportModal({ report, form, setForm, onClose, onSubmit }) {
+  function update(field, value) {
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6">
+      <form onSubmit={onSubmit} className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
+          <div>
+            <h2 className="font-heading text-2xl font-black">Edit report</h2>
+            <p className="mt-1 text-sm font-semibold text-slate-500">{report._id}</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="mt-5 grid gap-4">
+          <label>
+            <span className="mb-1 block text-sm font-black">Title</span>
+            <input required className="form-field" value={form.title} onChange={(event) => update("title", event.target.value)} />
+          </label>
+          <label>
+            <span className="mb-1 block text-sm font-black">Description</span>
+            <textarea required className="form-field" rows={4} value={form.description} onChange={(event) => update("description", event.target.value)} />
+          </label>
+          <div className="grid gap-3 md:grid-cols-2">
+            <label>
+              <span className="mb-1 block text-sm font-black">Crisis type</span>
+              <select className="form-field" value={form.crisisType} onChange={(event) => update("crisisType", event.target.value)}>
+                {Object.entries(crisisTypes).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+              </select>
+            </label>
+            <label>
+              <span className="mb-1 block text-sm font-black">Infrastructure</span>
+              <select className="form-field" value={form.infrastructureType} onChange={(event) => update("infrastructureType", event.target.value)}>
+                {Object.entries(infrastructureTypes).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+              </select>
+            </label>
+            <label>
+              <span className="mb-1 block text-sm font-black">Damage level</span>
+              <select className="form-field" value={form.damageLevel} onChange={(event) => update("damageLevel", event.target.value)}>
+                {Object.entries(damageLevels).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
+              </select>
+            </label>
+            <label>
+              <span className="mb-1 block text-sm font-black">Status</span>
+              <select className="form-field" value={form.status} onChange={(event) => update("status", event.target.value)}>
+                <option value="pending">Pending</option>
+                <option value="verified">Verified</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </label>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <input className="form-field" placeholder="Province" value={form.province} onChange={(event) => update("province", event.target.value)} />
+            <input className="form-field" placeholder="Commune" value={form.commune} onChange={(event) => update("commune", event.target.value)} />
+          </div>
+          <input className="form-field" placeholder="Address text" value={form.addressText} onChange={(event) => update("addressText", event.target.value)} />
+          <label>
+            <span className="mb-1 block text-sm font-black">Replace photo</span>
+            <input name="images" type="file" accept="image/*" className="form-field" />
+          </label>
+        </div>
+
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button type="submit"><Check size={18} /> Save changes</Button>
+        </div>
+      </form>
     </div>
   );
 }
