@@ -66,13 +66,6 @@ export default function About() {
         ))}
       </section>
 
-      <section className="mt-6 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-        <h2 className="text-xl font-black text-text">Operational roadmap</h2>
-        <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-          Next steps are broader localization, optional AI-assisted damage classification, stronger duplicate detection for repeated building reports, and integrations with response coordination systems.
-        </p>
-      </section>
-
       <p className="mt-5 text-center text-xs font-semibold text-slate-400">Tala Mboka Crisis - Version {VERSION}</p>
     </div>
   );
