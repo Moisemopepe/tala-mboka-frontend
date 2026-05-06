@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import Header from "./Header.jsx";
 
 const items = [
-  { to: "/app/map", label: "Map", icon: Home },
+  { to: "/app", label: "Map", icon: Home },
   { to: "/app/report", label: "Report", icon: PlusCircle }
 ];
 
