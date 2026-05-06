@@ -3,8 +3,10 @@ import {
   Building2,
   CheckCircle2,
   Clock3,
+  Download,
   FileText,
   Flame,
+  Info,
   ListFilter,
   Map,
   MapPin,
@@ -15,7 +17,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { api } from "../api/client.js";
+import { api, downloadApiFile } from "../api/client.js";
 import Button from "../components/Button.jsx";
 import ReportMap from "../components/ReportMap.jsx";
 import { categories } from "../utils/categories.js";
@@ -34,6 +36,7 @@ const typeCards = [
 export default function Feed() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [exportError, setExportError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -55,46 +58,52 @@ export default function Feed() {
     };
   }, []);
 
-  const visibleReports = useMemo(
-    () => reports.filter((report) => report.location && report.status !== "rejected"),
-    [reports]
-  );
-  const publicReports = useMemo(() => {
-    const verified = visibleReports.filter((report) => report.status === "verified");
-    return verified.length ? verified : visibleReports;
-  }, [visibleReports]);
+  const visibleReports = useMemo(() => reports.filter((report) => report.location), [reports]);
   const criticalReports = useMemo(
-    () => publicReports.filter((report) => report.damageLevel === "complete").slice(0, 3),
-    [publicReports]
+    () => visibleReports.filter((report) => report.damageLevel === "complete" || report.status === "pending").slice(0, 3),
+    [visibleReports]
   );
-  const recentReports = publicReports.slice(0, 5);
+  const recentReports = visibleReports.slice(0, 5);
   const stats = useMemo(() => {
-    const total = publicReports.length;
+    const total = visibleReports.length;
     return [
-      { label: "Public reports", value: total, note: "Anonymized community reports", icon: FileText, tone: "blue" },
+      { label: "Reports today", value: total, note: "Live community reports", icon: FileText, tone: "blue" },
       {
-        label: "Severe damage",
-        value: publicReports.filter((report) => report.damageLevel === "complete").length,
-        note: "Verified public alerts",
+        label: "Critical alerts",
+        value: visibleReports.filter((report) => report.damageLevel === "complete").length,
+        note: "Needs urgent attention",
         icon: AlertTriangle,
         tone: "red"
       },
       {
         label: "Verified reports",
-        value: publicReports.filter((report) => report.status === "verified").length,
-        note: "Published after review",
+        value: visibleReports.filter((report) => report.status === "verified").length,
+        note: "Ready for response teams",
         icon: CheckCircle2,
         tone: "green"
       },
       {
-        label: "Recent updates",
-        value: publicReports.length,
-        note: "Community map activity",
+        label: "Pending review",
+        value: visibleReports.filter((report) => report.status === "pending").length,
+        note: "Awaiting validation",
         icon: Clock3,
         tone: "purple"
       }
     ];
-  }, [publicReports]);
+  }, [visibleReports]);
+
+  async function exportData(format) {
+    setExportError("");
+    try {
+      await downloadApiFile(`/reports/export/${format}`, `tala-mboka-reports.${format === "csv" ? "csv" : "geojson"}`);
+    } catch (error) {
+      setExportError(
+        error.status === 401
+          ? "Admin access is required to export full crisis data."
+          : "Export unavailable right now. Please retry when the server is reachable."
+      );
+    }
+  }
 
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-5 pb-8">
@@ -103,10 +112,10 @@ export default function Feed() {
           <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
             <div>
               <h1 className="font-heading text-3xl font-black leading-tight text-[#071b4d] sm:text-4xl">
-                Community crisis map
+                Live crisis overview
               </h1>
               <p className="mt-2 max-w-xl text-sm font-semibold leading-6 text-slate-600 sm:text-base">
-                View verified community reports and submit damage information from the field.
+                Real-time incident reports from communities. Together, we respond faster and save lives.
               </p>
             </div>
             <Button as={Link} to="/app/report" variant="success" className="w-full md:w-auto">
@@ -139,7 +148,7 @@ export default function Feed() {
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="flex items-center gap-2 font-heading text-lg font-black text-[#071b4d]">
                 <AlertTriangle size={20} className="text-red-600" />
-                Public alerts
+                Critical alerts
               </h2>
               <a href="#reports" className="text-sm font-bold text-blue-700 hover:text-blue-900">View all</a>
             </div>
@@ -164,7 +173,7 @@ export default function Feed() {
               Filters
             </Link>
           </div>
-          <ReportMap reports={publicReports.length ? publicReports : sampleReports.filter((report) => report.status === "verified")} analytics height="min(540px, 62vh)" />
+          <ReportMap reports={visibleReports.length ? visibleReports : sampleReports} analytics height="min(540px, 62vh)" />
           <div className="grid gap-2 rounded-xl bg-slate-50 p-3 text-xs font-bold text-slate-600 sm:grid-cols-3">
             <p className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-green-600" /> Minimal</p>
             <p className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-orange-500" /> Partial</p>
@@ -173,7 +182,8 @@ export default function Feed() {
         </div>
       </section>
 
-      <section id="reports" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.55fr)]">
+        <div id="reports" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="font-heading text-xl font-black text-[#071b4d]">Recent reports</h2>
             <Link to="/app/map" className="text-sm font-bold text-blue-700 hover:text-blue-900">Open map</Link>
@@ -185,6 +195,45 @@ export default function Feed() {
               recentReports.map((report) => <RecentReportRow key={report._id} report={report} />)
             )}
           </div>
+        </div>
+
+        <div id="exports" className="space-y-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          <div>
+            <h2 className="font-heading text-xl font-black text-[#071b4d]">Export data</h2>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+              Download structured reports for geospatial analysis and response coordination.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <Button type="button" variant="ghost" onClick={() => exportData("csv")} className="w-full">
+              <Download size={18} />
+              CSV
+            </Button>
+            <Button type="button" variant="ghost" onClick={() => exportData("geojson")} className="w-full">
+              <Map size={18} />
+              GeoJSON
+            </Button>
+          </div>
+          {exportError && (
+            <div className="rounded-lg bg-red-50 p-3 text-sm font-bold text-red-700">
+              <p>{exportError}</p>
+              {exportError.includes("Admin") && (
+                <Link to="/admin/login" className="mt-2 inline-flex text-blue-700 hover:text-blue-900">
+                  Sign in as admin
+                </Link>
+              )}
+            </div>
+          )}
+          <div className="rounded-xl bg-green-50 p-4">
+            <p className="flex items-center gap-2 text-sm font-black text-green-800">
+              <Info size={18} />
+              Open-source and low-connectivity ready
+            </p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-green-900/80">
+              Mobile reports sync when connectivity returns. Web exports stay interoperable with CSV and GeoJSON.
+            </p>
+          </div>
+        </div>
       </section>
 
       <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.55fr)]">
