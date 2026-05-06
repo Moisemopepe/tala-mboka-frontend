@@ -1,13 +1,12 @@
-import { Home, Info, List, PlusCircle } from "lucide-react";
+import { Home, Info, PlusCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import Header from "./Header.jsx";
 
 const items = [
-  { to: "/app", label: "Reports", icon: List },
-  { to: "/app/report", label: "Report", icon: PlusCircle },
-  { to: "/app/map", label: "Map", icon: Home }
+  { to: "/app/map", label: "Map", icon: Home },
+  { to: "/app/report", label: "Report", icon: PlusCircle }
 ];
 
 export default function Layout() {
@@ -66,7 +65,7 @@ export default function Layout() {
       >
         <div
           className={`grid w-full px-2 py-2 sm:px-4 md:px-6 ${
-            navItems.length === 6 ? "grid-cols-6" : navItems.length === 5 ? "grid-cols-5" : "grid-cols-4"
+            navItems.length === 3 ? "grid-cols-3" : navItems.length === 4 ? "grid-cols-4" : "grid-cols-2"
           }`}
         >
           {navItems.map(({ to, label, icon: Icon }) => (

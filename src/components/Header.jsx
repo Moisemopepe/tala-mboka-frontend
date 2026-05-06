@@ -3,7 +3,7 @@ import { Link, NavLink } from "react-router-dom";
 import Logo from "./Logo.jsx";
 
 const desktopNav = [
-  { to: "/app", label: "Reports", icon: FileText },
+  { to: "/app", label: "Incidents", icon: FileText },
   { to: "/app/report", label: "Report", icon: PlusCircle },
   { to: "/app/map", label: "Crisis map", icon: Map }
 ];
@@ -38,7 +38,7 @@ export default function Header() {
         </nav>
         <Link to="/app/report" className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-lg bg-primary px-3 text-sm font-black text-white shadow-sm transition hover:bg-green-700 active:scale-95">
           <PlusCircle size={17} />
-          Report
+          Report incident
         </Link>
       </div>
     </header>
