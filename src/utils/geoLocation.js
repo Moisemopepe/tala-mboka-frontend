@@ -4,6 +4,14 @@ const NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse";
 const NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search";
 
 export async function resolveDrcLocation(lat, lng) {
+  const resolved = await resolveAdministrativeLocation(lat, lng, "fr");
+  return {
+    province: resolved.province,
+    commune: resolved.commune
+  };
+}
+
+export async function resolveAdministrativeLocation(lat, lng, language = "fr") {
   const fallback = resolveKinshasaFallback(lat, lng);
 
   try {
@@ -12,7 +20,7 @@ export async function resolveDrcLocation(lat, lng) {
       lat: String(lat),
       lon: String(lng),
       addressdetails: "1",
-      "accept-language": "fr"
+      "accept-language": language
     });
     const response = await fetch(`${NOMINATIM_URL}?${params.toString()}`);
 
@@ -20,21 +28,26 @@ export async function resolveDrcLocation(lat, lng) {
 
     const data = await response.json();
     const address = data.address || {};
-    const province = matchProvince(address.state || address.region || address.city || address.county);
-    const commune = matchCommune(
-      province,
+    const rawProvince = address.state || address.region || address.province || address.county || address.city || "";
+    const rawCommune =
       address.city_district ||
         address.suburb ||
         address.municipality ||
         address.town ||
         address.city ||
         address.county ||
-        address.village
-    );
+        address.village ||
+        "";
+    const matchedProvince = matchProvince(rawProvince);
+    const province = matchedProvince || rawProvince || fallback.province;
+    const commune = matchCommune(matchedProvince, rawCommune) || rawCommune || fallback.commune;
 
     return {
-      province: province || fallback.province,
-      commune: commune || fallback.commune
+      country: address.country || "",
+      countryCode: address.country_code || "",
+      province,
+      commune,
+      addressText: data.display_name || ""
     };
   } catch (_error) {
     return fallback;
@@ -92,10 +105,10 @@ function resolveKinshasaFallback(lat, lng) {
   }
 
   if (lat > -4.34 && lng > 15.24 && lng < 15.34) {
-    return { province: "Kinshasa", commune: "Gombe" };
+    return { country: "Democratic Republic of the Congo", countryCode: "cd", province: "Kinshasa", commune: "Gombe", addressText: "" };
   }
 
-  return { province: "Kinshasa", commune: "Kinshasa" };
+  return { country: "Democratic Republic of the Congo", countryCode: "cd", province: "Kinshasa", commune: "Kinshasa", addressText: "" };
 }
 
 function normalize(value) {

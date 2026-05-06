@@ -120,6 +120,7 @@ export default function Report() {
   const [locationStatus, setLocationStatus] = useState("");
   const [crises, setCrises] = useState([]);
   const [selectedFootprint, setSelectedFootprint] = useState(null);
+  const [dynamicArea, setDynamicArea] = useState(null);
   const autoLocateStarted = useRef(false);
   const cameraInputRef = useRef(null);
   const galleryInputRef = useRef(null);
@@ -157,10 +158,10 @@ export default function Report() {
     let nextProvince = form.province;
     let nextCommune = form.commune;
 
-    setForm((current) => {
+      setForm((current) => {
       if (field === "province") {
         nextProvince = value;
-        nextCommune = drcLocations[value]?.[0] || "";
+        nextCommune = drcLocations[value]?.[0] || current.commune || "";
         return { ...current, province: nextProvince, commune: nextCommune };
       }
       if (field === "commune") nextCommune = value;
@@ -193,14 +194,16 @@ export default function Report() {
 
     const resolved = await resolveDrcLocation(nextLocation.lat, nextLocation.lng);
     if (resolved.province) {
+      setDynamicArea(resolved);
       setForm((current) => ({
         ...current,
         province: resolved.province,
         commune: resolved.commune || drcLocations[resolved.province]?.[0] || current.commune
       }));
-      setLocationStatus(`Location resolved: ${resolved.province}${resolved.commune ? ` / ${resolved.commune}` : ""}`);
+      setLocationStatus(`Location resolved: ${resolved.country ? `${resolved.country} / ` : ""}${resolved.province}${resolved.commune ? ` / ${resolved.commune}` : ""}`);
       return;
     }
+    setDynamicArea(null);
     setLocationStatus("Location selected. Please verify the administrative area.");
   }
 
@@ -232,6 +235,12 @@ export default function Report() {
     setForm((current) => ({ ...current, category: key, infrastructureType: key }));
     setErrors((current) => ({ ...current, category: "" }));
   }
+
+  const provinceOptions = useMemo(() => Array.from(new Set([form.province, ...provinces].filter(Boolean))), [form.province]);
+  const communeOptions = useMemo(
+    () => Array.from(new Set([form.commune, ...(drcLocations[form.province] || [])].filter(Boolean))),
+    [form.commune, form.province]
+  );
 
   async function addImages(fileList) {
     const files = Array.from(fileList || []);
@@ -320,7 +329,7 @@ export default function Report() {
         buildingFootprintGeometry: selectedFootprint?.geometry ? JSON.stringify(selectedFootprint.geometry) : "",
         province: form.province,
         commune: form.commune,
-        address: `${form.commune}, ${form.province}`,
+        address: dynamicArea?.addressText || `${form.commune}, ${form.province}`,
         lat: String(location.lat),
         lng: String(location.lng)
       },
@@ -334,7 +343,8 @@ export default function Report() {
       setForm(initialForm);
       setImages([]);
       setLocation(null);
-      setSelectedFootprint(null);
+              setSelectedFootprint(null);
+              setDynamicArea(null);
       setMapVisible(false);
       setErrors({});
       autoLocateStarted.current = false;
@@ -656,7 +666,7 @@ export default function Report() {
           <label>
             <span className="mb-1 block text-sm font-semibold text-slate-700">{copy.region}</span>
             <select value={form.province} onChange={(event) => update("province", event.target.value)} className="form-field">
-              {provinces.map((province) => (
+              {provinceOptions.map((province) => (
                 <option value={province} key={province}>{province}</option>
               ))}
             </select>
@@ -664,7 +674,7 @@ export default function Report() {
           <label>
             <span className="mb-1 block text-sm font-semibold text-slate-700">{copy.localArea}</span>
             <select value={form.commune} onChange={(event) => update("commune", event.target.value)} className="form-field">
-              {(drcLocations[form.province] || []).map((commune) => (
+              {communeOptions.map((commune) => (
                 <option value={commune} key={commune}>{commune}</option>
               ))}
             </select>
@@ -684,7 +694,7 @@ export default function Report() {
           {location ? (
             <span className="flex items-center gap-2 text-text">
               <MapPin size={17} className="text-primary" />
-              {form.province} / {form.commune} - {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+              {dynamicArea?.country ? `${dynamicArea.country} / ` : ""}{form.province} / {form.commune} - {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
             </span>
           ) : (
             locationStatus || copy.noLocation
