@@ -1,11 +1,10 @@
-import { Download, FileText, Info, Map, PlusCircle } from "lucide-react";
+import { FileText, Info, Map, PlusCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import Logo from "./Logo.jsx";
 
 const desktopNav = [
   { to: "/app", label: "Map", icon: Map },
   { to: "/app#reports", label: "Reports", icon: FileText },
-  { to: "/app#exports", label: "Export", icon: Download },
   { to: "/app/about", label: "About", icon: Info }
 ];
 
