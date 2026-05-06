@@ -211,7 +211,7 @@ export default function PublicSite() {
         <div>
           <Logo compact />
           <p className="mt-4 max-w-sm text-sm font-semibold leading-6 text-slate-600">An open-source platform for crisis reporting and humanitarian response.</p>
-          <p className="mt-6 text-sm font-semibold text-slate-500">(c) 2026 Tala Mboka Crisis. Open-source crisis mapping platform.</p>
+          <p className="mt-6 text-sm font-semibold text-slate-500">© 2026 Tala Mboka Crisis. Open-source crisis mapping platform.</p>
         </div>
         <div>
           <h3 className="font-heading text-sm font-black">Platform</h3>

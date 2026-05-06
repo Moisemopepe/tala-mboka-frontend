@@ -10,6 +10,7 @@ const loadFeed = () => import("./pages/Feed.jsx");
 const loadHome = () => import("./pages/Home.jsx");
 const loadMyReports = () => import("./pages/MyReports.jsx");
 const loadNotifications = () => import("./pages/Notifications.jsx");
+const loadPublicSite = () => import("./pages/PublicSite.jsx");
 const loadReport = () => import("./pages/Report.jsx");
 
 const About = lazy(loadAbout);
@@ -19,6 +20,7 @@ const Feed = lazy(loadFeed);
 const Home = lazy(loadHome);
 const MyReports = lazy(loadMyReports);
 const Notifications = lazy(loadNotifications);
+const PublicSite = lazy(loadPublicSite);
 const Report = lazy(loadReport);
 
 function PageLoader() {
@@ -45,7 +47,7 @@ export default function App() {
     <BrowserRouter>
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          <Route path="/" element={<Navigate to="/app" replace />} />
+          <Route path="/" element={<PublicSite />} />
           <Route path="/report" element={<Navigate to="/app/report" replace />} />
           <Route path="/feed" element={<Navigate to="/app/map" replace />} />
           <Route path="/profile" element={<Navigate to="/app/report" replace />} />

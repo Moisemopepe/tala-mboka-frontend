@@ -55,9 +55,7 @@ export async function downloadApiFile(path, filename) {
   });
 
   if (!response.ok) {
-    const error = new Error("Export unavailable");
-    error.status = response.status;
-    throw error;
+    throw new Error("Export unavailable");
   }
 
   const blob = await response.blob();
