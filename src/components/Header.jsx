@@ -4,7 +4,7 @@ import Logo from "./Logo.jsx";
 
 const desktopNav = [
   { to: "/app", label: "Reports", icon: FileText },
-  { to: "/app/report", label: "Submit", icon: PlusCircle },
+  { to: "/app/report", label: "Report", icon: PlusCircle },
   { to: "/app/map", label: "Crisis map", icon: Map }
 ];
 

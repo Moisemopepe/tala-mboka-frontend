@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowRight, Building2, CheckCircle2, CirclePlus, Clock3, FileText, Flame, Globe2, HeartPulse, Map, MapPin, Menu, Navigation, Radio, ShieldCheck, Users, Waves, Zap } from "lucide-react";
+import { AlertTriangle, ArrowRight, Building2, CirclePlus, Clock3, FileText, Flame, HeartPulse, Map, MapPin, Menu, Navigation, Radio, ShieldCheck, Users, Waves, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
@@ -12,13 +12,6 @@ const incidentImages = [
   "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=75",
   "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=900&q=75",
   "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=75"
-];
-
-const impactStats = [
-  { label: "Reports submitted", value: "2,847", change: "+12%", icon: FileText, color: "text-green-700", bg: "bg-green-50" },
-  { label: "Critical incidents", value: "312", change: "+8%", icon: AlertTriangle, color: "text-red-600", bg: "bg-red-50" },
-  { label: "Communities involved", value: "1,248", change: "+15%", icon: Users, color: "text-orange-500", bg: "bg-orange-50" },
-  { label: "Verified reports", value: "1,985", change: "+10%", icon: ShieldCheck, color: "text-violet-600", bg: "bg-violet-50" }
 ];
 
 const typeFilters = [
@@ -45,7 +38,7 @@ function WorldMapHero() {
     ["left-[30%] top-[55%]", "bg-red-600", "!"],
     ["left-[55%] top-[44%]", "bg-orange-500", "!"],
     ["left-[58%] top-[28%]", "bg-orange-500", "!"],
-    ["right-[18%] top-[30%]", "bg-green-600", "✓"]
+    ["right-[18%] top-[30%]", "bg-green-600", "OK"]
   ];
 
   return (
@@ -55,7 +48,7 @@ function WorldMapHero() {
       <div className="absolute right-[16%] top-[20%] h-52 w-72 rounded-[50%] bg-blue-100/40 blur-sm" />
       <div className="absolute left-[40%] top-[28%] h-64 w-48 rounded-[50%] bg-blue-100/30 blur-sm" />
       {pins.map(([position, color, label]) => (
-        <span key={position} className={`absolute ${position} flex h-8 w-8 items-center justify-center rounded-full border-4 border-white ${color} text-sm font-black text-white shadow-lg`}>
+        <span key={position} className={`absolute ${position} flex h-8 w-8 items-center justify-center rounded-full border-4 border-white ${color} text-xs font-black text-white shadow-lg`}>
           {label}
         </span>
       ))}
@@ -71,6 +64,18 @@ export default function PublicSite() {
   }, []);
 
   const visibleReports = useMemo(() => (reports.length > 0 ? reports : sampleReports.slice(0, 5)), [reports]);
+  const impactStats = useMemo(() => {
+    const total = visibleReports.length;
+    const critical = visibleReports.filter((report) => report.damageLevel === "complete").length;
+    const verified = visibleReports.filter((report) => report.status === "verified").length;
+    const communities = new Set(visibleReports.map((report) => `${report.commune || "Area"}-${report.province || "Region"}`)).size;
+    return [
+      { label: "Reports available", value: String(total), change: "Live", icon: FileText, color: "text-green-700", bg: "bg-green-50" },
+      { label: "Critical incidents", value: String(critical), change: "Priority", icon: AlertTriangle, color: "text-red-600", bg: "bg-red-50" },
+      { label: "Communities mapped", value: String(communities), change: "Field", icon: Users, color: "text-orange-500", bg: "bg-orange-50" },
+      { label: "Verified reports", value: String(verified), change: "Admin", icon: ShieldCheck, color: "text-violet-600", bg: "bg-violet-50" }
+    ];
+  }, [visibleReports]);
 
   return (
     <div className="min-h-screen bg-white text-[#071a4f]">
@@ -84,16 +89,10 @@ export default function PublicSite() {
             <Link to="/app/map" className="pb-5 text-[#071a4f] hover:text-green-700">Live Map</Link>
             <Link to="/app" className="pb-5 text-[#071a4f] hover:text-green-700">Reports</Link>
           </nav>
-          <div className="flex items-center gap-3">
-            <button className="hidden min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-black text-[#071a4f] sm:flex">
-              <Globe2 size={17} />
-              EN
-            </button>
-            <Button as={Link} to="/app/report" className="bg-[#071a4f] hover:bg-[#0b255d]" size="lg">
-              <CirclePlus size={18} />
-              Report an incident
-            </Button>
-          </div>
+          <Button as={Link} to="/app/report" className="bg-[#071a4f] hover:bg-[#0b255d]" size="lg">
+            <CirclePlus size={18} />
+            Report an incident
+          </Button>
         </div>
       </header>
 
@@ -104,7 +103,7 @@ export default function PublicSite() {
               Together, we can respond faster and save lives.
             </h1>
             <p className="mt-7 max-w-md text-lg font-semibold leading-8 text-slate-600">
-              Tala Mboka Crisis connects communities and humanitarian actors through real-time incident reporting and open data.
+              Tala Mboka Crisis connects communities and response teams through mobile-first reporting, live mapping, and open structured data.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button as={Link} to="/app/map" size="lg">
@@ -122,8 +121,8 @@ export default function PublicSite() {
 
           <aside className="self-center rounded-xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/60">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-heading text-lg font-black">Global impact</h2>
-              <span className="text-sm font-bold text-slate-500">Last 7 days</span>
+              <h2 className="font-heading text-lg font-black">Current data</h2>
+              <span className="text-sm font-bold text-slate-500">Live feed</span>
             </div>
             <div className="divide-y divide-slate-200">
               {impactStats.map(({ label, value, change, icon: Icon, color, bg }) => (
@@ -135,7 +134,7 @@ export default function PublicSite() {
                     <p className="text-sm font-semibold text-slate-500">{label}</p>
                     <p className="font-heading text-2xl font-black text-[#071a4f]">{value}</p>
                   </div>
-                  <span className={`text-sm font-black ${change.startsWith("+") ? "text-green-600" : "text-red-600"}`}>{change}</span>
+                  <span className="text-sm font-black text-green-600">{change}</span>
                 </div>
               ))}
             </div>
@@ -154,7 +153,7 @@ export default function PublicSite() {
             {visibleReports.map((report, index) => {
               const severity = severityFor(report, index);
               return (
-                <article key={report._id} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md shadow-slate-200/70">
+                <article key={report._id || `${report.title}-${index}`} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md shadow-slate-200/70">
                   <div className="relative h-32 overflow-hidden">
                     <img src={incidentImages[index % incidentImages.length]} alt="" className="h-full w-full object-cover" />
                     <span className={`absolute left-3 top-3 rounded-md px-2 py-1 text-xs font-black text-white ${severity.className}`}>{severity.label}</span>
@@ -194,12 +193,12 @@ export default function PublicSite() {
               <HeartPulse className="text-green-700" size={58} />
             </div>
             <div>
-              <h2 className="font-heading text-2xl font-black">See something? Report it in seconds.</h2>
-              <p className="mt-2 font-semibold text-slate-600">Your report helps communities and responders take action.</p>
+              <h2 className="font-heading text-2xl font-black">See damage? Report it in seconds.</h2>
+              <p className="mt-2 font-semibold text-slate-600">The mobile app is the primary field channel. This web form remains available as a backup.</p>
             </div>
             <div>
               <Button as={Link} to="/app/report" size="lg">
-                <Globe2 size={18} />
+                <CirclePlus size={18} />
                 Report an incident
               </Button>
               <p className="mt-3 text-center text-sm font-semibold text-slate-500">Works offline. No account required.</p>
@@ -211,8 +210,8 @@ export default function PublicSite() {
       <footer className="mx-auto grid max-w-[1500px] gap-8 border-t border-slate-200 px-5 py-8 lg:grid-cols-[1.4fr_repeat(2,1fr)] lg:px-10">
         <div>
           <Logo compact />
-          <p className="mt-4 max-w-sm text-sm font-semibold leading-6 text-slate-600">An open platform for crisis reporting and humanitarian response.</p>
-          <p className="mt-6 text-sm font-semibold text-slate-500">© 2024 Tala Mboka Crisis. All rights reserved.</p>
+          <p className="mt-4 max-w-sm text-sm font-semibold leading-6 text-slate-600">An open-source platform for crisis reporting and humanitarian response.</p>
+          <p className="mt-6 text-sm font-semibold text-slate-500">© 2026 Tala Mboka Crisis. Open-source crisis mapping platform.</p>
         </div>
         <div>
           <h3 className="font-heading text-sm font-black">Platform</h3>

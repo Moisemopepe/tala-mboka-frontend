@@ -22,7 +22,7 @@ import {
   Zap
 } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
@@ -105,7 +105,6 @@ async function compressImage(file) {
 }
 
 export default function Report() {
-  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [form, setForm] = useState(initialForm);
   const [images, setImages] = useState([]);
@@ -151,12 +150,6 @@ export default function Report() {
     const items = await listOfflineReports().catch(() => []);
     setOfflineCount(items.length);
   }
-
-  useEffect(() => {
-    if (!success) return undefined;
-    const timer = window.setTimeout(() => navigate(isAuthenticated ? "/app/my-reports" : "/app"), 2500);
-    return () => window.clearTimeout(timer);
-  }, [isAuthenticated, navigate, success]);
 
   function update(field, value) {
     setSuccess(null);
@@ -414,9 +407,9 @@ export default function Report() {
       <div className="mx-auto w-full max-w-[1080px] space-y-4">
         <div className="space-y-2">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">{copy.pageKicker}</p>
-          <h1 className="font-heading text-2xl font-black text-text md:text-3xl">Choose the damaged infrastructure category</h1>
+          <h1 className="font-heading text-2xl font-black text-text md:text-3xl">{copy.categoryTitle}</h1>
           <p className="max-w-3xl text-sm font-medium text-slate-500 md:text-base">
-            Start with the affected asset. The next screen will collect crisis type, damage level, photo evidence, description, and location.
+            {copy.categoryIntro}
           </p>
         </div>
         <Card className="space-y-4 p-4 md:p-5">
@@ -433,7 +426,7 @@ export default function Report() {
                 >
                   <Icon size={24} style={{ color: item?.color || "#16a34a" }} />
                   <span className="mt-4 block text-sm font-black">{item?.label || key}</span>
-                  <span className="mt-1 block text-xs font-semibold text-slate-500">Open report form</span>
+                  <span className="mt-1 block text-xs font-semibold text-slate-500">{copy.openForm}</span>
                 </button>
               );
             })}
@@ -469,7 +462,11 @@ export default function Report() {
       <Card className="space-y-4 p-4 md:p-5">
         <div>
           <h2 className="font-heading text-lg font-black text-text">{copy.classificationTitle}</h2>
-          <p className="text-sm font-semibold text-slate-500">Category: {categories[form.category]?.label}. <button type="button" onClick={() => update("category", "")} className="font-black text-primary underline">Change</button></p>
+          <p className="text-sm font-semibold text-slate-500">
+            {categories[form.category]?.label}
+            <button type="button" onClick={() => update("category", "")} className="ml-2 font-black text-primary underline">{copy.changeCategory}</button>
+          </p>
+          <p className="mt-1 text-sm font-semibold text-slate-500">{copy.classificationIntro}</p>
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
           <label>
@@ -508,7 +505,7 @@ export default function Report() {
         </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-semibold text-slate-700">
           <AlertTriangle className="mr-2 inline text-primary" size={17} />
-          {damageLevels[form.damageLevel]?.description}
+          {copy.damageHint} {damageLevels[form.damageLevel]?.description}
         </div>
         <label>
           <span className="mb-1 block text-sm font-semibold text-slate-700">{copy.debris}</span>
@@ -608,25 +605,25 @@ export default function Report() {
           </div>
         </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-sm font-black text-text">Reporter details for admin follow-up</p>
-          <p className="mt-1 text-xs font-semibold text-slate-500">Optional and never shown on the public map.</p>
+          <p className="text-sm font-black text-text">{copy.reporterTitle}</p>
+          <p className="mt-1 text-xs font-semibold text-slate-500">{copy.reporterIntro}</p>
           <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
             <input
               value={form.reporterName}
               onChange={(event) => update("reporterName", event.target.value)}
-              placeholder="Name optional"
+              placeholder={copy.reporterName}
               className="form-field"
             />
             <input
               value={form.reporterContact}
               onChange={(event) => update("reporterContact", event.target.value)}
-              placeholder="Phone or email optional"
+              placeholder={copy.reporterContact}
               className="form-field"
             />
             <input
               value={form.reporterOrganization}
               onChange={(event) => update("reporterOrganization", event.target.value)}
-              placeholder="Organization optional"
+              placeholder={copy.reporterOrganization}
               className="form-field"
             />
             <select value={form.reporterRole} onChange={(event) => update("reporterRole", event.target.value)} className="form-field">
@@ -645,7 +642,7 @@ export default function Report() {
               onChange={(event) => updateBoolean("reporterConsent", event.target.checked)}
               className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
             />
-            I can be contacted by response teams if they need to verify this report.
+            {copy.reporterConsent}
           </label>
         </div>
       </Card>
