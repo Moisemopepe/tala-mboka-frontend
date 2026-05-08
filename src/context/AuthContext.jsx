@@ -7,7 +7,12 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem("token") || localStorage.getItem("tala_token"));
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem("tala_user");
-    return stored ? JSON.parse(stored) : null;
+    try {
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      localStorage.removeItem("tala_user");
+      return null;
+    }
   });
 
   async function login(phone, password) {
@@ -15,7 +20,7 @@ export function AuthProvider({ children }) {
       method: "POST",
       body: JSON.stringify({ phone, password })
     });
-    saveSession(data);
+    setSession(data);
   }
 
   async function register(name, phone, password) {
@@ -23,10 +28,10 @@ export function AuthProvider({ children }) {
       method: "POST",
       body: JSON.stringify({ name, phone, password })
     });
-    saveSession(data);
+    setSession(data);
   }
 
-  function saveSession(data) {
+  function setSession(data) {
     localStorage.setItem("token", data.token);
     localStorage.setItem("tala_token", data.token);
     localStorage.setItem("tala_user", JSON.stringify(data.user));
@@ -53,7 +58,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ token, user, isAuthenticated: Boolean(token), login, register, logout }),
+    () => ({ token, user, isAuthenticated: Boolean(token), login, register, setSession, logout }),
     [token, user]
   );
 

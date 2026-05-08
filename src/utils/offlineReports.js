@@ -69,7 +69,14 @@ export async function syncOfflineReports({ authenticated = false } = {}) {
 
   for (const item of items) {
     try {
-      const body = buildReportFormData(item.payload);
+      const body = buildReportFormData({
+        ...item.payload,
+        fields: {
+          ...item.payload.fields,
+          offlineCreatedAt: item.payload.fields.offlineCreatedAt || item.createdAt,
+          offlineSyncedAt: new Date().toISOString()
+        }
+      });
       await api(authenticated ? "/reports" : "/reports/guest", { method: "POST", body });
       await deleteOfflineReport(item.id);
       synced.push(item.id);

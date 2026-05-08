@@ -16,7 +16,7 @@ const labels = {
   rejected: "Rejected"
 };
 
-export default function StatusBadge({ status = "pending", showNeutral = true }) {
+export default function StatusBadge({ status = "pending", showNeutral = true, statusLabels = labels }) {
   if (!showNeutral && status === "verified") {
     return null;
   }
@@ -28,7 +28,7 @@ export default function StatusBadge({ status = "pending", showNeutral = true }) 
       }`}
     >
       <span className={`mr-1.5 h-2.5 w-2.5 rounded-full ${dotStyles[status] || "bg-slate-400"}`} />
-      {labels[status] || status}
+      {statusLabels[status] || labels[status] || status}
     </span>
   );
 }

@@ -6,6 +6,8 @@ import Button from "../components/Button.jsx";
 import ReportCard from "../components/ReportCard.jsx";
 import { crisisTypes, damageLevels } from "../utils/crisisOptions.js";
 import { drcLocations, provinces } from "../utils/drcLocations.js";
+import { getAppCopy, getStoredLanguage } from "../utils/appI18n.js";
+import { getAppOptionLabels } from "../utils/appOptionI18n.js";
 import { distanceKm } from "../utils/risk.js";
 import { sampleReports } from "../utils/sampleReports.js";
 
@@ -23,6 +25,17 @@ export default function Feed() {
   const [locationError, setLocationError] = useState("");
   const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(initialVisibleReports);
+  const [language, setLanguage] = useState(getStoredLanguage);
+  const copy = getAppCopy(language).feed;
+  const optionCopy = getAppOptionLabels(language);
+
+  useEffect(() => {
+    function syncLanguage(event) {
+      setLanguage(event.detail || getStoredLanguage());
+    }
+    window.addEventListener("tala:language-changed", syncLanguage);
+    return () => window.removeEventListener("tala:language-changed", syncLanguage);
+  }, []);
 
   useEffect(() => {
     setVisibleCount(initialVisibleReports);
@@ -78,7 +91,7 @@ export default function Feed() {
 
   function useLocation() {
     if (!navigator.geolocation) {
-      setLocationError("Location is unavailable on this device.");
+      setLocationError(copy.noLocation);
       return;
     }
 
@@ -87,7 +100,7 @@ export default function Feed() {
         setNearby({ lat: position.coords.latitude, lng: position.coords.longitude });
         setLocationError("");
       },
-      () => setLocationError("Unable to get your location.")
+      () => setLocationError(copy.locationError)
     );
   }
 
@@ -97,16 +110,16 @@ export default function Feed() {
         <div className="bg-gradient-to-br from-white via-blue-50/50 to-white p-4 sm:p-5">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-primary">Live damage reports</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-primary">{copy.eyebrow}</p>
               <h1 className="mt-1 font-heading text-2xl font-semibold leading-tight text-text md:text-3xl">
-                Crisis reports around you
+                {copy.title}
               </h1>
               <p className="mt-1 text-sm text-slate-500 md:text-base">
-                Track reported damage, verification status, and response priorities in real time.
+                {copy.text}
               </p>
             </div>
             <Button type="button" variant="success" onClick={() => (window.location.href = "/app/report")} className="w-full md:w-auto">
-              Report Damage
+              {copy.report}
             </Button>
           </div>
         </div>
@@ -115,8 +128,8 @@ export default function Feed() {
       <section className="space-y-3 rounded-xl border border-slate-200/70 bg-white p-3 shadow-sm">
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           <select value={sort} onChange={(event) => setSort(event.target.value)} className="form-field text-sm font-bold" aria-label="Sort reports">
-            <option value="newest">Newest</option>
-            <option value="liked">Most confirmed</option>
+            <option value="newest">{copy.newest}</option>
+            <option value="liked">{copy.liked}</option>
           </select>
           <Button
             type="button"
@@ -125,24 +138,24 @@ export default function Feed() {
             className={`w-full md:shrink-0 ${nearby ? "border-green-200 bg-green-50 text-green-700" : ""}`}
           >
             {nearby ? <X size={18} /> : <LocateFixed size={18} />}
-            {nearby ? "Clear location" : "Near me"}
+            {nearby ? copy.clearLocation : copy.nearMe}
           </Button>
           <select value={damageLevel} onChange={(event) => setDamageLevel(event.target.value)} className="form-field text-sm font-bold" aria-label="Filter by damage level">
-            <option value="">All damage levels</option>
+            <option value="">{copy.allDamage}</option>
             {Object.entries(damageLevels).map(([key, item]) => (
-              <option value={key} key={key}>{item.label}</option>
+              <option value={key} key={key}>{optionCopy.damage[key]?.label || item.label}</option>
             ))}
           </select>
         </div>
 
-        {nearby && <p className="rounded-xl bg-green-50 p-3 text-sm font-bold text-primary">Distance filter active: nearby reports appear first.</p>}
+        {nearby && <p className="rounded-xl bg-green-50 p-3 text-sm font-bold text-primary">{copy.distanceActive}</p>}
         {locationError && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{locationError}</p>}
 
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           <select value={crisisType} onChange={(event) => setCrisisType(event.target.value)} className="form-field text-sm font-bold" aria-label="Filter by crisis type">
-            <option value="">All crisis types</option>
+            <option value="">{copy.allCrisis}</option>
             {Object.entries(crisisTypes).map(([key, label]) => (
-              <option value={key} key={key}>{label}</option>
+              <option value={key} key={key}>{optionCopy.crisis[key] || label}</option>
             ))}
           </select>
           <select
@@ -154,19 +167,19 @@ export default function Feed() {
             className="form-field text-sm font-bold"
             aria-label="Filter by region"
           >
-            <option value="">All regions</option>
+            <option value="">{copy.allRegions}</option>
             {provinces.map((item) => (
               <option value={item} key={item}>{item}</option>
             ))}
           </select>
           <select value={commune} onChange={(event) => setCommune(event.target.value)} disabled={!province} className="form-field text-sm font-bold disabled:bg-slate-100 disabled:text-slate-400" aria-label="Filter by local area">
-            <option value="">All local areas</option>
+            <option value="">{copy.allAreas}</option>
             {(drcLocations[province] || []).map((item) => (
               <option value={item} key={item}>{item}</option>
             ))}
           </select>
         </div>
-        <CategoryFilter value={infrastructureType} onChange={setInfrastructureType} />
+        <CategoryFilter value={infrastructureType} onChange={setInfrastructureType} language={language} />
       </section>
 
       {loading && reports.length === 0 && <SkeletonList />}
@@ -181,7 +194,7 @@ export default function Feed() {
           {visibleCount < visibleReports.length && (
             <div className="flex justify-center pb-8 pt-2">
               <Button type="button" variant="ghost" onClick={() => setVisibleCount((count) => count + initialVisibleReports)}>
-                Show more
+                {copy.showMore}
               </Button>
             </div>
           )}
@@ -189,10 +202,10 @@ export default function Feed() {
       ) : (
         !loading && (
           <div className="w-full rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-            <p className="text-lg font-semibold text-text">No reports found</p>
-            <p className="mt-2 text-sm text-slate-500">Adjust filters or report new damage.</p>
+            <p className="text-lg font-semibold text-text">{copy.emptyTitle}</p>
+            <p className="mt-2 text-sm text-slate-500">{copy.emptyText}</p>
             <Button type="button" variant="success" className="mt-4 hidden sm:inline-flex" onClick={() => (window.location.href = "/app/report")}>
-              Report Damage
+              {copy.report}
             </Button>
           </div>
         )

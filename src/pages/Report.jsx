@@ -447,7 +447,7 @@ export default function Report() {
   }
 
   return (
-    <form onSubmit={submit} className="mx-auto w-full max-w-[1080px] space-y-4">
+    <form onSubmit={submit} className="mx-auto w-full max-w-[1080px] space-y-4 pb-[calc(10rem+env(safe-area-inset-bottom))] md:pb-8">
       <div className="space-y-2">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">{copy.pageKicker}</p>
         <h1 className="font-heading text-2xl font-black text-text md:text-3xl">{copy.pageTitle}</h1>

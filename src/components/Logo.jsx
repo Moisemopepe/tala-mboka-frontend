@@ -1,4 +1,4 @@
-export default function Logo({ compact = false }) {
+export default function Logo({ compact = false, tagline = "Community crisis mapping" }) {
   return (
     <div className="flex items-center gap-2.5">
       <img
@@ -12,7 +12,7 @@ export default function Logo({ compact = false }) {
           <span className="text-[#15803d]">CRISIS</span>
         </p>
         <p className={`${compact ? "text-[11px]" : "hidden text-xs sm:block"} font-semibold text-slate-500`}>
-          Community crisis mapping
+          {tagline}
         </p>
       </div>
     </div>

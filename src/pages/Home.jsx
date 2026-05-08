@@ -10,14 +10,10 @@ import { crisisTypes, damageLevels } from "../utils/crisisOptions.js";
 import { provinces } from "../utils/drcLocations.js";
 import { sampleReports } from "../utils/sampleReports.js";
 import { distanceKm } from "../utils/risk.js";
+import { getAppCopy, getStoredLanguage } from "../utils/appI18n.js";
+import { getAppOptionLabels } from "../utils/appOptionI18n.js";
 
-const distanceOptions = [
-  { value: "", label: "All distances" },
-  { value: "1", label: "Under 1 km" },
-  { value: "5", label: "Under 5 km" },
-  { value: "10", label: "Under 10 km" },
-  { value: "25", label: "Under 25 km" }
-];
+const distanceValues = ["", "1", "5", "10", "25"];
 
 export default function Home() {
   const [searchParams] = useSearchParams();
@@ -32,6 +28,17 @@ export default function Home() {
   const [locationError, setLocationError] = useState("");
   const [loading, setLoading] = useState(true);
   const [debouncedFilters, setDebouncedFilters] = useState({ category: "", province: "" });
+  const [language, setLanguage] = useState(getStoredLanguage);
+  const copy = getAppCopy(language).map;
+  const optionCopy = getAppOptionLabels(language);
+
+  useEffect(() => {
+    function syncLanguage(event) {
+      setLanguage(event.detail || getStoredLanguage());
+    }
+    window.addEventListener("tala:language-changed", syncLanguage);
+    return () => window.removeEventListener("tala:language-changed", syncLanguage);
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedFilters({ category, province }), 250);
@@ -81,61 +88,61 @@ export default function Home() {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">Crisis impact map</h1>
+          <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">{copy.title}</h1>
           <p className="text-sm font-medium text-slate-500 md:text-base">
-            Map community reports by crisis type, infrastructure, damage level, and response priority.
+            {copy.text}
           </p>
         </div>
         <div className="grid grid-cols-2 rounded-xl bg-slate-100 p-1">
           <button type="button" onClick={() => setMode("map")} className={`flex min-h-10 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold ${mode === "map" ? "bg-white text-primary shadow-sm" : "text-slate-600"}`}>
             <Map size={17} />
-            Map
+            {copy.map}
           </button>
           <button type="button" onClick={() => setMode("list")} className={`flex min-h-10 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold ${mode === "list" ? "bg-white text-primary shadow-sm" : "text-slate-600"}`}>
             <List size={17} />
-            List
+            {copy.list}
           </button>
         </div>
       </div>
 
       <div className="space-y-3 rounded-xl border border-slate-200/70 bg-white p-3 shadow-sm">
         <select value={province} onChange={(event) => setProvince(event.target.value)} className="form-field text-sm font-bold">
-          <option value="">All regions</option>
+          <option value="">{copy.allRegions}</option>
           {provinces.map((item) => (
             <option value={item} key={item}>{item}</option>
           ))}
         </select>
-        <CategoryFilter value={category} onChange={setCategory} />
+        <CategoryFilter value={category} onChange={setCategory} language={language} />
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_auto]">
           <select value={crisisType} onChange={(event) => setCrisisType(event.target.value)} className="form-field text-sm font-bold">
-            <option value="">All crisis types</option>
+            <option value="">{copy.allCrisis}</option>
             {Object.entries(crisisTypes).map(([key, label]) => (
-              <option value={key} key={key}>{label}</option>
+              <option value={key} key={key}>{optionCopy.crisis[key] || label}</option>
             ))}
           </select>
           <select value={damageLevel} onChange={(event) => setDamageLevel(event.target.value)} className="form-field text-sm font-bold">
-            <option value="">All damage levels</option>
+            <option value="">{copy.allDamage}</option>
             {Object.entries(damageLevels).map(([key, item]) => (
-              <option value={key} key={key}>{item.label}</option>
+              <option value={key} key={key}>{optionCopy.damage[key]?.label || item.label}</option>
             ))}
           </select>
           <select value={distance} onChange={(event) => setDistance(event.target.value)} className="form-field text-sm font-bold" disabled={!userLocation}>
-            {distanceOptions.map((item) => (
-              <option value={item.value} key={item.value}>{item.label}</option>
+            {distanceValues.map((value, index) => (
+              <option value={value} key={value}>{copy.distances[index]}</option>
             ))}
           </select>
           <Button type="button" variant="ghost" onClick={resetFilters}>
             <RotateCcw size={17} />
-            Reset
+            {copy.reset}
           </Button>
         </div>
         {!userLocation && distance && (
-          <p className="rounded-xl bg-amber-50 p-3 text-sm font-bold text-amber-800">Enable location first to filter by distance.</p>
+          <p className="rounded-xl bg-amber-50 p-3 text-sm font-bold text-amber-800">{copy.enableLocation}</p>
         )}
         {locationError && <p className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{locationError}</p>}
       </div>
 
-      {selectedReport && <p className="rounded-xl bg-green-50 p-3 text-sm font-bold text-primary">Map centered on: {selectedReport.title}</p>}
+      {selectedReport && <p className="rounded-xl bg-green-50 p-3 text-sm font-bold text-primary">{copy.centered} {selectedReport.title}</p>}
       {loading && <div className="h-[300px] animate-pulse rounded-xl bg-slate-100 md:h-[400px] lg:h-[500px]" />}
 
       {!loading && mode === "map" && (
@@ -161,7 +168,7 @@ export default function Home() {
 
       {!loading && enrichedReports.length === 0 && (
         <p className="w-full rounded-xl border border-slate-200 bg-white p-8 text-center font-semibold text-slate-500 shadow-sm">
-          No crisis reports in this area
+          {copy.empty}
         </p>
       )}
 

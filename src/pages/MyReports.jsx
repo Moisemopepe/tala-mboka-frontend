@@ -7,6 +7,9 @@ import Card from "../components/Card.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { categories } from "../utils/categories.js";
+import { getStoredLanguage } from "../utils/appI18n.js";
+import { getAppOptionLabels } from "../utils/appOptionI18n.js";
+import { getAppSecondaryCopy } from "../utils/appSecondaryI18n.js";
 import { reporterRoleLabel } from "../utils/reporterRoles.js";
 
 export default function MyReports() {
@@ -15,10 +18,21 @@ export default function MyReports() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [language, setLanguage] = useState(getStoredLanguage);
+  const copy = getAppSecondaryCopy(language).myReports;
+  const optionCopy = getAppOptionLabels(language);
+
+  useEffect(() => {
+    function syncLanguage(event) {
+      setLanguage(event.detail || getStoredLanguage());
+    }
+    window.addEventListener("tala:language-changed", syncLanguage);
+    return () => window.removeEventListener("tala:language-changed", syncLanguage);
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) {
-      localStorage.setItem("tala_session_message", "Connectez-vous pour voir vos alertes.");
+      localStorage.setItem("tala_session_message", copy.sessionRequired);
       navigate("/app/profile", { replace: true });
       return;
     }
@@ -30,33 +44,33 @@ export default function MyReports() {
       })
       .catch((err) => {
         if (err.status === 401) {
-          localStorage.setItem("tala_session_message", "Votre session a expiré. Reconnectez-vous.");
+          localStorage.setItem("tala_session_message", copy.sessionExpired);
           navigate("/app/profile", { replace: true });
           return;
         }
         setError(err.message);
       })
       .finally(() => setLoading(false));
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, copy.sessionExpired, copy.sessionRequired]);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">Mes alertes</h1>
-          <p className="text-sm font-medium text-slate-500 md:text-base">Suivez le statut de vos signalements.</p>
+          <h1 className="font-heading text-xl font-black text-text md:text-2xl lg:text-3xl">{copy.title}</h1>
+          <p className="text-sm font-medium text-slate-500 md:text-base">{copy.intro}</p>
         </div>
         <Link to="/app/report">
           <Button type="button" variant="success" className="w-full md:w-auto">
             <PlusCircle size={18} />
-            Signaler
+            {copy.report}
           </Button>
         </Link>
       </div>
 
       {loading && (
         <Card className="p-5">
-          <p className="text-sm font-bold text-slate-600">Chargement de vos alertes...</p>
+          <p className="text-sm font-bold text-slate-600">{copy.loading}</p>
         </Card>
       )}
 
@@ -65,8 +79,8 @@ export default function MyReports() {
       {!loading && !error && reports.length === 0 && (
         <Card className="p-6 text-center">
           <FileText className="mx-auto text-slate-400" size={28} />
-          <p className="mt-3 font-heading text-lg font-black text-text">Aucune alerte disponible</p>
-          <p className="mt-1 text-sm font-semibold text-slate-500">Vos prochains signalements apparaîtront ici.</p>
+          <p className="mt-3 font-heading text-lg font-black text-text">{copy.emptyTitle}</p>
+          <p className="mt-1 text-sm font-semibold text-slate-500">{copy.emptyText}</p>
         </Card>
       )}
 
@@ -76,11 +90,11 @@ export default function MyReports() {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[11px] font-black uppercase" style={{ color: categories[report.category]?.color }}>
-                  {categories[report.category]?.label || report.category}
+                  {optionCopy.categories[report.category] || categories[report.category]?.label || report.category}
                 </p>
                 <h2 className="font-heading text-lg font-black leading-snug text-text">{report.title}</h2>
               </div>
-              <StatusBadge status={report.status} />
+              <StatusBadge status={report.status} statusLabels={optionCopy.statuses} />
             </div>
             <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{report.description}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold text-slate-500">
@@ -88,7 +102,7 @@ export default function MyReports() {
               <span>{report.province || "-"} / {report.commune || "-"}</span>
               <span className="inline-flex items-center gap-1">
                 <CalendarDays size={14} />
-                {new Date(report.createdAt).toLocaleDateString()}
+                {new Date(report.createdAt).toLocaleDateString(language === "en" ? "en-US" : language)}
               </span>
             </div>
           </Card>

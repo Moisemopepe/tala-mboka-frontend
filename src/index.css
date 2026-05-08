@@ -16,6 +16,8 @@ body {
 }
 
 html {
+  scroll-padding-bottom: 12rem;
+  scroll-padding-top: 6rem;
   scroll-behavior: smooth;
 }
 
@@ -36,6 +38,15 @@ button,
 a,
 select {
   -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input,
+select,
+textarea,
+[role="button"] {
+  scroll-margin-bottom: 12rem;
+  scroll-margin-top: 6rem;
 }
 
 button:focus-visible,

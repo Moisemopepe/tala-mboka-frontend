@@ -1,8 +1,8 @@
 export const languageOptions = {
   en: "English",
-  fr: "Francais",
-  es: "Espanol",
-  ar: "Arabic",
-  zh: "Chinese",
-  ru: "Russian"
+  fr: "Français",
+  es: "Español",
+  ar: "العربية",
+  zh: "中文",
+  ru: "Русский"
 };

@@ -2,6 +2,7 @@ import { Home, Info, PlusCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { getAppCopy, getStoredLanguage } from "../utils/appI18n.js";
 import Header from "./Header.jsx";
 
 const items = [
@@ -14,12 +15,22 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const [language, setLanguage] = useState(getStoredLanguage);
+  const copy = getAppCopy(language);
   const storedUser = JSON.parse(localStorage.getItem("tala_user") || "null");
   const currentUser = user || storedUser;
   const userItems = currentUser
     ? [...items, { to: "/app/about", label: "About", icon: Info }]
     : [...items, { to: "/app/about", label: "About", icon: Info }];
   const navItems = userItems;
+
+  useEffect(() => {
+    function syncLanguage(event) {
+      setLanguage(event.detail || getStoredLanguage());
+    }
+    window.addEventListener("tala:language-changed", syncLanguage);
+    return () => window.removeEventListener("tala:language-changed", syncLanguage);
+  }, []);
 
   useEffect(() => {
     function handleSessionExpired() {
@@ -68,23 +79,34 @@ export default function Layout() {
             navItems.length === 3 ? "grid-cols-3" : navItems.length === 4 ? "grid-cols-4" : "grid-cols-2"
           }`}
         >
-          {navItems.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === "/app"}
-              className={({ isActive }) =>
-                `flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl border text-[11px] font-semibold transition ${
-                  isActive
-                    ? "border-green-200 bg-green-50 text-primary"
-                    : "border-transparent text-slate-700 hover:bg-slate-50 hover:text-primary"
-                }`
-              }
-            >
-              <Icon size={21} strokeWidth={2.4} />
-              <span className="max-w-full truncate px-1">{label}</span>
-            </NavLink>
-          ))}
+          {navItems.map(({ to, label, icon: Icon }) => {
+            const translatedLabel =
+              to === "/app/map"
+                ? copy.nav.map
+                : to === "/app/report"
+                  ? copy.nav.report
+                  : to === "/app/about"
+                    ? copy.nav.about
+                    : label;
+
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === "/app"}
+                className={({ isActive }) =>
+                  `flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl border text-[11px] font-semibold transition ${
+                    isActive
+                      ? "border-green-200 bg-green-50 text-primary"
+                      : "border-transparent text-slate-700 hover:bg-slate-50 hover:text-primary"
+                  }`
+                }
+              >
+                <Icon size={21} strokeWidth={2.4} />
+                <span className="max-w-full truncate px-1">{translatedLabel}</span>
+              </NavLink>
+            );
+          })}
         </div>
       </nav>
     </div>

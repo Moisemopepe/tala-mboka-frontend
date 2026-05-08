@@ -7,6 +7,7 @@ import {
   Edit3,
   Eye,
   FileText,
+  Globe2,
   History,
   LayoutDashboard,
   ListChecks,
@@ -22,12 +23,12 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Circle, MapContainer, Popup, TileLayer } from "react-leaflet";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { api, assetUrl, downloadApiFile } from "../api/client.js";
 import Button from "../components/Button.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { crisisTypes, damageLevels, infrastructureTypes } from "../utils/crisisOptions.js";
-import { sampleReports } from "../utils/sampleReports.js";
+import { languageOptions } from "../utils/languageOptions.js";
 
 const navItems = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -40,6 +41,294 @@ const navItems = [
 ];
 
 const emptyUserForm = { name: "", email: "", phone: "", password: "", role: "moderator" };
+
+const adminUiCopy = {
+  en: {
+    subtitle: "Crisis response dashboard",
+    systemStatus: "System status",
+    systemOk: "All systems operational",
+    nav: { dashboard: "Dashboard", map: "Live Map", reports: "Reports", validation: "Validation", exports: "Exports", users: "Users", audit: "Audit" },
+    table: { evidence: "Evidence", incident: "Incident", reporter: "Reporter", type: "Type", damage: "Damage", location: "Location", status: "Status", actions: "Actions", empty: "No reports match the current filters.", sectionEmpty: "No reports in this section." },
+    toolbar: { search: "Search reports...", mapSearch: "Search map reports...", allStatuses: "All statuses", pending: "Pending", verified: "Verified", rejected: "Rejected", allCrises: "All crises" },
+    dashboard: { headline: "Real-time crisis reports for faster response.", text: "Verify field incidents, map impact, manage staff access, and export structured response data.", openMap: "Open live map", viewReports: "View reports", exportData: "Export data", total: "Total reports", critical: "Critical incidents", verified: "Verified reports", pending: "Pending validation", liveMap: "Live map", mapped: "mapped reports", criticalAlerts: "Critical alerts", pendingList: "Pending validation", byDamage: "Reports by damage level", byCrisis: "Reports by crisis type" },
+    detail: { eyebrow: "Admin full report view", verify: "Verify", reject: "Reject", edit: "Edit", delete: "Delete", close: "Close" },
+    export: { csv: "CSV export", geojson: "GeoJSON export", download: "Download" }
+  },
+  fr: {
+    subtitle: "Tableau de réponse aux crises",
+    systemStatus: "État du système",
+    systemOk: "Tous les systèmes sont opérationnels",
+    nav: { dashboard: "Tableau", map: "Carte", reports: "Alertes", validation: "Validation", exports: "Exports", users: "Utilisateurs", audit: "Audit" },
+    table: { evidence: "Preuve", incident: "Incident", reporter: "Auteur", type: "Type", damage: "Dégâts", location: "Lieu", status: "Statut", actions: "Actions", empty: "Aucune alerte ne correspond aux filtres.", sectionEmpty: "Aucune alerte dans cette section." },
+    toolbar: { search: "Rechercher des alertes...", mapSearch: "Rechercher sur la carte...", allStatuses: "Tous les statuts", pending: "En attente", verified: "Vérifiée", rejected: "Rejetée", allCrises: "Toutes les crises" },
+    dashboard: { headline: "Alertes de crise en temps réel pour répondre plus vite.", text: "Validez les incidents de terrain, cartographiez l'impact, gérez les accès et exportez les données.", openMap: "Ouvrir la carte", viewReports: "Voir les alertes", exportData: "Exporter", total: "Total alertes", critical: "Incidents critiques", verified: "Alertes vérifiées", pending: "En validation", liveMap: "Carte en direct", mapped: "alertes cartographiées", criticalAlerts: "Alertes critiques", pendingList: "Validation en attente", byDamage: "Alertes par niveau de dégâts", byCrisis: "Alertes par type de crise" },
+    detail: { eyebrow: "Vue complète admin", verify: "Approuver", reject: "Rejeter", edit: "Modifier", delete: "Supprimer", close: "Fermer" },
+    export: { csv: "Export CSV", geojson: "Export GeoJSON", download: "Télécharger" }
+  },
+  es: {
+    subtitle: "Panel de respuesta a crisis",
+    systemStatus: "Estado del sistema",
+    systemOk: "Todos los sistemas operativos",
+    nav: { dashboard: "Panel", map: "Mapa", reports: "Alertas", validation: "Validación", exports: "Exportaciones", users: "Usuarios", audit: "Auditoría" },
+    table: { evidence: "Evidencia", incident: "Incidente", reporter: "Reportero", type: "Tipo", damage: "Daño", location: "Ubicación", status: "Estado", actions: "Acciones", empty: "Ninguna alerta coincide con los filtros.", sectionEmpty: "No hay alertas en esta sección." },
+    toolbar: { search: "Buscar alertas...", mapSearch: "Buscar en el mapa...", allStatuses: "Todos los estados", pending: "Pendiente", verified: "Verificada", rejected: "Rechazada", allCrises: "Todas las crisis" },
+    dashboard: { headline: "Alertas de crisis en tiempo real para responder más rápido.", text: "Valide incidentes, cartografíe impactos, gestione accesos y exporte datos.", openMap: "Abrir mapa", viewReports: "Ver alertas", exportData: "Exportar", total: "Total alertas", critical: "Incidentes críticos", verified: "Alertas verificadas", pending: "Pendientes", liveMap: "Mapa en vivo", mapped: "alertas mapeadas", criticalAlerts: "Alertas críticas", pendingList: "Validación pendiente", byDamage: "Alertas por daño", byCrisis: "Alertas por crisis" },
+    detail: { eyebrow: "Vista completa admin", verify: "Aprobar", reject: "Rechazar", edit: "Editar", delete: "Eliminar", close: "Cerrar" },
+    export: { csv: "Exportar CSV", geojson: "Exportar GeoJSON", download: "Descargar" }
+  },
+  ar: {
+    subtitle: "لوحة الاستجابة للأزمات",
+    systemStatus: "حالة النظام",
+    systemOk: "كل الأنظمة تعمل",
+    nav: { dashboard: "لوحة", map: "الخريطة", reports: "التنبيهات", validation: "التحقق", exports: "التصدير", users: "المستخدمون", audit: "السجل" },
+    table: { evidence: "الدليل", incident: "الحادث", reporter: "المبلغ", type: "النوع", damage: "الضرر", location: "الموقع", status: "الحالة", actions: "الإجراءات", empty: "لا توجد تنبيهات مطابقة.", sectionEmpty: "لا توجد تنبيهات في هذا القسم." },
+    toolbar: { search: "بحث في التنبيهات...", mapSearch: "بحث في الخريطة...", allStatuses: "كل الحالات", pending: "قيد الانتظار", verified: "موثق", rejected: "مرفوض", allCrises: "كل الأزمات" },
+    dashboard: { headline: "تنبيهات أزمة فورية لاستجابة أسرع.", text: "تحقق من الحوادث، اعرض التأثير على الخريطة، وأدر الوصول والتصدير.", openMap: "فتح الخريطة", viewReports: "عرض التنبيهات", exportData: "تصدير", total: "كل التنبيهات", critical: "حوادث حرجة", verified: "تنبيهات موثقة", pending: "قيد التحقق", liveMap: "الخريطة المباشرة", mapped: "تنبيهات على الخريطة", criticalAlerts: "تنبيهات حرجة", pendingList: "قيد التحقق", byDamage: "حسب الضرر", byCrisis: "حسب الأزمة" },
+    detail: { eyebrow: "عرض إداري كامل", verify: "اعتماد", reject: "رفض", edit: "تعديل", delete: "حذف", close: "إغلاق" },
+    export: { csv: "تصدير CSV", geojson: "تصدير GeoJSON", download: "تنزيل" }
+  },
+  zh: {
+    subtitle: "危机响应仪表板",
+    systemStatus: "系统状态",
+    systemOk: "所有系统正常",
+    nav: { dashboard: "仪表板", map: "地图", reports: "警报", validation: "验证", exports: "导出", users: "用户", audit: "审计" },
+    table: { evidence: "证据", incident: "事件", reporter: "报告人", type: "类型", damage: "损害", location: "位置", status: "状态", actions: "操作", empty: "没有符合筛选条件的警报。", sectionEmpty: "此部分没有警报。" },
+    toolbar: { search: "搜索警报...", mapSearch: "搜索地图警报...", allStatuses: "所有状态", pending: "待处理", verified: "已验证", rejected: "已拒绝", allCrises: "所有危机" },
+    dashboard: { headline: "实时危机警报，帮助更快响应。", text: "验证现场事件、绘制影响地图、管理访问并导出结构化数据。", openMap: "打开地图", viewReports: "查看警报", exportData: "导出数据", total: "警报总数", critical: "严重事件", verified: "已验证警报", pending: "待验证", liveMap: "实时地图", mapped: "个地图警报", criticalAlerts: "严重警报", pendingList: "待验证", byDamage: "按损害级别", byCrisis: "按危机类型" },
+    detail: { eyebrow: "管理员完整视图", verify: "批准", reject: "拒绝", edit: "编辑", delete: "删除", close: "关闭" },
+    export: { csv: "CSV 导出", geojson: "GeoJSON 导出", download: "下载" }
+  },
+  ru: {
+    subtitle: "Панель реагирования на кризисы",
+    systemStatus: "Состояние системы",
+    systemOk: "Все системы работают",
+    nav: { dashboard: "Панель", map: "Карта", reports: "Оповещения", validation: "Проверка", exports: "Экспорт", users: "Пользователи", audit: "Аудит" },
+    table: { evidence: "Доказательство", incident: "Инцидент", reporter: "Автор", type: "Тип", damage: "Ущерб", location: "Место", status: "Статус", actions: "Действия", empty: "Нет оповещений по этим фильтрам.", sectionEmpty: "В этом разделе нет оповещений." },
+    toolbar: { search: "Поиск оповещений...", mapSearch: "Поиск на карте...", allStatuses: "Все статусы", pending: "Ожидает", verified: "Проверено", rejected: "Отклонено", allCrises: "Все кризисы" },
+    dashboard: { headline: "Оповещения о кризисах в реальном времени для быстрой реакции.", text: "Проверяйте инциденты, картируйте ущерб, управляйте доступом и экспортируйте данные.", openMap: "Открыть карту", viewReports: "Смотреть оповещения", exportData: "Экспорт", total: "Всего оповещений", critical: "Критические инциденты", verified: "Проверенные", pending: "На проверке", liveMap: "Живая карта", mapped: "оповещений на карте", criticalAlerts: "Критические", pendingList: "Ожидают проверки", byDamage: "По уровню ущерба", byCrisis: "По типу кризиса" },
+    detail: { eyebrow: "Полный просмотр админом", verify: "Одобрить", reject: "Отклонить", edit: "Изменить", delete: "Удалить", close: "Закрыть" },
+    export: { csv: "Экспорт CSV", geojson: "Экспорт GeoJSON", download: "Скачать" }
+  }
+};
+
+const adminCopy = {
+  en: {
+    language: "Language",
+    refresh: "Refresh",
+    delete: {
+      eyebrow: "Permanent deletion",
+      title: "Delete this alert?",
+      text: "This action removes the alert from the admin table and the production database.",
+      confirm: "Delete alert",
+      done: "Report deleted."
+    },
+    status: {
+      verified: {
+        eyebrow: "Validation",
+        title: "Approve this alert?",
+        text: "This alert will become verified and visible as validated crisis information.",
+        confirm: "Approve alert",
+        done: "Report approved."
+      },
+      rejected: {
+        eyebrow: "Rejection",
+        title: "Reject this alert?",
+        text: "This alert will be marked as rejected and kept out of validated response data.",
+        confirm: "Reject alert",
+        done: "Report rejected."
+      }
+    },
+    cancel: "Cancel",
+    noDescription: "No description provided.",
+    userDelete: {
+      eyebrow: "Access management",
+      title: "Delete this staff access?",
+      text: "This removes the admin or moderator account from the response dashboard.",
+      confirm: "Delete access",
+      done: "Staff access deleted."
+    }
+  },
+  fr: {
+    language: "Langue",
+    refresh: "Actualiser",
+    delete: {
+      eyebrow: "Suppression définitive",
+      title: "Supprimer cette alerte ?",
+      text: "Cette action retire l'alerte du tableau admin et de la base de production.",
+      confirm: "Supprimer l'alerte",
+      done: "Alerte supprimée."
+    },
+    status: {
+      verified: {
+        eyebrow: "Validation",
+        title: "Approuver cette alerte ?",
+        text: "Cette alerte deviendra vérifiée et visible comme information de crise validée.",
+        confirm: "Approuver l'alerte",
+        done: "Alerte approuvée."
+      },
+      rejected: {
+        eyebrow: "Rejet",
+        title: "Rejeter cette alerte ?",
+        text: "Cette alerte sera marquée comme rejetée et exclue des données validées.",
+        confirm: "Rejeter l'alerte",
+        done: "Alerte rejetée."
+      }
+    },
+    cancel: "Annuler",
+    noDescription: "Aucune description fournie.",
+    userDelete: {
+      eyebrow: "Gestion des accès",
+      title: "Supprimer cet accès ?",
+      text: "Cette action retire le compte admin ou modérateur du tableau de réponse.",
+      confirm: "Supprimer l'accès",
+      done: "Accès supprimé."
+    }
+  },
+  es: {
+    language: "Idioma",
+    refresh: "Actualizar",
+    delete: {
+      eyebrow: "Eliminacion permanente",
+      title: "Eliminar esta alerta?",
+      text: "Esta accion retira la alerta del panel admin y de la base de produccion.",
+      confirm: "Eliminar alerta",
+      done: "Alerta eliminada."
+    },
+    status: {
+      verified: {
+        eyebrow: "Validacion",
+        title: "Aprobar esta alerta?",
+        text: "Esta alerta quedara verificada y visible como informacion validada de crisis.",
+        confirm: "Aprobar alerta",
+        done: "Alerta aprobada."
+      },
+      rejected: {
+        eyebrow: "Rechazo",
+        title: "Rechazar esta alerta?",
+        text: "Esta alerta se marcara como rechazada y quedara fuera de los datos validados.",
+        confirm: "Rechazar alerta",
+        done: "Alerta rechazada."
+      }
+    },
+    cancel: "Cancelar",
+    noDescription: "Sin descripcion.",
+    userDelete: {
+      eyebrow: "Gestion de acceso",
+      title: "Eliminar este acceso?",
+      text: "Esta accion retira la cuenta admin o moderador del panel de respuesta.",
+      confirm: "Eliminar acceso",
+      done: "Acceso eliminado."
+    }
+  },
+  ar: {
+    language: "اللغة",
+    refresh: "تحديث",
+    delete: {
+      eyebrow: "حذف نهائي",
+      title: "حذف هذا التنبيه؟",
+      text: "سيتم حذف التنبيه من لوحة الإدارة وقاعدة بيانات الإنتاج.",
+      confirm: "حذف التنبيه",
+      done: "تم حذف التنبيه."
+    },
+    status: {
+      verified: {
+        eyebrow: "التحقق",
+        title: "اعتماد هذا التنبيه؟",
+        text: "سيصبح هذا التنبيه موثقا ومرئيا كمعلومة أزمة معتمدة.",
+        confirm: "اعتماد التنبيه",
+        done: "تم اعتماد التنبيه."
+      },
+      rejected: {
+        eyebrow: "الرفض",
+        title: "رفض هذا التنبيه؟",
+        text: "سيتم وضع علامة مرفوض على هذا التنبيه واستبعاده من البيانات المعتمدة.",
+        confirm: "رفض التنبيه",
+        done: "تم رفض التنبيه."
+      }
+    },
+    cancel: "إلغاء",
+    noDescription: "لا يوجد وصف.",
+    userDelete: {
+      eyebrow: "إدارة الوصول",
+      title: "حذف صلاحية هذا المستخدم؟",
+      text: "سيتم حذف حساب المسؤول أو المشرف من لوحة الاستجابة.",
+      confirm: "حذف الصلاحية",
+      done: "تم حذف الصلاحية."
+    }
+  },
+  zh: {
+    language: "语言",
+    refresh: "刷新",
+    delete: {
+      eyebrow: "永久删除",
+      title: "删除此警报？",
+      text: "此操作会从管理表和生产数据库中移除此警报。",
+      confirm: "删除警报",
+      done: "警报已删除。"
+    },
+    status: {
+      verified: {
+        eyebrow: "验证",
+        title: "批准此警报？",
+        text: "此警报将标记为已验证，并作为已验证危机信息显示。",
+        confirm: "批准警报",
+        done: "警报已批准。"
+      },
+      rejected: {
+        eyebrow: "拒绝",
+        title: "拒绝此警报？",
+        text: "此警报将标记为已拒绝，并从已验证响应数据中排除。",
+        confirm: "拒绝警报",
+        done: "警报已拒绝。"
+      }
+    },
+    cancel: "取消",
+    noDescription: "没有说明。",
+    userDelete: {
+      eyebrow: "访问管理",
+      title: "删除此人员访问权限？",
+      text: "这会从响应仪表板中删除管理员或审核员账户。",
+      confirm: "删除访问权限",
+      done: "访问权限已删除。"
+    }
+  },
+  ru: {
+    language: "Язык",
+    refresh: "Обновить",
+    delete: {
+      eyebrow: "Окончательное удаление",
+      title: "Удалить это оповещение?",
+      text: "Это действие удалит оповещение из панели администратора и рабочей базы данных.",
+      confirm: "Удалить оповещение",
+      done: "Оповещение удалено."
+    },
+    status: {
+      verified: {
+        eyebrow: "Проверка",
+        title: "Одобрить это оповещение?",
+        text: "Оповещение станет проверенным и будет отображаться как подтвержденная информация о кризисе.",
+        confirm: "Одобрить оповещение",
+        done: "Оповещение одобрено."
+      },
+      rejected: {
+        eyebrow: "Отклонение",
+        title: "Отклонить это оповещение?",
+        text: "Оповещение будет помечено как отклоненное и исключено из подтвержденных данных.",
+        confirm: "Отклонить оповещение",
+        done: "Оповещение отклонено."
+      }
+    },
+    cancel: "Отмена",
+    noDescription: "Описание не указано.",
+    userDelete: {
+      eyebrow: "Управление доступом",
+      title: "Удалить доступ сотрудника?",
+      text: "Это удалит учетную запись администратора или модератора из панели реагирования.",
+      confirm: "Удалить доступ",
+      done: "Доступ удален."
+    }
+  }
+};
 
 function countBy(items, key) {
   return items.reduce((acc, item) => {
@@ -136,13 +425,24 @@ export default function Admin() {
   const [message, setMessage] = useState("");
   const [editingReport, setEditingReport] = useState(null);
   const [selectedReport, setSelectedReport] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [statusTarget, setStatusTarget] = useState(null);
+  const [userDeleteTarget, setUserDeleteTarget] = useState(null);
+  const [adminLanguage, setAdminLanguage] = useState(() => localStorage.getItem("tala_admin_language") || "en");
+  const [actionBusy, setActionBusy] = useState(false);
   const [editForm, setEditForm] = useState({});
 
   const isAdmin = user?.role === "admin";
+  const copy = adminCopy[adminLanguage] || adminCopy.en;
+  const ui = adminUiCopy[adminLanguage] || adminUiCopy.en;
 
   useEffect(() => {
     refresh();
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("tala_admin_language", adminLanguage);
+  }, [adminLanguage]);
 
   async function refresh() {
     setLoading(true);
@@ -154,13 +454,13 @@ export default function Admin() {
         api("/admin/audit").catch(() => [])
       ]);
       const nextCrises = await api("/crises/admin").catch(() => []);
-      setReports(nextReports.length ? nextReports : sampleReports);
+      setReports(Array.isArray(nextReports) ? nextReports : []);
       setUsers(nextUsers);
       setAudit(nextAudit);
       setCrises(nextCrises);
     } catch (error) {
-      setReports(sampleReports);
-      setMessage(error.message || "Live API unavailable, showing demo data.");
+      setReports([]);
+      setMessage(error.message || "Live API unavailable. Please refresh or check the backend.");
     } finally {
       setLoading(false);
     }
@@ -171,15 +471,42 @@ export default function Admin() {
     navigate("/admin/login", { replace: true });
   }
 
-  async function setReportStatus(report, status) {
+  async function updateReportStatus(report, status) {
     await api(`/admin/reports/${report._id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
     setReports((items) => items.map((item) => (item._id === report._id ? { ...item, status } : item)));
   }
 
-  async function deleteReport(report) {
-    if (!window.confirm(`Delete "${report.title}"?`)) return;
-    await api(`/admin/reports/${report._id}`, { method: "DELETE" });
-    setReports((items) => items.filter((item) => item._id !== report._id));
+  async function confirmStatusChange() {
+    const action = statusTarget;
+    if (!action) return;
+    setActionBusy(true);
+    try {
+      await updateReportStatus(action.report, action.status);
+      const statusCopy = copy.status[action.status] || adminCopy.en.status[action.status];
+      setMessage(statusCopy.done);
+      setStatusTarget(null);
+    } catch (error) {
+      setMessage(error.message || "Action failed.");
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  async function confirmDeleteReport() {
+    const report = deleteTarget;
+    if (!report) return;
+    setActionBusy(true);
+    try {
+      await api(`/admin/reports/${report._id}`, { method: "DELETE" });
+      setReports((items) => items.filter((item) => item._id !== report._id));
+      setMessage(copy.delete.done);
+      if (selectedReport?._id === report._id) setSelectedReport(null);
+      setDeleteTarget(null);
+    } catch (error) {
+      setMessage(error.message || "Delete failed.");
+    } finally {
+      setActionBusy(false);
+    }
   }
 
   function openEdit(report) {
@@ -230,9 +557,17 @@ export default function Admin() {
   }
 
   async function deleteUser(staffUser) {
-    if (!window.confirm(`Delete ${staffUser.name}?`)) return;
-    await api(`/admin/users/${staffUser._id}`, { method: "DELETE" });
-    setUsers((items) => items.filter((item) => item._id !== staffUser._id));
+    setActionBusy(true);
+    try {
+      await api(`/admin/users/${staffUser._id}`, { method: "DELETE" });
+      setUsers((items) => items.filter((item) => item._id !== staffUser._id));
+      setMessage((copy.userDelete.done || adminCopy.en.userDelete.done));
+      setUserDeleteTarget(null);
+    } catch (error) {
+      setMessage(error.message || "Delete failed.");
+    } finally {
+      setActionBusy(false);
+    }
   }
 
   const filteredReports = useMemo(() => {
@@ -261,7 +596,7 @@ export default function Admin() {
           <img src="/tala-mboka-logo.svg" alt="Tala Mboka Crisis" className="h-12 w-12 rounded-xl bg-white object-contain p-1" />
           <div>
             <p className="font-heading text-lg font-black leading-tight">TALA MBOKA <span className="text-green-400">CRISIS</span></p>
-            <p className="text-xs font-semibold text-slate-300">Crisis response dashboard</p>
+            <p className="text-xs font-semibold text-slate-300">{ui.subtitle}</p>
           </div>
         </div>
         <nav className="flex-1 space-y-2 overflow-y-auto px-3 pb-4">
@@ -274,36 +609,65 @@ export default function Admin() {
               }`}
             >
               <Icon size={21} />
-              <span className="flex-1">{label}</span>
+              <span className="flex-1">{ui.nav[key] || label}</span>
               {key === "validation" && pendingReports.length > 0 ? <span className="rounded-lg bg-red-500 px-2 py-1 text-xs text-white">{pendingReports.length}</span> : null}
             </button>
           ))}
         </nav>
         <div className="border-t border-white/10 p-5">
-          <p className="flex items-center gap-2 text-sm font-black"><span className="h-2.5 w-2.5 rounded-full bg-green-400" /> System status</p>
-          <p className="mt-1 text-xs font-semibold text-slate-300">All systems operational</p>
+          <p className="flex items-center gap-2 text-sm font-black"><span className="h-2.5 w-2.5 rounded-full bg-green-400" /> {ui.systemStatus}</p>
+          <p className="mt-1 text-xs font-semibold text-slate-300">{ui.systemOk}</p>
         </div>
       </aside>
 
       <div className="xl:pl-[280px]">
         <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
-          <div className="flex min-h-20 items-center justify-between gap-5 px-5 lg:px-8">
-            <div>
-              <p className="text-sm font-semibold text-slate-500">Crisis response dashboard</p>
-              <h1 className="font-heading text-xl font-black capitalize md:text-2xl">{navItems.find((item) => item.key === activeSection)?.label || "Dashboard"}</h1>
+          <div className="flex min-h-20 flex-wrap items-center justify-between gap-3 px-5 py-3 lg:px-8">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-500">{ui.subtitle}</p>
+              <h1 className="font-heading text-xl font-black capitalize md:text-2xl">{ui.nav[activeSection] || "Dashboard"}</h1>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <label className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 shadow-sm">
+                <Globe2 size={17} className="text-green-700" />
+                <span className="sr-only">{copy.language}</span>
+                <select
+                  value={adminLanguage}
+                  onChange={(event) => setAdminLanguage(event.target.value)}
+                  className="bg-transparent font-black outline-none"
+                  aria-label={copy.language}
+                >
+                  {Object.entries(languageOptions).map(([code, label]) => (
+                    <option key={code} value={code}>{label}</option>
+                  ))}
+                </select>
+              </label>
               <Button type="button" variant="ghost" onClick={refresh} disabled={loading}>
                 <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
-                Refresh
+                {copy.refresh}
               </Button>
               <button onClick={signOut} className="flex min-h-11 items-center gap-2 rounded-lg bg-[#071a4f] px-4 text-sm font-black text-white">
                 <CircleUserRound size={18} />
-                {user?.name || "Admin"}
+                <span className="hidden sm:inline">{user?.name || "Admin"}</span>
                 <LogOut size={17} />
               </button>
             </div>
           </div>
+          <nav className="flex gap-2 overflow-x-auto border-t border-slate-200 px-5 py-2 xl:hidden">
+            {visibleNav.map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => setActiveSection(key)}
+                className={`flex min-h-10 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-black transition ${
+                  activeSection === key ? "bg-[#071a4f] text-white" : "bg-white text-slate-700 hover:bg-green-50"
+                }`}
+              >
+                <Icon size={18} />
+                {ui.nav[key] || label}
+                {key === "validation" && pendingReports.length > 0 ? <span className="rounded-md bg-red-500 px-2 py-0.5 text-xs text-white">{pendingReports.length}</span> : null}
+              </button>
+            ))}
+          </nav>
         </header>
 
         <main className="px-5 py-7 lg:px-8">
@@ -314,9 +678,10 @@ export default function Admin() {
               stats={{ pending: pendingReports.length, verified: verifiedReports.length, critical: criticalReports.length, byDamage, byCrisis }}
               setActiveSection={setActiveSection}
               mapReports={mapReports}
+              ui={ui}
             />
           )}
-          {activeSection === "map" && <MapView reports={mapReports} query={query} setQuery={setQuery} />}
+          {activeSection === "map" && <MapView reports={mapReports} query={query} setQuery={setQuery} ui={ui} />}
           {activeSection === "reports" && (
             <ReportsView
               reports={filteredReports}
@@ -327,15 +692,16 @@ export default function Admin() {
               crises={crises}
               crisisFilter={crisisFilter}
               setCrisisFilter={setCrisisFilter}
-              setReportStatus={setReportStatus}
-              deleteReport={deleteReport}
+              setReportStatus={(report, status) => setStatusTarget({ report, status })}
+              deleteReport={setDeleteTarget}
               openDetail={setSelectedReport}
               openEdit={openEdit}
+              ui={ui}
             />
           )}
           {activeSection === "validation" && (
             <ReportsView
-              title="Pending validation"
+              title={ui.dashboard.pendingList}
               reports={pendingReports}
               query={query}
               setQuery={setQuery}
@@ -344,15 +710,16 @@ export default function Admin() {
               crises={crises}
               crisisFilter={crisisFilter}
               setCrisisFilter={setCrisisFilter}
-              setReportStatus={setReportStatus}
-              deleteReport={deleteReport}
+              setReportStatus={(report, status) => setStatusTarget({ report, status })}
+              deleteReport={setDeleteTarget}
               openDetail={setSelectedReport}
               openEdit={openEdit}
+              ui={ui}
             />
           )}
-          {activeSection === "exports" && <ExportsView reports={reports} />}
+          {activeSection === "exports" && <ExportsView reports={reports} ui={ui} />}
           {activeSection === "users" && isAdmin && (
-            <UsersView users={users} userForm={userForm} setUserForm={setUserForm} createUser={createUser} toggleUserSuspension={toggleUserSuspension} deleteUser={deleteUser} />
+            <UsersView users={users} userForm={userForm} setUserForm={setUserForm} createUser={createUser} toggleUserSuspension={toggleUserSuspension} deleteUser={setUserDeleteTarget} />
           )}
           {activeSection === "audit" && isAdmin && <AuditView audit={audit} />}
         </main>
@@ -366,30 +733,189 @@ export default function Admin() {
           onSubmit={submitReportEdit}
         />
       )}
-      {selectedReport && <ReportDetailModal report={selectedReport} onClose={() => setSelectedReport(null)} onEdit={openEdit} setReportStatus={setReportStatus} />}
+      {deleteTarget && (
+        <DeleteReportDialog
+          report={deleteTarget}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={confirmDeleteReport}
+          copy={copy}
+          busy={actionBusy}
+        />
+      )}
+      {statusTarget && (
+        <StatusReportDialog
+          report={statusTarget.report}
+          status={statusTarget.status}
+          onCancel={() => setStatusTarget(null)}
+          onConfirm={confirmStatusChange}
+          copy={copy}
+          busy={actionBusy}
+        />
+      )}
+      {userDeleteTarget && (
+        <DeleteUserDialog
+          staffUser={userDeleteTarget}
+          onCancel={() => setUserDeleteTarget(null)}
+          onConfirm={() => deleteUser(userDeleteTarget)}
+          copy={copy}
+          busy={actionBusy}
+        />
+      )}
+      {selectedReport && (
+        <ReportDetailModal
+          report={selectedReport}
+          onClose={() => setSelectedReport(null)}
+          onEdit={openEdit}
+          setReportStatus={(report, status) => {
+            setSelectedReport(null);
+            setStatusTarget({ report, status });
+          }}
+          deleteReport={(report) => {
+            setSelectedReport(null);
+            setDeleteTarget(report);
+          }}
+          ui={ui}
+        />
+      )}
     </div>
   );
 }
 
-function DashboardView({ reports, stats, setActiveSection, mapReports }) {
+function DeleteReportDialog({ report, onCancel, onConfirm, copy, busy }) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/55 px-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="delete-report-title">
+      <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-600">
+            <Trash2 size={24} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black uppercase text-red-600">{copy.delete.eyebrow}</p>
+            <h2 id="delete-report-title" className="mt-1 font-heading text-2xl font-black text-[#061849]">{copy.delete.title}</h2>
+            <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+              {copy.delete.text}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <p className="truncate text-base font-black text-[#061849]">{report.title}</p>
+          <p className="mt-1 line-clamp-2 text-sm font-semibold text-slate-600">{report.description || copy.noDescription}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {statusBadge(report.status)}
+            {severityBadge(report.damageLevel)}
+            <span className="rounded-md bg-white px-2 py-1 text-xs font-black text-slate-600">{report.commune || "Zone"}, {report.province || "Region"}</span>
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button type="button" variant="ghost" onClick={onCancel} disabled={busy}>{copy.cancel}</Button>
+          <Button type="button" variant="danger" onClick={onConfirm} disabled={busy}>
+            <Trash2 size={18} />
+            {copy.delete.confirm}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatusReportDialog({ report, status, onCancel, onConfirm, copy, busy }) {
+  const statusCopy = copy.status[status] || adminCopy.en.status[status];
+  const isApproval = status === "verified";
+  const Icon = isApproval ? CheckCircle2 : X;
+  const iconClass = isApproval ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600";
+  const buttonVariant = isApproval ? "success" : "danger";
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/55 px-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="status-report-title">
+      <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
+        <div className="flex items-start gap-4">
+          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${iconClass}`}>
+            <Icon size={24} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className={`text-xs font-black uppercase ${isApproval ? "text-green-700" : "text-red-600"}`}>{statusCopy.eyebrow}</p>
+            <h2 id="status-report-title" className="mt-1 font-heading text-2xl font-black text-[#061849]">{statusCopy.title}</h2>
+            <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">{statusCopy.text}</p>
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <p className="truncate text-base font-black text-[#061849]">{report.title}</p>
+          <p className="mt-1 line-clamp-2 text-sm font-semibold text-slate-600">{report.description || copy.noDescription}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {statusBadge(report.status)}
+            {severityBadge(report.damageLevel)}
+            <span className="rounded-md bg-white px-2 py-1 text-xs font-black text-slate-600">{report.commune || "Zone"}, {report.province || "Region"}</span>
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button type="button" variant="ghost" onClick={onCancel} disabled={busy}>{copy.cancel}</Button>
+          <Button type="button" variant={buttonVariant} onClick={onConfirm} disabled={busy}>
+            <Icon size={18} />
+            {statusCopy.confirm}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DeleteUserDialog({ staffUser, onCancel, onConfirm, copy, busy }) {
+  const userCopy = copy.userDelete.eyebrow ? copy.userDelete : adminCopy.en.userDelete;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/55 px-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="delete-user-title">
+      <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-600">
+            <Trash2 size={24} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black uppercase text-red-600">{userCopy.eyebrow}</p>
+            <h2 id="delete-user-title" className="mt-1 font-heading text-2xl font-black text-[#061849]">{userCopy.title}</h2>
+            <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">{userCopy.text}</p>
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <p className="truncate text-base font-black text-[#061849]">{staffUser.name}</p>
+          <p className="mt-1 text-sm font-semibold text-slate-600">{staffUser.email || staffUser.phone || "No contact"} - {staffUser.role}</p>
+        </div>
+
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button type="button" variant="ghost" onClick={onCancel} disabled={busy}>{copy.cancel}</Button>
+          <Button type="button" variant="danger" onClick={onConfirm} disabled={busy}>
+            <Trash2 size={18} />
+            {userCopy.confirm}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DashboardView({ reports, stats, setActiveSection, mapReports, ui }) {
   const cards = [
-    { label: "Total reports", value: reports.length, icon: FileText, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Critical incidents", value: stats.critical, icon: AlertTriangle, color: "text-red-600", bg: "bg-red-50" },
-    { label: "Verified reports", value: stats.verified, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50" },
-    { label: "Pending validation", value: stats.pending, icon: ListChecks, color: "text-orange-600", bg: "bg-orange-50" }
+    { label: ui.dashboard.total, value: reports.length, icon: FileText, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: ui.dashboard.critical, value: stats.critical, icon: AlertTriangle, color: "text-red-600", bg: "bg-red-50" },
+    { label: ui.dashboard.verified, value: stats.verified, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50" },
+    { label: ui.dashboard.pending, value: stats.pending, icon: ListChecks, color: "text-orange-600", bg: "bg-orange-50" }
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
-          <h2 className="font-heading text-3xl font-black">Real-time crisis reports for faster response.</h2>
-          <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-slate-600">Verify field incidents, map impact, manage staff access, and export structured response data.</p>
+          <h2 className="font-heading text-3xl font-black">{ui.dashboard.headline}</h2>
+          <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-slate-600">{ui.dashboard.text}</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <Button type="button" onClick={() => setActiveSection("map")} size="lg"><Map size={20} /> Open live map</Button>
-          <Button type="button" onClick={() => setActiveSection("reports")} variant="ghost" size="lg"><FileText size={20} /> View reports</Button>
-          <Button type="button" onClick={() => setActiveSection("exports")} variant="ghost" size="lg"><Download size={20} /> Export data</Button>
+          <Button type="button" onClick={() => setActiveSection("map")} size="lg"><Map size={20} /> {ui.dashboard.openMap}</Button>
+          <Button type="button" onClick={() => setActiveSection("reports")} variant="ghost" size="lg"><FileText size={20} /> {ui.dashboard.viewReports}</Button>
+          <Button type="button" onClick={() => setActiveSection("exports")} variant="ghost" size="lg"><Download size={20} /> {ui.dashboard.exportData}</Button>
         </div>
       </div>
 
@@ -408,36 +934,36 @@ function DashboardView({ reports, stats, setActiveSection, mapReports }) {
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[1.4fr_0.9fr]">
-        <MapPanel reports={mapReports} />
+        <MapPanel reports={mapReports} ui={ui} />
         <div className="grid gap-5">
-          <SideList title="Critical alerts" reports={reports.filter((report) => report.damageLevel === "complete").slice(0, 4)} />
-          <SideList title="Pending validation" reports={reports.filter((report) => report.status === "pending").slice(0, 4)} />
+          <SideList title={ui.dashboard.criticalAlerts} reports={reports.filter((report) => report.damageLevel === "complete").slice(0, 4)} emptyText={ui.table.sectionEmpty} />
+          <SideList title={ui.dashboard.pendingList} reports={reports.filter((report) => report.status === "pending").slice(0, 4)} emptyText={ui.table.sectionEmpty} />
         </div>
       </section>
 
       <section className="grid gap-5 xl:grid-cols-2">
-        <Breakdown title="Reports by damage level" rows={stats.byDamage} labels={damageLevels} />
-        <Breakdown title="Reports by crisis type" rows={stats.byCrisis} labels={crisisTypes} />
+        <Breakdown title={ui.dashboard.byDamage} rows={stats.byDamage} labels={damageLevels} />
+        <Breakdown title={ui.dashboard.byCrisis} rows={stats.byCrisis} labels={crisisTypes} />
       </section>
     </div>
   );
 }
 
-function MapView({ reports, query, setQuery }) {
+function MapView({ reports, query, setQuery, ui }) {
   return (
     <div className="space-y-5">
-      <Toolbar query={query} setQuery={setQuery} placeholder="Search map reports..." />
-      <MapPanel reports={reports} large />
+      <Toolbar query={query} setQuery={setQuery} placeholder={ui.toolbar.mapSearch} ui={ui} />
+      <MapPanel reports={reports} large ui={ui} />
     </div>
   );
 }
 
-function MapPanel({ reports, large = false }) {
+function MapPanel({ reports, large = false, ui = adminUiCopy.en }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-heading text-lg font-black">Live map</h2>
-        <p className="text-sm font-bold text-slate-500">{reports.length} mapped reports</p>
+        <h2 className="font-heading text-lg font-black">{ui.dashboard.liveMap}</h2>
+        <p className="text-sm font-bold text-slate-500">{reports.length} {ui.dashboard.mapped}</p>
       </div>
       <div className={`${large ? "h-[72vh]" : "h-[420px]"} overflow-hidden rounded-xl`}>
         <MapContainer center={[-2.8, 23.7]} zoom={5} scrollWheelZoom className="h-full w-full">
@@ -463,19 +989,21 @@ function MapPanel({ reports, large = false }) {
   );
 }
 
-function ReportsView({ title = "Reports", reports, query, setQuery, statusFilter, setStatusFilter, crises = [], crisisFilter = "all", setCrisisFilter, setReportStatus, deleteReport, openDetail, openEdit }) {
+function ReportsView({ title, reports, query, setQuery, statusFilter, setStatusFilter, crises = [], crisisFilter = "all", setCrisisFilter, setReportStatus, deleteReport, openDetail, openEdit, ui }) {
+  const viewTitle = title || ui.nav.reports;
+
   return (
     <div className="space-y-5">
-      <Toolbar query={query} setQuery={setQuery} statusFilter={statusFilter} setStatusFilter={setStatusFilter} crises={crises} crisisFilter={crisisFilter} setCrisisFilter={setCrisisFilter} />
+      <Toolbar query={query} setQuery={setQuery} statusFilter={statusFilter} setStatusFilter={setStatusFilter} crises={crises} crisisFilter={crisisFilter} setCrisisFilter={setCrisisFilter} ui={ui} />
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-200 p-4">
-          <h2 className="font-heading text-lg font-black">{title}</h2>
-          <p className="text-sm font-bold text-slate-500">{reports.length} reports</p>
+          <h2 className="font-heading text-lg font-black">{viewTitle}</h2>
+          <p className="text-sm font-bold text-slate-500">{reports.length} {ui.nav.reports}</p>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs font-black uppercase text-slate-500">
-              <tr><th className="px-4 py-3">Evidence</th><th className="px-4 py-3">Incident</th><th className="px-4 py-3">Reporter</th><th className="px-4 py-3">Type</th><th className="px-4 py-3">Damage</th><th className="px-4 py-3">Location</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Actions</th></tr>
+              <tr><th className="px-4 py-3">{ui.table.evidence}</th><th className="px-4 py-3">{ui.table.incident}</th><th className="px-4 py-3">{ui.table.reporter}</th><th className="px-4 py-3">{ui.table.type}</th><th className="px-4 py-3">{ui.table.damage}</th><th className="px-4 py-3">{ui.table.location}</th><th className="px-4 py-3">{ui.table.status}</th><th className="px-4 py-3">{ui.table.actions}</th></tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {reports.map((report) => (
@@ -504,6 +1032,13 @@ function ReportsView({ title = "Reports", reports, query, setQuery, statusFilter
                   </td>
                 </tr>
               ))}
+              {reports.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="px-4 py-10 text-center text-sm font-bold text-slate-500">
+                    {ui.table.empty}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -512,24 +1047,24 @@ function ReportsView({ title = "Reports", reports, query, setQuery, statusFilter
   );
 }
 
-function Toolbar({ query, setQuery, statusFilter, setStatusFilter, crises = [], crisisFilter = "all", setCrisisFilter, placeholder = "Search reports..." }) {
+function Toolbar({ query, setQuery, statusFilter, setStatusFilter, crises = [], crisisFilter = "all", setCrisisFilter, placeholder, ui = adminUiCopy.en }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:flex-row md:items-center">
       <label className="relative flex-1">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={placeholder} className="form-field pl-10" />
+        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={placeholder || ui.toolbar.search} className="form-field pl-10" />
       </label>
       {setStatusFilter && (
         <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="form-field md:w-56">
-          <option value="all">All statuses</option>
-          <option value="pending">Pending</option>
-          <option value="verified">Verified</option>
-          <option value="rejected">Rejected</option>
+          <option value="all">{ui.toolbar.allStatuses}</option>
+          <option value="pending">{ui.toolbar.pending}</option>
+          <option value="verified">{ui.toolbar.verified}</option>
+          <option value="rejected">{ui.toolbar.rejected}</option>
         </select>
       )}
       {setCrisisFilter && (
         <select value={crisisFilter} onChange={(event) => setCrisisFilter(event.target.value)} className="form-field md:w-64">
-          <option value="all">All crises</option>
+          <option value="all">{ui.toolbar.allCrises}</option>
           {crises.map((crisis) => (
             <option key={crisis.slug} value={crisis.slug}>{crisis.name}</option>
           ))}
@@ -539,27 +1074,27 @@ function Toolbar({ query, setQuery, statusFilter, setStatusFilter, crises = [], 
   );
 }
 
-function ExportsView({ reports }) {
+function ExportsView({ reports, ui }) {
   return (
     <div className="grid gap-5 md:grid-cols-2">
-      <ExportCard title="CSV export" text="Spreadsheet-ready report list with reporter metadata, versioning, duplicates, and offline sync fields." onClick={() => downloadApiFile("/reports/export/csv", "tala-mboka-crisis-reports.csv").catch(() => exportBlob("tala-mboka-crisis-reports.csv", toCsv(reports), "text/csv"))} />
-      <ExportCard title="GeoJSON export" text="Interoperable GIS export with geolocation, building footprint references, and response metadata." onClick={() => downloadApiFile("/reports/export/geojson", "tala-mboka-crisis-reports.geojson").catch(() => exportBlob("tala-mboka-crisis-reports.geojson", toGeoJson(reports), "application/geo+json"))} />
+      <ExportCard title={ui.export.csv} text="Spreadsheet-ready report list with reporter metadata, versioning, duplicates, and offline sync fields." buttonText={ui.export.download} onClick={() => downloadApiFile("/reports/export/csv", "tala-mboka-crisis-reports.csv").catch(() => exportBlob("tala-mboka-crisis-reports.csv", toCsv(reports), "text/csv"))} />
+      <ExportCard title={ui.export.geojson} text="Interoperable GIS export with geolocation, building footprint references, and response metadata." buttonText={ui.export.download} onClick={() => downloadApiFile("/reports/export/geojson", "tala-mboka-crisis-reports.geojson").catch(() => exportBlob("tala-mboka-crisis-reports.geojson", toGeoJson(reports), "application/geo+json"))} />
     </div>
   );
 }
 
-function ExportCard({ title, text, onClick }) {
+function ExportCard({ title, text, buttonText, onClick }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <Download className="text-green-600" size={34} />
       <h2 className="mt-5 font-heading text-2xl font-black">{title}</h2>
       <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">{text}</p>
-      <Button type="button" onClick={onClick} className="mt-6"><Download size={18} /> Download</Button>
+      <Button type="button" onClick={onClick} className="mt-6"><Download size={18} /> {buttonText}</Button>
     </div>
   );
 }
 
-function ReportDetailModal({ report, onClose, onEdit, setReportStatus }) {
+function ReportDetailModal({ report, onClose, onEdit, setReportStatus, deleteReport }) {
   const reporter = report.reporterSummary || {};
   const trace = report.responseTrace || {};
   const duplicateCount = trace.possibleDuplicateIds?.length || report.possibleDuplicateIds?.length || 0;
@@ -573,12 +1108,12 @@ function ReportDetailModal({ report, onClose, onEdit, setReportStatus }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6" role="dialog" aria-modal="true" aria-labelledby="report-detail-title">
       <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
         <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-200 bg-white p-5">
           <div>
-            <p className="text-xs font-black uppercase tracking-wide text-green-700">Admin full report view</p>
-            <h2 className="mt-1 font-heading text-2xl font-black">{report.title}</h2>
+            <p className="text-xs font-black uppercase tracking-wide text-green-700">{ui.detail.eyebrow}</p>
+            <h2 id="report-detail-title" className="mt-1 font-heading text-2xl font-black">{report.title}</h2>
             <p className="mt-1 text-sm font-semibold text-slate-500">{report._id} - v{trace.version || report.version || 1}</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><X size={20} /></button>
@@ -636,10 +1171,11 @@ function ReportDetailModal({ report, onClose, onEdit, setReportStatus }) {
               <InfoLine label="Possible duplicates" value={String(duplicateCount)} />
             </InfoCard>
             <div className="grid grid-cols-2 gap-3">
-              <Button type="button" onClick={() => setReportStatus(report, "verified")}><Check size={18} /> Verify</Button>
-              <Button type="button" variant="danger" onClick={() => setReportStatus(report, "rejected")}><X size={18} /> Reject</Button>
-              <Button type="button" variant="ghost" onClick={closeAndEdit}><Edit3 size={18} /> Edit</Button>
-              <Button type="button" variant="ghost" onClick={onClose}>Close</Button>
+              <Button type="button" onClick={() => setReportStatus(report, "verified")}><Check size={18} /> {ui.detail.verify}</Button>
+              <Button type="button" variant="danger" onClick={() => setReportStatus(report, "rejected")}><X size={18} /> {ui.detail.reject}</Button>
+              <Button type="button" variant="ghost" onClick={closeAndEdit}><Edit3 size={18} /> {ui.detail.edit}</Button>
+              <Button type="button" variant="danger" onClick={() => deleteReport(report)}><Trash2 size={18} /> {ui.detail.delete}</Button>
+              <Button type="button" variant="ghost" className="col-span-2" onClick={onClose}>{ui.detail.close}</Button>
             </div>
           </aside>
         </div>
@@ -736,11 +1272,11 @@ function EditReportModal({ report, form, setForm, onClose, onSubmit }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6" role="dialog" aria-modal="true" aria-labelledby="edit-report-title">
       <form onSubmit={onSubmit} className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
           <div>
-            <h2 className="font-heading text-2xl font-black">Edit report</h2>
+            <h2 id="edit-report-title" className="font-heading text-2xl font-black">Edit report</h2>
             <p className="mt-1 text-sm font-semibold text-slate-500">{report._id}</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
@@ -805,7 +1341,7 @@ function EditReportModal({ report, form, setForm, onClose, onSubmit }) {
   );
 }
 
-function SideList({ title, reports }) {
+function SideList({ title, reports, emptyText = "No reports in this section." }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <h2 className="mb-3 border-b border-slate-200 pb-3 font-heading text-lg font-black">{title}</h2>
@@ -820,7 +1356,7 @@ function SideList({ title, reports }) {
             </div>
           </article>
         ))}
-        {reports.length === 0 && <p className="text-sm font-bold text-slate-500">No reports in this section.</p>}
+        {reports.length === 0 && <p className="text-sm font-bold text-slate-500">{emptyText}</p>}
       </div>
     </div>
   );

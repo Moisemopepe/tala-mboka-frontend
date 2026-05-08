@@ -1,8 +1,11 @@
 import { categories } from "../utils/categories.js";
+import { getAppOptionLabels } from "../utils/appOptionI18n.js";
 
 const primaryCategories = ["residential", "commercial", "government", "utility", "transport", "communication", "health", "education", "public_space", "other"];
 
-export default function CategoryFilter({ value, onChange }) {
+export default function CategoryFilter({ value, onChange, language = "en" }) {
+  const labels = getAppOptionLabels(language).categories;
+
   return (
     <div className="flex gap-2 overflow-x-auto pb-2">
       <button
@@ -12,7 +15,7 @@ export default function CategoryFilter({ value, onChange }) {
           value === "" ? "border-green-200 bg-green-50 text-green-700" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
         }`}
       >
-        All
+        {labels.all}
       </button>
       {primaryCategories.map((key) => {
         const item = categories[key];
@@ -25,7 +28,7 @@ export default function CategoryFilter({ value, onChange }) {
             value === key ? "border-green-200 bg-green-50 text-green-700" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
           }`}
         >
-          {item.label}
+          {labels[key] || item.label}
         </button>
         );
       })}
