@@ -451,10 +451,10 @@ export default function Admin() {
     try {
       const [nextReports, nextUsers, nextAudit] = await Promise.all([
         api("/admin/reports"),
-        api("/admin/users").catch(() => []),
-        api("/admin/audit").catch(() => [])
+        isAdmin ? api("/admin/users").catch(() => []) : Promise.resolve([]),
+        isAdmin ? api("/admin/audit").catch(() => []) : Promise.resolve([])
       ]);
-      const nextCrises = await api("/crises/admin").catch(() => []);
+      const nextCrises = canMutateReports ? await api("/crises/admin").catch(() => []) : [];
       setReports(Array.isArray(nextReports) ? nextReports : []);
       setUsers(nextUsers);
       setAudit(nextAudit);
