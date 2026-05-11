@@ -433,6 +433,7 @@ export default function Admin() {
   const [editForm, setEditForm] = useState({});
 
   const isAdmin = user?.role === "admin";
+  const canMutateReports = ["admin", "moderator"].includes(user?.role);
   const copy = adminCopy[adminLanguage] || adminCopy.en;
   const ui = adminUiCopy[adminLanguage] || adminUiCopy.en;
 
@@ -696,6 +697,7 @@ export default function Admin() {
               deleteReport={setDeleteTarget}
               openDetail={setSelectedReport}
               openEdit={openEdit}
+              canMutate={canMutateReports}
               ui={ui}
             />
           )}
@@ -714,6 +716,7 @@ export default function Admin() {
               deleteReport={setDeleteTarget}
               openDetail={setSelectedReport}
               openEdit={openEdit}
+              canMutate={canMutateReports}
               ui={ui}
             />
           )}
@@ -774,6 +777,7 @@ export default function Admin() {
             setSelectedReport(null);
             setDeleteTarget(report);
           }}
+          canMutate={canMutateReports}
           ui={ui}
         />
       )}
@@ -989,7 +993,7 @@ function MapPanel({ reports, large = false, ui = adminUiCopy.en }) {
   );
 }
 
-function ReportsView({ title, reports, query, setQuery, statusFilter, setStatusFilter, crises = [], crisisFilter = "all", setCrisisFilter, setReportStatus, deleteReport, openDetail, openEdit, ui }) {
+function ReportsView({ title, reports, query, setQuery, statusFilter, setStatusFilter, crises = [], crisisFilter = "all", setCrisisFilter, setReportStatus, deleteReport, openDetail, openEdit, canMutate = true, ui }) {
   const viewTitle = title || ui.nav.reports;
 
   return (
@@ -1024,10 +1028,14 @@ function ReportsView({ title, reports, query, setQuery, statusFilter, setStatusF
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
                       <button onClick={() => openDetail(report)} className="rounded-lg p-2 hover:bg-slate-100" title="View"><Eye size={16} /></button>
-                      <button onClick={() => openEdit(report)} className="rounded-lg p-2 hover:bg-slate-100" title="Edit"><Edit3 size={16} /></button>
-                      <button onClick={() => setReportStatus(report, "verified")} className="rounded-lg p-2 text-green-600 hover:bg-green-50" title="Verify"><Check size={16} /></button>
-                      <button onClick={() => setReportStatus(report, "rejected")} className="rounded-lg p-2 text-red-600 hover:bg-red-50" title="Reject"><X size={16} /></button>
-                      <button onClick={() => deleteReport(report)} className="rounded-lg p-2 text-red-600 hover:bg-red-50" title="Delete"><Trash2 size={16} /></button>
+                      {canMutate && (
+                        <>
+                          <button onClick={() => openEdit(report)} className="rounded-lg p-2 hover:bg-slate-100" title="Edit"><Edit3 size={16} /></button>
+                          <button onClick={() => setReportStatus(report, "verified")} className="rounded-lg p-2 text-green-600 hover:bg-green-50" title="Verify"><Check size={16} /></button>
+                          <button onClick={() => setReportStatus(report, "rejected")} className="rounded-lg p-2 text-red-600 hover:bg-red-50" title="Reject"><X size={16} /></button>
+                          <button onClick={() => deleteReport(report)} className="rounded-lg p-2 text-red-600 hover:bg-red-50" title="Delete"><Trash2 size={16} /></button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -1094,7 +1102,7 @@ function ExportCard({ title, text, buttonText, onClick }) {
   );
 }
 
-function ReportDetailModal({ report, onClose, onEdit, setReportStatus, deleteReport }) {
+function ReportDetailModal({ report, onClose, onEdit, setReportStatus, deleteReport, canMutate = true, ui = adminUiCopy.en }) {
   const reporter = report.reporterSummary || {};
   const trace = report.responseTrace || {};
   const duplicateCount = trace.possibleDuplicateIds?.length || report.possibleDuplicateIds?.length || 0;
@@ -1171,10 +1179,14 @@ function ReportDetailModal({ report, onClose, onEdit, setReportStatus, deleteRep
               <InfoLine label="Possible duplicates" value={String(duplicateCount)} />
             </InfoCard>
             <div className="grid grid-cols-2 gap-3">
-              <Button type="button" onClick={() => setReportStatus(report, "verified")}><Check size={18} /> {ui.detail.verify}</Button>
-              <Button type="button" variant="danger" onClick={() => setReportStatus(report, "rejected")}><X size={18} /> {ui.detail.reject}</Button>
-              <Button type="button" variant="ghost" onClick={closeAndEdit}><Edit3 size={18} /> {ui.detail.edit}</Button>
-              <Button type="button" variant="danger" onClick={() => deleteReport(report)}><Trash2 size={18} /> {ui.detail.delete}</Button>
+              {canMutate && (
+                <>
+                  <Button type="button" onClick={() => setReportStatus(report, "verified")}><Check size={18} /> {ui.detail.verify}</Button>
+                  <Button type="button" variant="danger" onClick={() => setReportStatus(report, "rejected")}><X size={18} /> {ui.detail.reject}</Button>
+                  <Button type="button" variant="ghost" onClick={closeAndEdit}><Edit3 size={18} /> {ui.detail.edit}</Button>
+                  <Button type="button" variant="danger" onClick={() => deleteReport(report)}><Trash2 size={18} /> {ui.detail.delete}</Button>
+                </>
+              )}
               <Button type="button" variant="ghost" className="col-span-2" onClick={onClose}>{ui.detail.close}</Button>
             </div>
           </aside>

@@ -11,5 +11,5 @@ export default function ProtectedAdminRoute({ children }) {
     localStorage.removeItem("tala_user");
   }
 
-  return token && ["admin", "moderator"].includes(role) ? children : <Navigate to="/admin/login" replace />;
+  return token && ["admin", "moderator", "demo"].includes(role) ? children : <Navigate to="/admin/login" replace />;
 }
